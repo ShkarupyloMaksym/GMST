@@ -1,0 +1,10 @@
+en/en-4446-2275-0030.wav
+en/en-1089-134691-0012.wav
+en/en-260-123440-0014.wav
+en/en-8224-274384-0004.wav
+en/en-1284-1181-0021.wav
+en/en-7021-85628-0025.wav
+en/en-7127-75947-0023.wav
+en/en-2961-961-0000.wav
+en/en-6829-68769-0041.wav
+# concatenated en clips, first 9 of manifest order, total 60.0s (>=60s target), from eval/results/data/en.jsonl

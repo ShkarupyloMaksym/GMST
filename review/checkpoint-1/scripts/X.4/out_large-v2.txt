@@ -1,0 +1,19 @@
+nproc=16  OMP_NUM_THREADS=None  cpu_threads param passed to WhisperModel: none (default/auto)
+
+=== model_size=large-v2  compute_device=cpu  compute_type=int8 ===
+load time: 3.90 s
+buffer_s  median_s  p90_s  (n=10, after 2 warm-ups)
+       2     4.035   4.300
+       4     4.536   4.745
+       8     5.014   5.703
+      15     6.402   7.616
+detect_language(3s): median 3.533 s  p90 3.559 s
+
+EVID-04 rule check: (wall at 4s update + LID(3s)) <= 1.0 s -> 4.536 + 3.533 = 8.069 s -> FAILS
+
+final-pass (transcribe + detect_language), median of 5 after 1 warm-up:
+utt_s  median_transcribe_s  median_lid_s  median_total_s
+    2               4.259         3.487           7.746
+    5               4.892         3.526           8.418
+   10               5.919         3.535           9.454
+   15               6.783         3.521          10.304
