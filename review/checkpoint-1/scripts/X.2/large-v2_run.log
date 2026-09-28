@@ -1,0 +1,14 @@
+[large-v2] loaded in 3.58s, 120 clips
+[large-v2] 10/120 clips, 50 calls, 187.2s elapsed
+[large-v2] 20/120 clips, 100 calls, 369.6s elapsed
+[large-v2] 30/120 clips, 150 calls, 554.2s elapsed
+[large-v2] 40/120 clips, 200 calls, 739.3s elapsed
+[large-v2] 50/120 clips, 250 calls, 918.0s elapsed
+[large-v2] 60/120 clips, 300 calls, 1097.0s elapsed
+[large-v2] 70/120 clips, 350 calls, 1275.2s elapsed
+[large-v2] 80/120 clips, 400 calls, 1454.2s elapsed
+[large-v2] 90/120 clips, 450 calls, 1632.9s elapsed
+[large-v2] 100/120 clips, 500 calls, 1811.3s elapsed
+[large-v2] 110/120 clips, 550 calls, 1990.4s elapsed
+[large-v2] 120/120 clips, 600 calls, 2170.3s elapsed
+[large-v2] done: 600 calls in 2170.3s (load 3.58s)

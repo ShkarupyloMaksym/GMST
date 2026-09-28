@@ -1,0 +1,30 @@
+
+=== small ===
+lang prefix    n  unrestr_acc  restr_acc
+en   1        60        1.000      1.000
+en   2        60        0.983      1.000
+en   3        60        0.983      1.000
+en   4        60        0.983      1.000
+en   full     60        0.983      1.000
+uk   1        60        0.000      0.183
+uk   2        60        0.133      0.883
+uk   3        60        0.400      0.950
+uk   4        60        0.533      0.983
+uk   full     60        0.600      0.983
+
+=== large-v2 ===
+lang prefix    n  unrestr_acc  restr_acc
+en   1        60        1.000      1.000
+en   2        60        1.000      1.000
+en   3        60        1.000      1.000
+en   4        60        1.000      1.000
+en   full     60        1.000      1.000
+uk   1        60        0.017      0.233
+uk   2        60        0.217      0.900
+uk   3        60        0.550      0.983
+uk   4        60        0.700      1.000
+uk   full     60        0.733      1.000
+
+=== capped rows (prefix > clip duration, i.e. prefix == full audio already) ===
+small_raw.jsonl capped rows: 58 / 600
+large-v2_raw.jsonl capped rows: 58 / 600
