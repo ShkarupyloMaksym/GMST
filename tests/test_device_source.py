@@ -49,12 +49,16 @@ def test_feed_resamples_and_downmixes_to_contract():
 
 def test_bounded_queue_drops_oldest():
     src = _src()  # maxsize = max(2, int(0.3 / 0.1)) = 3
-    for _ in range(5):
-        src.feed(np.zeros((4800, 1), dtype=np.float32))
+    for i in range(5):  # each block carries its own level, so we can tell which survived
+        src.feed(np.full((4800, 1), 0.1 * i, dtype=np.float32))
     assert src.stats.blocks_in == 5
     assert src.stats.blocks_dropped == 2
     assert src._q.qsize() == 3
     assert src.lagging is True
+    # R4: with identical blocks this test passed for drop-*newest* too. The survivors must be the
+    # three most recent (levels ~0.2, 0.3, 0.4; the resampler smears block edges a little).
+    levels = [float(np.median(src._q.get_nowait())) for _ in range(3)]
+    assert levels == sorted(levels) and levels[0] > 0.15 and levels[-1] > 0.35
 
 
 def test_sample_counter_counts_all_captured_audio():

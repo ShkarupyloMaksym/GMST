@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 11:27 UTC",
+ "generated": "2026-09-28 11:29 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -76,13 +76,12 @@
    "waiting_on": [
     "H1",
     "F.4",
-    "F.5",
     "F.6",
     "F.7"
    ],
    "depth": 0,
    "leaves_total": 12,
-   "leaves_done": 8,
+   "leaves_done": 9,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -242,11 +241,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -256,13 +255,13 @@
    "file": "tasks/F.5-tests.md",
    "summary": "- **FIX-18** `test_bounded_queue_drops_oldest` asserts on block *content* after overflow (R4 `queue_content_probe.py`; mutation 5 must go red). - **FIX-19** commit short `tests/fixtures/en.wav` (LibriSpeech, CC BY 4.0, credit in the fixtures README) and `uk.wav` (Common Voice, CC0) and a slow test that `detect_language` returns `en`/`uk` on them. - **FIX-20** an autouse fixture in `tests/conftest.",
    "instructions": "- **FIX-18** `test_bounded_queue_drops_oldest` asserts on block *content* after overflow (R4 `queue_content_probe.py`; mutation 5 must go red).\n- **FIX-19** commit short `tests/fixtures/en.wav` (LibriSpeech, CC BY 4.0, credit in the fixtures README) and `uk.wav` (Common Voice, CC0) and a slow test that `detect_language` returns `en`/`uk` on them.\n- **FIX-20** an autouse fixture in `tests/conftest.py` clears every `GMST_*` variable.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
-   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "findings_text": "See above; one commit for the three.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -1071,7 +1070,7 @@
    "effort": "high",
    "status": "in-progress",
    "depends_on": [],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -1081,7 +1080,7 @@
    "file": "tasks/X.5-terms-eval-data.md",
    "summary": "The user's meetings are *Ukrainian with English technical terms* (H1, 2026-09-28) and they cannot supply recordings; they asked for public datasets. Read first: root `CLAUDE.md`, root `PLAN.md` \"Review decisions\" (DECIDE-06, DECIDE-08), `review/checkpoint-1/PLAN.md`, this file. Set `status: in-progress` before starting. **Rule 4 is amended for this node only (2026-09-28, the user asked for a web s",
    "instructions": "The user's meetings are *Ukrainian with English technical terms* (H1, 2026-09-28) and they cannot\nsupply recordings; they asked for public datasets. Read first: root `CLAUDE.md`, root `PLAN.md`\n\"Review decisions\" (DECIDE-06, DECIDE-08), `review/checkpoint-1/PLAN.md`, this file. Set\n`status: in-progress` before starting. **Rule 4 is amended for this node only (2026-09-28, the\nuser asked for a web search): network access and dataset downloads are allowed**, up to ~10 GB\ntotal, into `eval/results/raw/` (git-ignored). Write only this node file, `scripts/X.5/` and new\nfiles under `eval/results/`.\n\nCandidates found by the orchestrator (verify each; search for more — IT/tech podcasts, conference\ntalks, YouTube with manual subtitles, anything with uk–en code-switching):\n- `taras-sereda/uk-pods` (HF): 51 h, podcast \"Вертіго\" (film/media), CC-BY-NC-4.0, manifests\n  `pods_train.json` / `pods_test.json` with `text` and `pred_text`; card examples keep \"MCU\",\n  \"retouch\" in Latin script. **Provenance of `text` unknown.**\n- `espnet/yodas2` `uk000` / `uk100` (HF): YouTube, CC BY 3.0; manual vs automatic subtitles per\n  subset is unconfirmed.\n- `Yehor/broadcast-speech-uk` (~300 h), `speech-uk/voice-of-america` (~390 h).\n\nPre-registered rule (fixed now, before any download):\n- A source is **usable as reference** only if its transcripts are human-made (manual subtitles,\n  human transcription, or human-corrected), established from its card, paper, repo, or by\n  evidence in the data (e.g. `text` differing from `pred_text` in human-correction patterns).\n  Whisper-generated references are rejected: scoring Whisper against Whisper is circular.\n- A **terms set** is buildable if the usable sources yield **≥ 150 clips** whose reference contains\n  ≥ 1 Latin-script token of ≥ 2 letters inside otherwise Ukrainian text, from **≥ 10 distinct\n  speakers or episodes**. Otherwise record what exists and say so.\n\nDeliverables: per candidate — size, licence, domain, provenance of transcripts (with the quote or\nevidence), count of Latin-term clips in a sample; if the rule holds, a script\n`scripts/X.5/build_terms_set.py` that writes `eval/results/data/terms/*.wav` (16 kHz mono) and\n`eval/results/data/terms.jsonl` with `{id, wav, text, terms: [...]}`, and the counts. Do not run\nany ASR model beyond `tiny` (for spot checks only). Offline rules otherwise unchanged; X.1 may be\nloading models concurrently — keep CPU use modest.",
-   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "findings_text": "Pre-registered rule (unchanged, quoted from this file): a source is usable as reference only if\nits transcripts are human-made, established from card/paper/repo, **or** by evidence in the data\n(e.g. `text` differing from `pred_text` in human-correction patterns); Whisper-generated\nreferences are rejected. A terms set is buildable if usable sources yield >=150 clips with >=1\nLatin-script token of >=2 letters inside otherwise-Ukrainian text, from >=10 distinct\nspeakers/episodes.\n\n**`taras-sereda/uk-pods` — USABLE (evidence-in-the-data route).**\n- 51.066 h, 34,231 clips, CC-BY-NC-4.0, domain: film/pop-culture podcast \"Вертіго\".\n- The HF card documents no provenance for `text`/`pred_text` (matches CLAUDE.md's existing note:\n  \"Provenance of `text` unknown\").\n- Evidence in the data: the manifest carries four text fields per clip —\n  `text_no_preprocessing` (original casing/punctuation), `text` and `text_normalized`\n  (lowercased), and `pred_text` (an ASR model's own transcript of the same clip, scored against\n  `text` via `wer`/`cer` fields it also ships). `text_no_preprocessing` keeps loanwords/brand names\n  in correct Latin spelling — e.g. `\"Навіть я вважаю, що Pixar вже не той.\"`,\n  `\"Тому, власне, місія Dreamcast...\"`, `\"Подкаст, який ми часто називаємо FilmSpotting.\"` — while\n  `pred_text` on the *same clips* garbles or transliterates the same span into Cyrillic:\n  `\"голг\"`/`\"дауонлод\"` for Google/Download, `\"дрім кастсту\"` for Dreamcast, `\"сеаркхінг\"` kept\n  phonetic rather than corrected. That is exactly the ASR-vs-human asymmetry the rule asks for —\n  an ASR pass does not reliably recover correctly-spelled OOV Latin proper nouns, a human\n  transcriber (or corrector) does. Quotes and side-by-side pairs are reproducible via\n  `build_terms_set.py`'s module docstring and the ad-hoc grep in \"What was read\".\n  - Caveat: `text` (the field actually named `text`, used for ASR training) is a **lowercased and\n    transliterated** derivative of `text_no_preprocessing` — e.g. `Google` → `гоогле`, `Pixar` →\n    `пікар`, `HBO` → `хбо`, `Netflix` → `нетфлік` — and has *already lost all Latin script* (0/3423\n    test-split clips have a Latin token in `text`, vs 102/3423 in `text_no_preprocessing`). Only\n    `text_no_preprocessing` is usable as a terms reference; the script uses that field.\n- Sample count (full train+test manifests, not just a sample): **1,062 candidate clips** with a\n  Latin token (>=2 letters) inside a majority-Cyrillic line (>=10 Cyrillic letters, Latin letters\n  <= Cyrillic letters, duration >=1.0 s), spanning **187 distinct episodes** (by the manifest's\n  per-episode audio-UUID prefix). Comfortably clears 150 clips / 10 episodes on its own.\n  Representative terms found: MCU, retouch, Lost, Nike, AirPods, Grand Budapest, Netflix, Google,\n  Pixar, HBO, Disenchantment, Apple, DC, FilmSpotting, Dreamcast, PDF.\n- Built the set: `build_terms_set.py --target 200 --per-episode 6` selected 200 clips from\n  67 distinct episodes (round-robin sampling, seed 0) and extracted them from the 5.24 GB\n  `clips.tar.gz` (already 16 kHz mono PCM16 — no resampling needed). Output:\n  `eval/results/data/terms/*.wav` (200 files) + `eval/results/data/terms.jsonl` (200 records,\n  `{id, wav, text, terms}`).\n\n**`espnet/yodas2` `uk000` — LIKELY USABLE, not built into the set (secondary, scope reasons).**\n- License CC-BY-3.0. The `espnet/yodas` (v1) card states verbatim: \"We distinguish manual caption\n  subset and automatic caption subset by the first digit in each shard's name. The first digit is\n  0 if it contains manual captions, 1 if it contains automatic captions.\" `yodas2`'s own card says\n  it \"provides the same dataset as espnet/yodas ... but ... formatted in long-form\" (same\n  underlying labels), and its `data/` tree contains the same `uk000`/`uk100` pair — so `uk000` is\n  documented (card route, one hop away) as manual/human-captioned YouTube subtitles.\n  Domain: mixed YouTube (news/broadcast in the sample pulled, not IT-specific).\n- Sample ",
    "children": [],
    "state": "in-progress",
    "waiting_on": [],
