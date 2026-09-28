@@ -30,7 +30,7 @@ from gmst.sink.base import Sink
 from gmst.transcribe.engine import Engine
 from gmst.transcribe.types import Segment, Word
 
-_PROMPT_CHARS = 560  # same cap as the stream's (pipeline/stream.py): 223 Whisper tokens in Ukrainian
+_PROMPT_CHARS = 560  # same cap as pipeline/stream.py: 223 Whisper tokens in Ukrainian
 _REGION_PAD_S = 0.2  # context kept around each speech region, so edges are not clipped
 
 
