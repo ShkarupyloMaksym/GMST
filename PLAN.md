@@ -151,7 +151,7 @@ measured seconds per update instead (F.3).)*
 
 | | `large-v2` | `large-v3` |
 |---|---|---|
-| decode, 2 s / 4 s / 8 s / 15 s buffer | 4.0 / 4.5 / – / – s (fixed cost dominates) | 4.4 / 4.8 / – / – s |
+| decode, 2 s / 4 s / 8 s / 15 s buffer (median of 10) | 4.0 / 4.5 / 5.0 / 6.4 s (fixed cost dominates) | 4.4 / 4.8 / 5.4 / 6.5 s |
 | `detect_language`, 3 s | 3.5 s | 4.0 s |
 | one live update (4 s buffer + LID) vs the 1.0 s budget | **8.1 s — fails ~8×** | **8.8 s** |
 | two-pass final text after an utterance ends (whole-utterance decode + LID, 2–15 s utterances) | 7.8–10.3 s | 8.6–10.6 s |
