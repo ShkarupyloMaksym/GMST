@@ -7,13 +7,24 @@ Systems:
                    in its own restricted LID language (DECIDE-03)
   gmst-stream      pipeline.run_stream over the clip fed in 0.25 s blocks — the streaming path
 
-Metrics: WER / CER (jiwer, shared normalization), and for the mixed set: per-language WER,
-utterance-level LID accuracy, and whether the system detected the language switch at all.
+Metrics (review F.2, 2026-09-28):
+- **corpus** WER / CER (total edits / total reference length, ``gmst.metrics``'s normalization),
+  which is what the Ukrainian leaderboard reports, with a bootstrap 95 % CI over clips; the old
+  mean-of-per-clip figure is kept as ``wer_macro`` for comparison only.
+- mixed set: ``wer_en_lid`` / ``wer_uk_lid`` — that language's reference words against the
+  hypothesis text the system *labelled* that language, so they measure LID x ASR jointly;
+  ``lid_recall`` and ``switch_detected`` — reported as n/a for ``fw-*``, which label a whole file
+  with one language and can never register a switch.
+- ``--compare A,B``: paired bootstrap CI of the WER difference on the clips both systems decoded.
 
-Per-clip hypotheses are cached to eval/results/hyp/<system>.jsonl so a re-run resumes.
+Hypotheses are cached per system **and model** — ``hyp/fw-<size>-<mode>.jsonl`` (the model is in
+the name) and ``hyp/gmst-<mode>@<model>.jsonl`` — every record names its model, and a cache holding
+another model's records is refused rather than resumed (R5: a large-v3 run silently continued a
+tiny one). Scoring one system merges into ``scores.json`` instead of overwriting it.
 
-Run:  uv run --with jiwer python eval/run_eval.py --systems fw-large-v3-auto,gmst-batch [--limit 40]
-      uv run --with jiwer python eval/run_eval.py --score-only
+Run:  uv run python eval/run_eval.py --systems fw-large-v3-auto,gmst-batch --gmst-model large-v2
+      uv run python eval/run_eval.py --score-only
+      uv run python eval/run_eval.py --compare gmst-batch@large-v2,gmst-batch@large-v3
 """
 
 from __future__ import annotations
@@ -27,18 +38,22 @@ import numpy as np
 import soundfile as sf
 
 from gmst.config import Config
-from gmst.metrics import normalize_words
+from gmst.metrics import char_errors, word_errors
 from gmst.pipeline.batch import transcribe_by_region
 
 DATA = Path(__file__).parent / "results" / "data"
 HYP = Path(__file__).parent / "results" / "hyp"
+SCORES = Path(__file__).parent / "results" / "scores.json"
 SR = 16_000
+BOOTSTRAP = 2000
 
 
 # ---------------------------------------------------------------- data
 
 def _load_manifest(name: str) -> list[dict]:
     p = DATA / f"{name}.jsonl"
+    if not p.exists():  # a set that was not built scores as empty
+        return []
     return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
 
 
@@ -169,88 +184,165 @@ def dispatch(system: str, wav: np.ndarray, clip_lang: str | None) -> dict:
     return run_fw(size, mode, wav, clip_lang)
 
 
+# ---------------------------------------------------------------- caching
+
+def model_of(system: str) -> str:
+    """The model a system's hypotheses come from: in the name for ``fw-*``, ``--gmst-model``
+    otherwise."""
+    if system.startswith("fw-"):
+        return "-".join(system.split("-")[1:-1])
+    return GMST_MODEL
+
+
+def hyp_path(system: str) -> Path:
+    if system.startswith("fw-"):
+        return HYP / f"{system}.jsonl"
+    return HYP / f"{system}@{GMST_MODEL}.jsonl"
+
+
+def _expected_model(path: Path) -> str:
+    stem = path.stem
+    return stem.split("@", 1)[1] if "@" in stem else model_of(stem)
+
+
+def cached_ids(path: Path) -> set[str]:
+    """Clip ids already decoded into ``path``; refuses a file holding another model's records."""
+    if not path.exists():
+        return set()
+    want, ids = _expected_model(path), set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        rec = json.loads(line)
+        if rec.get("model", want) != want:
+            raise ValueError(f"{path} holds {rec['model']} hypotheses, not {want}; move it aside")
+        ids.add(rec["id"])
+    return ids
+
+
 # ---------------------------------------------------------------- scoring
 
-def _wer(ref: str, hyp: str) -> float:
-    import jiwer
-
-    r, h = " ".join(normalize_words(ref)), " ".join(normalize_words(hyp))
-    if not r:
-        return 0.0 if not h else 1.0
-    return jiwer.wer(r, h)
+def _rate(errs: list[int], ns: list[int]) -> float:
+    total = sum(ns)
+    return 100 * sum(errs) / total if total else float("nan")
 
 
-def _cer(ref: str, hyp: str) -> float:
-    import jiwer
-
-    r, h = " ".join(normalize_words(ref)), " ".join(normalize_words(hyp))
-    if not r:
-        return 0.0 if not h else 1.0
-    return jiwer.cer(r, h)
-
-
-def _mean(xs: list[float]) -> float:
-    return sum(xs) / len(xs) if xs else float("nan")
+def _ci(errs: list[int], ns: list[int]) -> list[float]:
+    """Bootstrap 95 % CI of corpus WER, resampling clips (seeded, so reruns agree)."""
+    e, n = np.asarray(errs, float), np.asarray(ns, float)
+    idx = np.random.default_rng(0).integers(0, len(e), size=(BOOTSTRAP, len(e)))
+    rates = 100 * e[idx].sum(1) / np.maximum(n[idx].sum(1), 1)
+    return [round(float(np.percentile(rates, q)), 2) for q in (2.5, 97.5)]
 
 
-def score(system: str) -> dict:
-    hyps = {}
-    hp = HYP / f"{system}.jsonl"
+def _macro(errs: list[int], ns: list[int]) -> float:
+    per = [e / n if n else float(e > 0) for e, n in zip(errs, ns, strict=True)]
+    return 100 * sum(per) / len(per) if per else float("nan")
+
+
+def _load_hyps(key: str) -> dict[str, dict]:
+    hp = HYP / f"{key}.jsonl"
+    out = {}
     if hp.exists():
         for line in hp.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 o = json.loads(line)
-                hyps[o["id"]] = o
+                out[o["id"]] = o
+    return out
 
-    out: dict = {"system": system, "n": len(hyps)}
+
+def score(key: str) -> dict:
+    """Scores for one cache file (``fw-tiny-auto``, ``gmst-batch@large-v2``, …)."""
+    hyps = _load_hyps(key)
+    out: dict = {"system": key, "n": len(hyps)}
     for name in ("en", "uk"):
         rows = [m for m in _load_manifest(name) if m["id"] in hyps]
         if not rows:
             continue
+        w = [word_errors(m["text"], hyps[m["id"]]["text"]) for m in rows]
+        c = [char_errors(m["text"], hyps[m["id"]]["text"]) for m in rows]
+        we, wn = [x[0] for x in w], [x[1] for x in w]
         out[name] = {
             "n": len(rows),
-            "wer": round(100 * _mean([_wer(m["text"], hyps[m["id"]]["text"]) for m in rows]), 2),
-            "cer": round(100 * _mean([_cer(m["text"], hyps[m["id"]]["text"]) for m in rows]), 2),
-            "rtf": round(_mean([hyps[m["id"]].get("rtf", float("nan")) for m in rows]), 3),
+            "wer": round(_rate(we, wn), 2),
+            "wer_ci95": _ci(we, wn),
+            "wer_macro": round(_macro(we, wn), 2),
+            "cer": round(_rate([x[0] for x in c], [x[1] for x in c]), 2),
+            "rtf": round(float(np.mean([hyps[m["id"]].get("rtf", np.nan) for m in rows])), 3),
         }
 
-    for kset in ("mixed", "mixed:inter", "mixed:intra"):
-        base, _, kind = kset.partition(":")
-        rows = [m for m in _load_manifest(base) if m["id"] in hyps
-                and (not kind or m.get("kind") == kind)]
+    raw_baseline = key.startswith("fw-")
+    mixed = _load_manifest("mixed") if (DATA / "mixed.jsonl").exists() else []
+    kinds = sorted({m.get("kind") for m in mixed if m.get("kind")})
+    for kset in ["mixed"] + [f"mixed:{k}" for k in kinds]:
+        _, _, kind = kset.partition(":")
+        rows = [m for m in mixed if m["id"] in hyps and (not kind or m.get("kind") == kind)]
         if not rows:
             continue
-        overall, wl = [], {"en": [], "uk": []}
+        we, wn = [], []
+        per_lang: dict[str, tuple[list[int], list[int]]] = {"en": ([], []), "uk": ([], [])}
         lid_hits = lid_total = sw_seen = sw_total = 0
         for m in rows:
             h = hyps[m["id"]]
-            overall.append(_wer(m["text"], h["text"]))
+            e, n = word_errors(m["text"], h["text"])
+            we.append(e)
+            wn.append(n)
             segs = h.get("segments", [{"text": h["text"], "lang": "?"}])
             ref_langs = {s["lang"] for s in m["spans"]}
             sys_langs = {s["lang"] for s in segs if s["lang"] in ("en", "uk")}
-            # per-language WER: this language's ref text vs the hyp segments labelled that language
             for lg in ("en", "uk"):
                 ref_l = " ".join(s["text"] for s in m["spans"] if s["lang"] == lg)
                 if not ref_l:
                     continue
-                hyp_l = " ".join(s["text"] for s in segs if s["lang"] == lg)
-                wl[lg].append(_wer(ref_l, hyp_l))
-            # LID span recall: did the system emit every language actually present?
+                e, n = word_errors(ref_l, " ".join(s["text"] for s in segs if s["lang"] == lg))
+                per_lang[lg][0].append(e)
+                per_lang[lg][1].append(n)
             for lg in ref_langs:
                 lid_total += 1
                 lid_hits += lg in sys_langs
             if len(ref_langs) > 1:
                 sw_total += 1
                 sw_seen += len(sys_langs) > 1
-        out[kset] = {
+        entry: dict = {"n": len(rows), "wer": round(_rate(we, wn), 2), "wer_ci95": _ci(we, wn)}
+        for lg, (e, n) in per_lang.items():
+            entry[f"wer_{lg}_lid"] = round(_rate(e, n), 2) if n else None
+        if raw_baseline:  # one file-level label: a switch can never register
+            entry["lid_recall"], entry["switch_detected"] = None, "n/a"
+        else:
+            entry["lid_recall"] = round(100 * lid_hits / lid_total, 1) if lid_total else None
+            entry["switch_detected"] = f"{sw_seen}/{sw_total}" if sw_total else "n/a"
+        out[kset] = entry
+    return out
+
+
+def compare(key_a: str, key_b: str) -> dict:
+    """Paired bootstrap 95 % CI of WER(a) - WER(b), per pure set, on clips both decoded."""
+    ha, hb = _load_hyps(key_a), _load_hyps(key_b)
+    out: dict = {"a": key_a, "b": key_b}
+    for name in ("en", "uk"):
+        rows = [m for m in _load_manifest(name) if m["id"] in ha and m["id"] in hb]
+        if not rows:
+            continue
+        ea, na = zip(*(word_errors(m["text"], ha[m["id"]]["text"]) for m in rows), strict=True)
+        eb, _ = zip(*(word_errors(m["text"], hb[m["id"]]["text"]) for m in rows), strict=True)
+        ea, eb, n = (np.asarray(x, float) for x in (ea, eb, na))
+        idx = np.random.default_rng(0).integers(0, len(n), size=(BOOTSTRAP, len(n)))
+        d = 100 * (ea[idx].sum(1) - eb[idx].sum(1)) / np.maximum(n[idx].sum(1), 1)
+        out[name] = {
             "n": len(rows),
-            "wer": round(100 * _mean(overall), 2),
-            "wer_en": round(100 * _mean(wl["en"]), 2) if wl["en"] else None,
-            "wer_uk": round(100 * _mean(wl["uk"]), 2) if wl["uk"] else None,
-            "lid_recall": round(100 * lid_hits / lid_total, 1) if lid_total else None,
-            "switch_detected": f"{sw_seen}/{sw_total}" if sw_total else "n/a",
+            "diff": round(float(100 * (ea.sum() - eb.sum()) / n.sum()), 2),
+            "ci95": [round(float(np.percentile(d, q)), 2) for q in (2.5, 97.5)],
         }
     return out
+
+
+def write_scores(new: list[dict]) -> None:
+    """Merge into ``scores.json`` by system: scoring one system never discards the others."""
+    old = json.loads(SCORES.read_text(encoding="utf-8")) if SCORES.exists() else []
+    by = {s["system"]: s for s in old}
+    by.update({s["system"]: s for s in new})
+    SCORES.write_text(json.dumps(sorted(by.values(), key=lambda s: s["system"]),
+                                 ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 # ---------------------------------------------------------------- main
@@ -261,10 +353,16 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0, help="cap clips per set (0 = all)")
     ap.add_argument("--gmst-model", default="large-v3")
     ap.add_argument("--score-only", action="store_true")
+    ap.add_argument("--compare", default="", help="KEY_A,KEY_B: paired WER difference with CI")
     args = ap.parse_args()
 
     global GMST_MODEL
     GMST_MODEL = args.gmst_model
+
+    if args.compare:
+        a, b = args.compare.split(",")
+        print(json.dumps(compare(a, b), ensure_ascii=False))
+        return
 
     systems = [s for s in args.systems.split(",") if s]
 
@@ -272,10 +370,8 @@ def main() -> None:
         HYP.mkdir(parents=True, exist_ok=True)
         sets = {"en": "en", "uk": "uk", "mixed": None}
         for system in systems:
-            hp = HYP / f"{system}.jsonl"
-            done = set()
-            if hp.exists():
-                done = {json.loads(x)["id"] for x in hp.read_text().splitlines() if x.strip()}
+            hp = hyp_path(system)
+            done = cached_ids(hp)
             with hp.open("a", encoding="utf-8") as fh:
                 for name, clip_lang in sets.items():
                     rows = _load_manifest(name)
@@ -284,10 +380,8 @@ def main() -> None:
                     for i, m in enumerate(rows):
                         if m["id"] in done:
                             continue
-                        cl = clip_lang
-                        r = dispatch(system, _wav(m["wav"]), cl)
-                        r["id"] = m["id"]
-                        r["set"] = name
+                        r = dispatch(system, _wav(m["wav"]), clip_lang)
+                        r.update(id=m["id"], set=name, model=model_of(system))
                         fh.write(json.dumps(r, ensure_ascii=False) + "\n")
                         fh.flush()
                         if i % 10 == 0:
@@ -295,10 +389,9 @@ def main() -> None:
             print(f"done {system}", flush=True)
 
     print("\n# scores\n")
-    all_scores = [score(s) for s in (systems or _known_systems())]
-    (Path(__file__).parent / "results" / "scores.json").write_text(
-        json.dumps(all_scores, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    keys = [hyp_path(s).stem for s in systems] if systems else _known_systems()
+    all_scores = [score(k) for k in keys]
+    write_scores(all_scores)
     for s in all_scores:
         print(json.dumps(s, ensure_ascii=False))
 

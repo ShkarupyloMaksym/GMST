@@ -7,12 +7,17 @@ FLEURS via the HF Hub is unusably rate-limited for unauthenticated use, so:
 
 Derived:
   mixed   : synthetic code-switch clips spliced from the same uk/en clips
-            * inter : [A] + 300-600 ms silence + [B]     (per-utterance LID across a pause)
-            * intra : [A_head][B][A_tail]  no gaps        (the hard intra-turn switch)
-  real_cs : uk clips whose *gold* transcript contains a Latin-script run — real embedded English
-            (brand/product/person names), real audio, real reference, nothing hand-made
+            * inter   : [A] + 800-1200 ms silence + [B]   (a switch across a pause the endpointer
+                        sees: longer than min_silence_ms = 600 and the eval stream's 500)
+            * nopause : [A][B], no gap                    (a sentence-level switch with no pause:
+                        one endpointed utterance, one LID decision — the hard realistic case)
+            The old "intra" kind (B spliced into the middle of A) cut A mid-word in 18/20 clips and
+            split its reference by word count, so the reference was misaligned (R5); the
+            intra-sentence switch it was named for is unsolved and is not measured here.
+  real_cs : dropped — the cleaned CV10 labels contain no Latin script at all (0 of 3204, R5), so
+            it could never be non-empty; real code-switched audio is DECIDE-06.
 
-Run:  uv run --with soundfile --with soxr python eval/build_sets.py [--per-lang N] [--mixed N]
+Run:  uv run python eval/build_sets.py [--per-lang N] [--mixed N]
 """
 
 from __future__ import annotations
@@ -21,7 +26,6 @@ import argparse
 import csv
 import json
 import random
-import re
 from pathlib import Path
 
 import numpy as np
@@ -32,7 +36,6 @@ SR = 16_000
 HERE = Path(__file__).parent
 RAW = HERE / "results" / "raw"
 OUT = HERE / "results" / "data"
-LATIN = re.compile(r"[A-Za-z]{2,}")
 
 
 def _to_16k_mono(audio: np.ndarray, rate: int) -> np.ndarray:
@@ -120,7 +123,7 @@ def _build_mixed(en: list[dict], uk: list[dict], n: int, seed: int) -> None:
         la = "en" if a in en else "uk"
         lb = "en" if b in en else "uk"
         if inter:
-            gap = _silence(rng.choice([300, 400, 600]))
+            gap = _silence(rng.choice([800, 1000, 1200]))
             parts, spans, off = [], [], 0
             for wav, lang, txt in ((a["wav"], la, a["text"]), (gap, None, None),
                                    (b["wav"], lb, b["text"])):
@@ -130,16 +133,12 @@ def _build_mixed(en: list[dict], uk: list[dict], n: int, seed: int) -> None:
                 off += len(wav)
             kind = "inter"
         else:
-            cut = len(a["wav"]) // 2
-            head, tail = a["wav"][:cut], a["wav"][cut:]
-            w = a["text"].split()
-            h_txt, t_txt = " ".join(w[: len(w) // 2]), " ".join(w[len(w) // 2 :])
             parts, spans, off = [], [], 0
-            for wav, lang, txt in ((head, la, h_txt), (b["wav"], lb, b["text"]), (tail, la, t_txt)):
+            for wav, lang, txt in ((a["wav"], la, a["text"]), (b["wav"], lb, b["text"])):
                 spans.append(_span(wav, off, lang, txt))
                 parts.append(wav)
                 off += len(wav)
-            kind = "intra"
+            kind = "nopause"
         clip = np.concatenate(parts)
         cid = f"mix-{kind}-{k:03d}"
         sf.write(d / f"{cid}.wav", clip, SR)
@@ -148,33 +147,7 @@ def _build_mixed(en: list[dict], uk: list[dict], n: int, seed: int) -> None:
     (OUT / "mixed.jsonl").write_text(
         "\n".join(json.dumps(m, ensure_ascii=False) for m in manifest) + "\n", encoding="utf-8")
     n_inter = sum(1 for m in manifest if m["kind"] == "inter")
-    print(f"mixed: {len(manifest)} clips ({n_inter} inter, {len(manifest) - n_inter} intra)")
-
-
-def _build_real_cs(seed: int, want: int = 40) -> None:
-    """uk clips whose gold transcript embeds a Latin-script (English) run."""
-    labels = HERE / "results" / "cv10-uk-testset-clean" / "labels_relative.csv"
-    rows = [r for r in csv.DictReader(labels.open(encoding="utf-8")) if LATIN.search(r["text"])]
-    random.Random(seed).shuffle(rows)
-    d = OUT / "real_cs"
-    d.mkdir(parents=True, exist_ok=True)
-    manifest = []
-    for r in rows:
-        wp = RAW / r["path"]
-        if not wp.is_file():
-            continue
-        a, sr = sf.read(wp, dtype="float32")
-        wav = _to_16k_mono(a, sr)
-        cid = f"rcs-{wp.stem}"
-        sf.write(d / f"{cid}.wav", wav, SR)
-        en_tokens = LATIN.findall(r["text"])
-        manifest.append({"id": cid, "wav": f"real_cs/{cid}.wav", "text": r["text"].strip(),
-                         "en_tokens": en_tokens})
-        if len(manifest) >= want:
-            break
-    (OUT / "real_cs.jsonl").write_text(
-        "\n".join(json.dumps(m, ensure_ascii=False) for m in manifest) + "\n", encoding="utf-8")
-    print(f"real_cs: {len(manifest)} uk clips with embedded English tokens")
+    print(f"mixed: {len(manifest)} clips ({n_inter} inter, {len(manifest) - n_inter} nopause)")
 
 
 def main() -> None:
@@ -191,7 +164,6 @@ def main() -> None:
     _write_pure(uk, "uk")
     _write_pure(en, "en")
     _build_mixed(en, uk, args.mixed, args.seed)
-    _build_real_cs(args.seed)
     print(f"\nwrote {OUT}", flush=True)
 
 

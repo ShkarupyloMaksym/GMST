@@ -38,3 +38,17 @@ def test_wer_empty_reference():
 def test_wer_deletion_and_insertion():
     # ref 3 words, hyp drops one and adds one -> 2 edits / 3
     assert word_error_rate("one two three", "one three four") == 2 / 3
+
+
+def test_wer_splits_hyphenated_words_on_both_sides():
+    # R5: CV10 refs write "що-небудь", models often "що небудь" -> WER 2.0 before
+    assert normalize_words("що-небудь") == ["що", "небудь"]
+    assert word_error_rate("що-небудь", "що небудь") == 0.0
+    assert normalize_token("well-known") == "well-known"  # reconcile's token identity unchanged
+
+
+def test_word_errors_gives_the_counts_corpus_wer_needs():
+    from gmst.metrics import word_errors
+
+    assert word_errors("one two three", "one three four") == (2, 3)
+    assert word_errors("", "spurious") == (1, 0)

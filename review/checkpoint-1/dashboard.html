@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 07:20 UTC",
+ "generated": "2026-09-28 07:24 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -269,7 +269,7 @@ const DATA = {
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [
     "T1"
    ],
@@ -283,9 +283,9 @@ const DATA = {
    "file": "tasks/F.2-eval-harness.md",
    "summary": "- **FIX-04** key the hypothesis cache by system *and* model (`hyp/<system>__<model>.jsonl`), write the model into every record, refuse to mix (R5 `p3_cache_mixes_models.py`). - **FIX-05** corpus WER (total errors / total ref words) plus a bootstrap 95 % CI per set. - **FIX-06** report `switch_detected`/`lid_recall` as n/a for systems that cannot label segments; rename per-language WER to what it m",
    "instructions": "- **FIX-04** key the hypothesis cache by system *and* model (`hyp/<system>__<model>.jsonl`), write the model into every record, refuse to mix (R5 `p3_cache_mixes_models.py`).\n- **FIX-05** corpus WER (total errors / total ref words) plus a bootstrap 95 % CI per set.\n- **FIX-06** report `switch_detected`/`lid_recall` as n/a for systems that cannot label segments; rename per-language WER to what it measures (LID × ASR).\n- **FIX-07** *intra*: cut at word timestamps; *inter*: gaps ≥ `min_silence_ms` + margin.\n- **FIX-08** `--systems X` merges into `scores.json` instead of overwriting.\n- **FIX-09** split hyphens in `normalize_words`; record the numerals bias in the docstring.\n- **FIX-10** the E501 at `eval/run_eval.py:6` (the line is also wrong: it says large-v3).\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
-   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "findings_text": "- **FIX-04** `hyp_path`: `hyp/fw-<size>-<mode>.jsonl` / `hyp/gmst-<mode>@<model>.jsonl`; every\n  record carries `model`; `cached_ids` raises on another model's records. The legacy\n  `hyp/gmst-batch.jsonl` (tiny, pre-F.10, no model field) is never resumed; it is still scored as\n  `gmst-batch` by `--score-only` and should be read as stale.\n- **FIX-05** corpus WER/CER (`metrics.word_errors`/`char_errors`, no jiwer), seeded bootstrap 95 %\n  CI (`wer_ci95`), `wer_macro` kept for comparison; `--compare A,B` gives the paired-bootstrap CI\n  of the WER difference (X.3's decision number).\n- **FIX-06** mixed set: `wer_en_lid`/`wer_uk_lid` (named for LID × ASR); `lid_recall` None and\n  `switch_detected` \"n/a\" for `fw-*`.\n- **FIX-07** `build_sets.py`: inter gaps 800/1000/1200 ms; `intra` replaced by `nopause` ([A][B],\n  exact reference); `real_cs` removed (DECIDE-06 covers real code-switched audio). Kinds are read\n  from the manifest when scoring.\n- **FIX-08** `write_scores` merges by system.\n- **FIX-09** `normalize_words` splits hyphens (WER only; `normalize_token` unchanged); numerals\n  bias documented in `metrics.py`.\n- **FIX-10** done in F.10's commit.",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
