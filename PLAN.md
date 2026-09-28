@@ -136,7 +136,7 @@ Decomposition, worst-case per committed word:
 | capture block | `block_ms` = 100 ms |
 | endpoint trailing silence | `min_silence_ms` = 600 ms |
 | VAD over the buffer, once per decode (`endpointer.assess`) | Silero: ~10 ms/s of buffer |
-| LID pass, once per utterance (both backends; R2 F8) | mlx ~150 ms (unmeasured); faster-whisper CPU: R5 measured 0.42 s median for `tiny` on 3 s — large models are X.4 |
+| LID pass, on every decode until the utterance has `lid_settle_seconds` = 3 s (≈ 1–3 passes; both backends; R2 F8, DECIDE-04) | mlx ~150 ms (unmeasured); faster-whisper CPU: R5 measured 0.42 s median for `tiny` on 3 s — large models are X.4 |
 | decode of the unconfirmed buffer | RTF × `buffer_seconds` |
 | agreement lag (≥ 1 extra update by construction) | `update_interval` |
 | **sum** | **≤ 3000 ms** |
@@ -280,6 +280,7 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | `lid_threshold` | `0.7` | below this, keep previous language |
 | `lid_tiebreak_margin` | `0.15` | `uk`/`ru` tie-break window |
 | `lid_languages` | `["en", "uk"]` | LID picks only among these; `ru` folds into `uk` unless listed (DECIDE-02) |
+| `lid_settle_seconds` | `3.0` | stream re-detects until the utterance has this much audio and commits nothing before (DECIDE-04; `0` = detect once) |
 | `input_device` | `None` | sounddevice id or name substring |
 | `block_ms` | `100` | capture block |
 | `min_silence_ms` | `600` | endpointer trailing-silence cut |

@@ -120,6 +120,12 @@ word-level EN↔UK within a sentence is not solved.
   language, don't flip.
 - `uk`/`ru` within `cfg.lid_tiebreak_margin`: prefer `uk` — only reachable now when `ru` is itself
   listed in `lid_languages` (a `ru` mislabel on Ukrainian is the visible failure).
+- **Stream timing (DECIDE-04):** LID re-runs on every decode until the utterance holds
+  `lid_settle_seconds` (3 s) of audio, and nothing commits before that — the meetings are Ukrainian
+  with English terms, and an utterance opening with a term must not be committed as English
+  (X.2: restricted LID ≥ 95 % at 3 s, 88–90 % on Ukrainian at 2 s). A short utterance commits at
+  its endpoint with its last detection. Word-level EN terms *inside* Ukrainian are DECIDE-08's
+  glossary, not LID.
 - `gmst stream --language en|uk` bypasses LID for known-monolingual meetings.
 - Never rely on global `language=None` autodetect — it biases to English.
 

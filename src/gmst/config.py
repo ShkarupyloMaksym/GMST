@@ -32,6 +32,7 @@ class Config:
     lid_threshold: float = 0.7         # below this, keep the previous utterance's language
     lid_tiebreak_margin: float = 0.15  # uk/ru tie-break window; prefer uk inside it
     lid_languages: tuple[str, ...] = ("en", "uk")  # LID picks only among these; ru counts as uk
+    lid_settle_seconds: float = 3.0    # stream: re-detect until the utterance has this much audio
 
     # --- audio capture (stream / listen) ---
     input_device: int | str | None = None   # sounddevice id, or name substring
@@ -81,6 +82,7 @@ _NUMERIC: dict[str, tuple[type, float, float | None]] = {
     "max_unconfirmed_seconds": (float, 0.0, None),
     "lid_threshold": (float, 0.0, 1.0),
     "lid_tiebreak_margin": (float, 0.0, 1.0),
+    "lid_settle_seconds": (float, 0.0, None),
     "vad_threshold": (float, 0.0, 1.0),
     "overlap_seconds": (float, 0.0, None),
     "sse_port": (int, 1, 65535),

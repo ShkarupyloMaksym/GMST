@@ -2,7 +2,12 @@
 LocalAgreement-2 -> sink.
 
 Loop per decode (buffer has >= ``min_chunk_seconds`` new audio and contains speech):
-1. detect the utterance's language once (unless pinned), sticky vs the previous utterance
+1. detect the utterance's language (unless pinned), sticky vs the previous utterance — on every
+   decode until the buffer holds ``lid_settle_seconds`` (3 s) of audio, then fixed for the rest of
+   the utterance. Until it settles nothing is committed, only shown as a partial (DECIDE-04: an
+   utterance that opens with an English term must not be committed as English; X.2 measured
+   restricted LID >= 95 % at 3 s, 88-90 % on Ukrainian at 2 s). An utterance that ends first
+   commits with its last detection.
 2. transcribe the whole buffer, prompted with the tail of the committed text (<= ~600 characters)
 3. push the hypothesis' words through LocalAgreement-2 → emit newly-agreed words as **final**,
    the unconfirmed tail as a **partial**; spans use per-word timestamps when the engine provides
@@ -93,6 +98,7 @@ def run_stream(
     committed: list[str] = []
     prev_lang = language
     utt_lang: str | None = language
+    settled = language is not None  # pinned: nothing to settle
     last_commit_seconds = 0.0  # audio-time of the last commit, on the sample clock
     last_pending: list[Word] = []
 
@@ -116,9 +122,10 @@ def run_stream(
 
     def decode(audio) -> tuple[list[Word], str]:
         """Transcribe ``audio`` and report the language it was actually decoded as."""
-        nonlocal utt_lang
-        if language is None and utt_lang is None:
+        nonlocal utt_lang, settled
+        if not settled:
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
+            settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
         prompt = " ".join(committed[-_PROMPT_WORDS:])[-_PROMPT_CHARS:] or None
         segs = engine.transcribe(audio, language=call_lang, prompt=prompt)
@@ -139,7 +146,28 @@ def run_stream(
                     ep.reset(keep_overlap=False)
                 continue
 
+            was_settled = settled
             hyp, call_lang = decode(ep.buffer)
+            if not was_settled:
+                # language not fixed yet: show, never commit (DECIDE-04); at an endpoint or a
+                # forced cut there is no later decode, so the hypothesis commits whole
+                if a.is_endpoint or a.forced:
+                    start = agree.absorb([w.text for w in hyp], _spans(hyp))
+                    if hyp[start:]:
+                        commit([w.text for w in hyp[start:]])
+                        emit(hyp[start:], final=True, lang=call_lang)
+                    agree.reset()
+                    prev_lang = utt_lang or prev_lang
+                    utt_lang, settled = language, language is not None
+                    ep.reset(keep_overlap=False)
+                    last_pending = []
+                    if a.is_endpoint:
+                        stats.utterances += 1
+                    last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
+                else:
+                    last_pending = hyp
+                    emit(hyp, final=False, lang=call_lang)
+                continue
             newly, _pending = agree.push([w.text for w in hyp], _spans(hyp))
             o = agree.last_offset
             new_words = hyp[o : o + len(newly)]
@@ -180,7 +208,8 @@ def run_stream(
                 else:
                     agree.reset()
                 prev_lang = utt_lang or prev_lang
-                utt_lang = language
+                if a.is_endpoint:  # a forced cut / stall splits the utterance, same language
+                    utt_lang, settled = language, language is not None
                 ep.reset(keep_overlap=keep_overlap)
                 last_pending = []
                 if a.is_endpoint:  # a forced cut / stall is not a new utterance

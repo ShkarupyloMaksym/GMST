@@ -19,6 +19,8 @@
 # lid_tiebreak_margin = 0.15          # uk/ru tie-break window; prefer uk inside it
 # lid_languages       = ["en", "uk"]  # LID only picks among these; ru counts as uk unless listed
 #                                     # (env: GMST_LID_LANGUAGES="en,uk")
+# lid_settle_seconds  = 3.0           # stream: re-detect LID until an utterance has this much
+#                                     # audio, committing nothing before (0 = detect once)
 
 # --- audio capture ---
 # input_device = "BlackHole"          # sounddevice id (int) or name substring; see `gmst devices`

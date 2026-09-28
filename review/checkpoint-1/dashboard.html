@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 11:21 UTC",
+ "generated": "2026-09-28 11:25 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -214,12 +214,11 @@ const DATA = {
     "F.5",
     "F.6",
     "F.7",
-    "F.11",
     "F.12"
    ],
    "depth": 0,
    "leaves_total": 12,
-   "leaves_done": 6,
+   "leaves_done": 7,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -595,11 +594,11 @@ const DATA = {
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -609,13 +608,13 @@ const DATA = {
    "file": "tasks/F.11-stream-lid-until-3s.md",
    "summary": "Implement DECIDE-04 in `run_stream`: while the utterance's buffer holds < `lid_settle_seconds` (new config field, default 3.0, validated) of audio and the language is not pinned, call `detect_language` on every decode (with the previous utterance's language as `prev_lang`) and hold commits — emit partials only; once ≥ 3 s, fix the language for the rest of the utterance and commit normally. An utte",
    "instructions": "Implement DECIDE-04 in `run_stream`: while the utterance's buffer holds < `lid_settle_seconds` (new config field, default 3.0, validated) of audio and the language is not pinned, call `detect_language` on every decode (with the previous utterance's language as `prev_lang`) and hold commits — emit partials only; once ≥ 3 s, fix the language for the rest of the utterance and commit normally. An utterance that endpoints before 3 s uses its last detection and commits at the flush. Tests: a `FakeEngine` whose LID says `en` on the first 1–2 s and `uk` from 3 s must commit nothing before 3 s and decode the committed words in `uk`; the pinned-language path must not call LID at all. Also update PLAN/CLAUDE latency text (up to ~3 LID passes per utterance).\n\nProtocol: `verify-then-integrate` skill — regression test first, watch it fail, then fix;\n`uv run pytest -q` and `uv run ruff check .` green; commit with an explicit pathspec. The decision:\nroot PLAN.md \"Review decisions\".",
-   "findings_text": "_(what changed, with the commit)_",
+   "findings_text": "- `Config.lid_settle_seconds = 3.0` (validated ≥ 0; `0` restores detect-once).\n- `run_stream`: `settled` flag; while unsettled every decode re-runs `detect_language` and the\n  hypothesis is emitted as a partial only (no `push`); at an endpoint / forced cut before settling\n  the hypothesis is committed whole via `absorb`. A forced cut / stall no longer resets the\n  utterance's language (it splits one utterance); only a real endpoint does.\n- Docs: `gmst.example.toml`, PLAN.md config table and latency row, CLAUDE.md \"Language mixture\".",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -1206,7 +1205,7 @@ const DATA = {
    "agent": "general-purpose",
    "model": "sonnet",
    "effort": "high",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [],
    "finding": null,
    "has_read_section": true,
@@ -1220,7 +1219,7 @@ const DATA = {
    "instructions": "The user's meetings are *Ukrainian with English technical terms* (H1, 2026-09-28) and they cannot\nsupply recordings; they asked for public datasets. Read first: root `CLAUDE.md`, root `PLAN.md`\n\"Review decisions\" (DECIDE-06, DECIDE-08), `review/checkpoint-1/PLAN.md`, this file. Set\n`status: in-progress` before starting. **Rule 4 is amended for this node only (2026-09-28, the\nuser asked for a web search): network access and dataset downloads are allowed**, up to ~10 GB\ntotal, into `eval/results/raw/` (git-ignored). Write only this node file, `scripts/X.5/` and new\nfiles under `eval/results/`.\n\nCandidates found by the orchestrator (verify each; search for more — IT/tech podcasts, conference\ntalks, YouTube with manual subtitles, anything with uk–en code-switching):\n- `taras-sereda/uk-pods` (HF): 51 h, podcast \"Вертіго\" (film/media), CC-BY-NC-4.0, manifests\n  `pods_train.json` / `pods_test.json` with `text` and `pred_text`; card examples keep \"MCU\",\n  \"retouch\" in Latin script. **Provenance of `text` unknown.**\n- `espnet/yodas2` `uk000` / `uk100` (HF): YouTube, CC BY 3.0; manual vs automatic subtitles per\n  subset is unconfirmed.\n- `Yehor/broadcast-speech-uk` (~300 h), `speech-uk/voice-of-america` (~390 h).\n\nPre-registered rule (fixed now, before any download):\n- A source is **usable as reference** only if its transcripts are human-made (manual subtitles,\n  human transcription, or human-corrected), established from its card, paper, repo, or by\n  evidence in the data (e.g. `text` differing from `pred_text` in human-correction patterns).\n  Whisper-generated references are rejected: scoring Whisper against Whisper is circular.\n- A **terms set** is buildable if the usable sources yield **≥ 150 clips** whose reference contains\n  ≥ 1 Latin-script token of ≥ 2 letters inside otherwise Ukrainian text, from **≥ 10 distinct\n  speakers or episodes**. Otherwise record what exists and say so.\n\nDeliverables: per candidate — size, licence, domain, provenance of transcripts (with the quote or\nevidence), count of Latin-term clips in a sample; if the rule holds, a script\n`scripts/X.5/build_terms_set.py` that writes `eval/results/data/terms/*.wav` (16 kHz mono) and\n`eval/results/data/terms.jsonl` with `{id, wav, text, terms: [...]}`, and the counts. Do not run\nany ASR model beyond `tiny` (for spot checks only). Offline rules otherwise unchanged; X.1 may be\nloading models concurrently — keep CPU use modest.",
    "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,

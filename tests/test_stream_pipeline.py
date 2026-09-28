@@ -440,3 +440,56 @@ def test_a_misheard_or_dropped_trim_sliver_loses_and_duplicates_nothing(variant)
     assert sorted(finals) == sorted(expected * 2), finals
     spans = [(s.start, s.end) for s in sink.segs if s.is_final]
     assert all(b[0] >= a[1] - 1e-6 for a, b in zip(spans, spans[1:], strict=False)), spans
+
+
+class _SettlingEngine(FakeEngine):
+    """LID says "en" on short buffers and "uk" from 2.5 s on — an utterance that opens with an
+    English term. Words are read back from the marked audio, tagged with the language asked for."""
+
+    def __init__(self):
+        base = _marked_engine()
+        super().__init__(lambda audio, i: base._callable(audio, i))
+        self.lid_calls: list[float] = []
+
+    def detect_language(self, audio, *, prev_lang=None):
+        secs = len(audio) / SAMPLE_RATE
+        self.lid_calls.append(secs)
+        return ("en" if secs < 2.5 else "uk"), 0.9
+
+
+def test_stream_settles_the_language_at_3s_and_commits_nothing_before():
+    """DECIDE-04: an utterance opening with an English term must not be committed as English."""
+    engine = _SettlingEngine()
+    sink = RecSink()
+    audio = np.concatenate([_marked(10), _silent(1.0)])  # one 5 s utterance
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+
+    run_stream(_cfg(min_chunk_seconds=0.5, lid_settle_seconds=3.0), ListSource(blocks), engine,
+               sink, language=None)
+
+    finals = [s for s in sink.segs if s.is_final]
+    assert finals and {s.language for s in finals} == {"uk"}
+    words = [w for w in sink.final_words() if w != "w0"]  # the fake reads silence as "w0"
+    assert sorted(words) == sorted(f"w{10 + 5 * i}" for i in range(10))
+    assert max(engine.lid_calls) < 3.0 + 0.5  # stopped detecting once settled
+    assert len(engine.lid_calls) >= 2          # re-detected while unsettled
+
+
+def test_a_short_utterance_still_commits_with_its_last_detection():
+    engine = _SettlingEngine()
+    sink = RecSink()
+    audio = np.concatenate([_marked(3), _silent(1.0)])  # 1.5 s, endpoints before settling
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+
+    run_stream(_cfg(min_chunk_seconds=0.5, lid_settle_seconds=3.0), ListSource(blocks), engine,
+               sink, language=None)
+
+    assert sorted(w for w in sink.final_words() if w != "w0") == ["w10", "w15", "w20"]
+
+
+def test_a_pinned_language_never_runs_lid():
+    engine = _SettlingEngine()
+    audio = np.concatenate([_marked(6), _silent(1.0)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+    run_stream(_cfg(min_chunk_seconds=0.5), ListSource(blocks), engine, RecSink(), language="uk")
+    assert engine.lid_calls == []
