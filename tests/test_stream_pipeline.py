@@ -493,3 +493,8 @@ def test_a_pinned_language_never_runs_lid():
     blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
     run_stream(_cfg(min_chunk_seconds=0.5), ListSource(blocks), engine, RecSink(), language="uk")
     assert engine.lid_calls == []
+
+
+def test_the_prompt_fits_whispers_prompt_window_in_ukrainian():
+    """R1: 600 Ukrainian characters are ~235 Whisper tokens, over faster-whisper's 223."""
+    assert stream_mod._PROMPT_CHARS * 235 / 600 <= 223

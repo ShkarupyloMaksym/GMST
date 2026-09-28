@@ -176,3 +176,11 @@ def test_a_new_word_stretched_back_to_the_buffer_head_is_kept():
     assert newly == ["for"]
     newly, _ = la.push(hyp + ["move"], spans + [(1.1, 1.3)])
     assert newly == ["him", "to"]
+
+
+def test_a_punctuation_only_token_does_not_block_agreement():
+    """R1: a standalone dash normalizes to "" and never agreed, stalling every word after it."""
+    la = LocalAgreement()
+    la.push(["Так", "-", "звісно,", "давайте"])
+    newly, _ = la.push(["Так", "-", "звісно,", "давайте", "далі"])
+    assert newly == ["Так", "-", "звісно,", "давайте"]

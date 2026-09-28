@@ -30,6 +30,7 @@ from gmst.sink.base import Sink
 from gmst.transcribe.engine import Engine
 from gmst.transcribe.types import Segment, Word
 
+_PROMPT_CHARS = 560  # same cap as the stream's (pipeline/stream.py): 223 Whisper tokens in Ukrainian
 _REGION_PAD_S = 0.2  # context kept around each speech region, so edges are not clipped
 
 
@@ -70,7 +71,8 @@ def transcribe_by_region(audio: AudioArray, cfg: Config, engine: Engine) -> list
     def decode(clip, lang):
         if not glossary:  # DECIDE-08: terms as prompt + hotwords only when there are any
             return engine.transcribe(clip, language=lang)
-        segs = engine.transcribe(clip, language=lang, prompt=glossary.prompt(None, max_chars=600),
+        segs = engine.transcribe(clip, language=lang,
+                                 prompt=glossary.prompt(None, max_chars=_PROMPT_CHARS),
                                  hotwords=glossary.hotwords())
         for s in segs:
             glossary.observe(s.text, lang=lang)

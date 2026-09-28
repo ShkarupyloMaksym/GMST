@@ -175,7 +175,7 @@ Every row has a defined policy; none of this is optional.
 | Model revises text it already committed | With word times (the stream always has them) the revised words lie over committed audio and are dropped by time (DECIDE-01). Text-only: `LocalAgreement._align` returns −1 (contradiction) instead of falling back to index 0; `push` commits nothing and flags `contradicted`. **Mid-stream**, `flush` drops the unplaceable tail — duplicating a final utterance is worse than losing one the next decode will recover. **On shutdown** there is no next decode, so `absorb` commits the whole tail anyway (a small seam artifact beats losing the last words of the meeting) |
 | Engine raises mid-meeting | `run_stream`'s shutdown flush is nested so `sink.close()` is unconditional — `SrtSink` only writes its file there, and one engine failure must not cost the whole transcript. The original exception still propagates |
 | SSE viewer stops reading | per-client queue bounded at 512 events, **drop oldest** (`SseSink.dropped` counts); a `retry:` hint and a 15 s heartbeat comment keep proxies from dropping idle connections |
-| Long meeting (2 h+) | memory bound = bounded queues + buffer trim + bounded SSE client queues + the committed word list capped at 4000 + `initial_prompt` capped at 600 characters (~200 Whisper tokens; 200 *words* of Ukrainian is ~400 tokens and would be silently truncated) |
+| Long meeting (2 h+) | memory bound = bounded queues + buffer trim + bounded SSE client queues + the committed word list capped at 4000 + `initial_prompt` capped at 560 characters (≤ 223 Whisper tokens in Ukrainian at ~0.39 tokens/char; 600 was 235 — R1, F.6) |
 | Ctrl-C / SIGTERM | stop stream → drain queue → transcribe & **flush the uncommitted tail as final** → close sink. A second Ctrl-C/SIGTERM skips the final decode, still closes the sink, exit 130 (both signals handled since the 2026-09-28 review, FIX-01/02) |
 
 Clock: all timestamps derive from a monotonic `samples_consumed` counter (`samples / SAMPLE_RATE`),
@@ -246,7 +246,7 @@ eval/                 # not part of the package; data + results in git-ignored e
 |---|---|
 | Longest common prefix | compare **normalized** word tokens (casefold, strip trailing punctuation); emit original text |
 | Tail never agrees | forced commit after `max_unconfirmed_seconds` or N stalled updates |
-| `initial_prompt` growth | cap to the last ~200 tokens of committed text (Whisper's prompt window) |
+| `initial_prompt` growth | cap to the last 560 characters (glossary terms first, then committed text) — inside faster-whisper's 223-token prompt window for Ukrainian |
 | Buffer trim mid-word | trim just before the last committed word (its start minus `_TRIM_BACKOFF_S` = 0.2 s), so it survives whole; `rebase` keeps the words whose audio survived, with their times, so they are not committed twice |
 | Re-heard anchor spelled differently / dropped | align by text, then by time: drop hypothesis words ending within the committed audio (`_TIME_TOLERANCE_S` = 0.02 s), then de-duplicate a ≤ 5-word repeat of the committed tail (DECIDE-01; R1 showed text-only alignment losing ~85 % of a real stream) |
 | Forced cut with `overlap_seconds` retained | the retained audio is decoded again — keep the committed words inside the overlap as the anchor, or those words commit a second time with timestamps that run backwards |

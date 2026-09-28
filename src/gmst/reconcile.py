@@ -23,7 +23,7 @@ Edge cases (PLAN.md "reconcile.py edge cases"):
   audio and are dropped by time; without spans the hypothesis **contradicts** the anchor, and
   ``push`` commits nothing and flags ``contradicted`` rather than re-emitting final words
 - the caller trims committed audio out of the buffer → ``rebase()`` re-anchors on what survived
-- the caller caps the context prompt to ~600 characters; that is not this module's job
+- the caller caps the context prompt (560 characters); that is not this module's job
 """
 
 from __future__ import annotations
@@ -108,7 +108,9 @@ class LocalAgreement:
 
         agreed: list[str] = []
         for a, b in zip(hypothesis[h0:], prev_tail, strict=False):
-            if _norm(a) and _norm(a) == _norm(b):
+            # a punctuation-only token ("-", "…") normalizes to "": it agrees with another one
+            # rather than blocking every word after it (R1)
+            if _norm(a) == _norm(b):
                 agreed.append(a)
             else:
                 break

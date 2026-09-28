@@ -130,3 +130,10 @@ def test_lid_languages_is_validated_at_load(tmp_path, bad):
     path.write_text(f"lid_languages = {bad}\n")
     with pytest.raises(ValueError, match="lid_languages: "):
         Config.load(path)
+
+
+def test_sse_port_zero_means_any_free_port(tmp_path):
+    """R6: gmst.example.toml documents `sse_port = 0`, and config.py rejected it."""
+    path = tmp_path / "g.toml"
+    path.write_text("sse_port = 0\n")
+    assert Config.load(path).sse_port == 0

@@ -147,7 +147,8 @@ and temperature fallback on.
 prefix of two consecutive hypotheses, comparing **normalized** word tokens (casefold, strip
 trailing punctuation) but emitting original text. Plus: forced commit after
 `max_unconfirmed_seconds` **of audio** (or 3 updates without progress) when the tail never agrees;
-`initial_prompt` capped at 600 characters (~200 Whisper tokens — 200 *words* of Ukrainian is ~400);
+`initial_prompt` capped at 560 characters (faster-whisper keeps 223 prompt tokens; Ukrainian runs
+~0.39 tokens/char, so 600 was 235 tokens — R1; English is bound first by the 100-word pre-cap);
 buffer trimmed on every commit to just before the last committed word (`Endpointer.trim_to` is
 passed that word's **start**, minus a 0.2 s back-off, so the word survives whole as the anchor) with
 `LocalAgreement.rebase` moving the anchor — and its word times — to match. Alignment is by text,

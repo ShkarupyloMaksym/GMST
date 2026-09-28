@@ -91,7 +91,7 @@ _NUMERIC: dict[str, tuple[type, float, float | None]] = {
     "lid_settle_seconds": (float, 0.0, None),
     "vad_threshold": (float, 0.0, 1.0),
     "overlap_seconds": (float, 0.0, None),
-    "sse_port": (int, 1, 65535),
+    "sse_port": (int, 0, 65535),  # 0 = any free port (gmst.example.toml)
     "turn_gap_seconds": (float, 0.0, None),
     "glossary_max_terms": (int, 1, None),
 }

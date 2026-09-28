@@ -8,7 +8,8 @@ Loop per decode (buffer has >= ``min_chunk_seconds`` new audio and contains spee
    utterance that opens with an English term must not be committed as English; X.2 measured
    restricted LID >= 95 % at 3 s, 88-90 % on Ukrainian at 2 s). An utterance that ends first
    commits with its last detection.
-2. transcribe the whole buffer, prompted with the tail of the committed text (<= ~600 characters)
+2. transcribe the whole buffer, prompted with the glossary terms and the tail of the committed text
+   (<= 560 characters)
 3. push the hypothesis' words through LocalAgreement-2 → emit newly-agreed words as **final**,
    the unconfirmed tail as a **partial**; spans use per-word timestamps when the engine provides
    them, else an even split of the segment span
@@ -45,7 +46,10 @@ from gmst.sink.base import Sink
 from gmst.transcribe.engine import Engine
 from gmst.transcribe.types import Segment, Word
 
-_PROMPT_CHARS = 600  # ~200 Whisper tokens for both en and uk; the window is 224
+# faster-whisper keeps the last 223 prompt tokens. Ukrainian runs ~0.39 tokens/char (R1: 600
+# chars = 235 tokens), so 560 chars stays inside the window; English is bound first by
+# _PROMPT_WORDS (100 words ~ 126 tokens). Glossary terms (DECIDE-08) share this cap, first.
+_PROMPT_CHARS = 560
 _PROMPT_WORDS = 100  # words scanned before the character cap does the real trimming
 _MAX_COMMITTED = 4000  # the session's committed word list is bounded (2 h+ meetings)
 _MIN_FLUSH_SAMPLES = SAMPLE_RATE // 5  # 0.2 s — below this, nothing worth a final decode
