@@ -52,6 +52,29 @@ The orchestrator lists every `DECIDE-nn` here with the options, the evidence for
 - **DECIDE-03 → (a)** batch VAD-splits and decodes each region in its own (restricted) language.
 - Still open: DECIDE-04 (waits on EVID-02), DECIDE-05, DECIDE-06, DECIDE-07.
 
+2026-09-28, after X.2 — **DECIDE-04 reframed by the user:** "Main problem of this question is
+Ukrainian/English mix is professional language, like we can speak Ukrainian, but with English
+terms." So the dominant case is *Ukrainian utterances carrying English technical terms*
+(intra-sentence), not whole utterances switching language. Per-utterance LID picks `uk` for those
+(correctly); the failure is then inside the Ukrainian decode — English terms transliterated into
+Cyrillic or misheard — which no LID timing fixes. Consequences: (1) DECIDE-04's timing question
+shrinks to "don't let an utterance that *starts* with an English term flip to `en`" (X.2: 2 s
+prefixes are 88–90 % right on Ukrainian); (2) the real open problem is term fidelity in `uk`
+decoding — candidates: a glossary of the team's terms in Latin script as `initial_prompt` /
+faster-whisper `hotwords`, a Ukrainian fine-tune, a post-pass; (3) none of it can be measured on
+the synthetic sets — DECIDE-06 (a recorded, hand-transcribed real meeting) becomes a prerequisite.
+
+2026-09-28, answered in session:
+- **DECIDE-04 → detect until 3 s, hold commits.** Re-detect on each decode while the utterance has
+  < 3 s of audio (X.2: restricted LID ≥ 95 % on both models at 3 s); fix the language at 3 s and
+  hold commits until then, so an utterance opening with an English term cannot be committed as `en`.
+- **DECIDE-06 → search the web for datasets** ("I can't give you real audio for now"): public
+  Ukrainian speech with English terms / uk–en code-switching, with transcripts that keep the terms
+  in Latin script. Node X.5.
+- **DECIDE-08 (new) → an auto-growing glossary**, enabled in config and removable for speed ("yes,
+  it'd add latency, but if we would want speed — it can be removed"): a configured term list fed to
+  Whisper as prompt / `hotwords`, which grows with English terms seen in the session.
+
 ## Findings
 
 _(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_

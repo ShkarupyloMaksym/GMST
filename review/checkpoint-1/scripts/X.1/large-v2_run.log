@@ -1,0 +1,4 @@
+=== model=large-v2 sets=['en', 'uk'] ===
+engine loaded in 3.7s
+--- en: 20 clips, 162.6s audio ---
+[large-v2/en] batch  WER=0.0168 (edits=7 ref_words=417) 118.8s

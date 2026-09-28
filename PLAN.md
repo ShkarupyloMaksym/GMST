@@ -313,6 +313,16 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   utterance too. `language = en|uk` pinning is unchanged.
 - **DECIDE-03 — batch per-segment LID.** Batch VAD-splits the file, detects each region's language
   (restricted as above) and decodes each region in that language — the same semantics as streaming.
+- **DECIDE-04 — stream LID timing.** Re-detect on each decode while the utterance holds < 3 s of
+  audio; fix its language at 3 s and hold commits until then (X.2: restricted LID ≥ 95 % at 3 s on
+  small and large-v2, 88–90 % on Ukrainian at 2 s). The meetings are *Ukrainian with English
+  terms* (user, 2026-09-28), so the point is that an utterance opening with an English term is not
+  committed as English.
+- **DECIDE-06 — evaluation audio.** No private recording for now; find public Ukrainian speech with
+  English terms / uk–en code-switching whose transcripts keep the terms in Latin script (X.5).
+- **DECIDE-08 — auto-growing glossary.** A config-enabled term list passed to Whisper (prompt and
+  faster-whisper `hotwords`) on every decode, growing with English terms seen in the session; off
+  for speed. Targets term fidelity inside Ukrainian decoding, which per-utterance LID cannot fix.
 
 ## Phases
 
