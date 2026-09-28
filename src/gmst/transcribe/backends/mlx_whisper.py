@@ -39,6 +39,10 @@ class MlxWhisperEngine:
                 f"no known mlx repo for model_size={cfg.model_size!r}; set model_repo explicitly"
             )
         self._model = None
+        # Load now, not at the first utterance: a missing repo must fail at startup, where
+        # load_engine turns it into ModelUnavailable / exit 2, and bench must time the real load
+        # (R2 F6). _load() fills mlx_whisper's own ModelHolder cache, so transcribe() reuses it.
+        self._load()
 
     def transcribe(
         self,
