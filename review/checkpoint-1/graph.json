@@ -1,0 +1,519 @@
+{
+ "generated": "2026-09-28 06:16 UTC",
+ "basis": "checkpoint-1 (8beade7)",
+ "branch": "review-checkpoint-1",
+ "stages": [
+  {
+   "id": "review",
+   "label": "Review"
+  },
+  {
+   "id": "triage",
+   "label": "Triage"
+  },
+  {
+   "id": "plan",
+   "label": "Evidence plan"
+  },
+  {
+   "id": "evidence",
+   "label": "Evidence"
+  },
+  {
+   "id": "decision",
+   "label": "Decisions"
+  },
+  {
+   "id": "fix",
+   "label": "Fixes"
+  },
+  {
+   "id": "close",
+   "label": "Close-out"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "F",
+   "title": "Fixes (group; T1 creates F.1 …)",
+   "parent": null,
+   "stage": "fix",
+   "kind": "group",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1",
+    "H1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F-fixes.md",
+   "summary": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
+   "instructions": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1",
+    "H1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "H1",
+   "title": "Your decisions",
+   "parent": null,
+   "stage": "decision",
+   "kind": "task",
+   "agent": "human",
+   "model": "human",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1",
+    "X"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/H1-decisions.md",
+   "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
+   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1",
+    "X"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R1",
+   "title": "Streaming seams: reconcile, endpointer, stream loop, turns",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R1-streaming-seams.md",
+   "summary": "Review line by line `src/gmst/reconcile.py`, `src/gmst/segment/endpointer.py`, `src/gmst/segment/turns.py` and `src/gmst/pipeline/stream.py` against the invariants in `CLAUDE.md` (\"Streaming reconciliation\") and `PLAN.md` (\"`reconcile.py` edge cases\", \"`Segment` timestamp contract\", the Ctrl-C and forced-commit rows of \"Failure modes\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1",
+   "instructions": "Review line by line `src/gmst/reconcile.py`, `src/gmst/segment/endpointer.py`, `src/gmst/segment/turns.py` and `src/gmst/pipeline/stream.py` against the invariants in `CLAUDE.md` (\"Streaming reconciliation\") and `PLAN.md` (\"`reconcile.py` edge cases\", \"`Segment` timestamp contract\", the Ctrl-C and forced-commit rows of \"Failure modes\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nWhat counts as a finding: any input sequence that (a) commits a word twice, (b) makes committed spans non-monotonic, (c) re-commits a revised prefix, (d) loses text that was committed or was flushable at shutdown, (e) lets the real buffer grow past one utterance because the trim/rebase is skipped, or (f) writes to the sink from a thread other than the reconcile thread. Demonstrate each with a probe in `scripts/R1/` built on `tests/fakes.py` and the audio-reactive `_marked` / `_marked_engine` helpers in `tests/test_stream_pipeline.py` — a fixed script that ignores the audio it is handed cannot show a seam bug (CLAUDE.md \"Testing\"). Also check: the 600-character prompt cap, the 4000-word cap, the stall counter using the sample clock not wall time, and the second-Ctrl-C path.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R2",
+   "title": "Language ID and engine backends",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R2-language-id-and-backends.md",
+   "summary": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nOwn the onboarding lead in `review/checkpoint-1/PLAN.md`: does `resolve_language` ever restrict the detector to the meeting's languages, and what does GMST do when the top label is `bg`, `ja`, `be`, `pl`…? Confirm with a probe on the local clips (`eval/results/data/uk/`, offline, `tiny` and `small` only — rule 4), saved in `scripts/R2/`. Also check: the sticky threshold and uk/ru tie-break compose as the module docstring says; the ≥ 0.5 s LID window around a segment; `multilingual=True` is only requested when `per_segment_lid` is off; `vad_filter=False` on every streaming call; `no_speech_threshold` and temperature fallback left on; `ModelUnavailable` carries \"run `gmst warmup`\". For `mlx_whisper.py`, read for bugs visible without running it (the `ModelHolder.get_model` reuse and the release in `gmst bench` are open Mac items — record, don't run).",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R3",
+   "title": "Capture, failure modes and shutdown",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R3-capture-and-failure-modes.md",
+   "summary": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoi",
+   "instructions": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nA row with no implementation, or an implementation that differs from the policy, is a finding. Specific checks: the capture callback does only downmix → persistent `soxr.ResampleStream` → enqueue; drop-oldest and the `[lagging]` flag reach the sink; PortAudio status flags are counted, not swallowed; `DeviceLost` after the drain → exit 3; `sink.close()` runs even when the final decode raises; the SSE per-client queue is bounded at 512 with drop-oldest and a heartbeat; the JSONL/SSE event schema matches the pinned one. You may run `gmst devices` / `gmst listen` briefly on this Linux machine; BlackHole is rule 6.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R4",
+   "title": "Test-suite adequacy",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R4-test-suite-adequacy.md",
+   "summary": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nFor each promised test, name the test that covers it or record that none does. Own the onboarding lead: `tests/fixtures/en.wav` / `uk.wav`. Then check that the tests would actually fail if the code were wrong: for the five riskiest guards (your pick, justified — start with `_align`'s −1 on contradiction, the overlap anchor, `trim_to`/`rebase`, the unconditional `sink.close()`, and the drop-oldest queue), apply a one-line mutation in a **scratch copy** of the tree (never the working tree), run the suite there, and record whether it goes red. Save the mutations and outputs in `scripts/R4/`. Run `uv run pytest -m slow` once (offline) and record the result.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R5",
+   "title": "Eval and bench methodology",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R5-eval-and-bench-method.md",
+   "summary": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nQuestions: (1) Are the WER numbers comparable to the `egorsmkv/speech-recognition-uk` leaderboard they are meant to reproduce (same test set, same normalization — casing, punctuation, apostrophes ʼ/'/’, numerals)? (2) Do the synthetic `mixed` inter/intra clips and `real_cs` measure what they are named for, and are per-language WER and `switch_detected` computed correctly? (3) Is `gmst bench`'s \"streaming amplification\" the quantity `PLAN.md` \"Latency budget\" defines? (4) What sample size per set is needed to separate the four candidates at the leaderboard's gaps (13.7 / 20.5 / 22.8 / 12.8 % WER) — compute it, don't guess. (5) Is `eval/results/` reproducible from the scripts (the onboarding lead on `tiny` vs `large-v3`)? You may re-score from cached hypotheses (`--score-only`) and run ≤ 10 min with `tiny`; propose anything bigger as child nodes for V1.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R6",
+   "title": "Documents vs code",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "doc-consistency-auditor",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R6-docs-vs-code.md",
+   "summary": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.",
+   "instructions": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nEvery disagreement is a finding with both locators. Own the onboarding leads on `eval/` being undocumented and the ruff E501. Also list anything a new user would need to run it on Linux (the PulseAudio/PipeWire monitor source) that the README does not say.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R7",
+   "title": "Clean-clone reproduction",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "low",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R7-clean-clone-repro.md",
+   "summary": "From a clean clone of tag `checkpoint-1` in your scratchpad (`git clone --branch checkpoint-1 <repo> <scratch>/gmst` — cloning is the one git use allowed), follow `README.md` \"Setup\" and \"Usage\" literally, offline where the model is cached. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "From a clean clone of tag `checkpoint-1` in your scratchpad (`git clone --branch checkpoint-1 <repo> <scratch>/gmst` — cloning is the one git use allowed), follow `README.md` \"Setup\" and \"Usage\" literally, offline where the model is cached. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nRecord every step that fails or needs knowledge the docs don't give. Run: `uv sync`, `uv run pytest -q`, `uv run pytest -m slow -q`, `uv run ruff check .`, `uv run gmst devices`, `uv run gmst batch` on one clip from `eval/results/data/uk/` with `--language uk` and with auto LID, and `uv run gmst bench` on one clip with a reference, all with `GMST_MODEL=tiny`. Compare counts and outputs with what the docs claim. Delete the clone when done.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "T1",
+   "title": "Triage: merge, dedupe and number the findings",
+   "parent": null,
+   "stage": "triage",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/T1-triage.md",
+   "summary": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
+   "instructions": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "V1",
+   "title": "Evidence plan: design the measurements",
+   "parent": null,
+   "stage": "plan",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/V1-evidence-plan.md",
+   "summary": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
+   "instructions": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X",
+   "title": "Evidence runs (group; V1 creates X.1 …)",
+   "parent": null,
+   "stage": "evidence",
+   "kind": "group",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "V1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X-evidence.md",
+   "summary": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
+   "instructions": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "V1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "Z1",
+   "title": "Close-out and checkpoint-2",
+   "parent": null,
+   "stage": "close",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/Z1-close-out.md",
+   "summary": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
+   "instructions": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "F"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,811 @@
+<title>GMST Review Graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --ground:#F2F4F1; --surface:#FFFFFF; --surface-2:#F7F9F6; --ink:#17201C; --muted:#5B6862; --line:#D5DCD7;
+  --accent:#2C5A88; --accent-soft:#E3ECF5;
+  --done:#2E774A; --done-soft:#E2F0E6; --prog:#A8660F; --prog-soft:#F7EBD8;
+  --block:#B0352E; --block-soft:#F6E1DF; --inc:#9A4E22; --inc-soft:#F5E4D8; --wait:#8A958F; --wait-soft:#ECEFEC;
+  --opus:#5A4A86; --sonnet:#2B6B79; --haiku:#6F7F2F; --human:#8A5641;
+  --edge:#AAB4AE; --edge-hot:#2C5A88;
+  --f-display:"Fraunces", Georgia, "Times New Roman", serif;
+  --f-ui:"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1311; --surface:#161B18; --surface-2:#1B211E; --ink:#E3E9E5; --muted:#98A49D; --line:#2A332E;
+    --accent:#86AEDB; --accent-soft:#1C2A38;
+    --done:#6CC08B; --done-soft:#17291E; --prog:#E0A24B; --prog-soft:#2E2414;
+    --block:#EB7D74; --block-soft:#331B19; --inc:#E09568; --inc-soft:#2F2016; --wait:#7D8882; --wait-soft:#1E2421;
+    --opus:#A898DA; --sonnet:#7CC0CE; --haiku:#B9C872; --human:#D69C82;
+    --edge:#46514B; --edge-hot:#86AEDB;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1311; --surface:#161B18; --surface-2:#1B211E; --ink:#E3E9E5; --muted:#98A49D; --line:#2A332E;
+  --accent:#86AEDB; --accent-soft:#1C2A38;
+  --done:#6CC08B; --done-soft:#17291E; --prog:#E0A24B; --prog-soft:#2E2414;
+  --block:#EB7D74; --block-soft:#331B19; --inc:#E09568; --inc-soft:#2F2016; --wait:#7D8882; --wait-soft:#1E2421;
+  --opus:#A898DA; --sonnet:#7CC0CE; --haiku:#B9C872; --human:#D69C82;
+  --edge:#46514B; --edge-hot:#86AEDB;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.45}
+.wrap{max-width:1480px;margin:0 auto;padding-inline:20px;padding-block:22px 40px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-size:12.5px}
+.meta b{color:var(--ink);font-family:var(--f-mono);font-weight:500;font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.tile h2{margin:0;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.big{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.big small{font-size:14px;color:var(--muted);font-weight:500}
+.bar{height:8px;border-radius:4px;background:var(--wait-soft);overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.st-done{background:var(--done-soft);color:var(--done)} .st-done i{background:var(--done)}
+.st-in-progress{background:var(--prog-soft);color:var(--prog)} .st-in-progress i{background:var(--prog)}
+.st-blocked{background:var(--block-soft);color:var(--block)} .st-blocked i{background:var(--block)}
+.st-INCOMPLETE{background:var(--inc-soft);color:var(--inc)} .st-INCOMPLETE i{background:var(--inc)}
+.st-ready{background:var(--accent-soft);color:var(--accent)} .st-ready i{background:var(--accent)}
+.st-waiting{background:var(--wait-soft);color:var(--wait)} .st-waiting i{background:var(--wait)}
+.sev{font-family:var(--f-mono);font-size:11.5px;border-radius:4px;padding:1px 6px;border:1px solid var(--line)}
+.sev.b{color:var(--block);border-color:currentColor} .sev.s{color:var(--prog);border-color:currentColor} .sev.m{color:var(--muted)}
+.model{font-family:var(--f-mono);font-size:11px;border-radius:4px;padding:1px 6px;color:var(--surface);font-weight:500}
+.m-opus{background:var(--opus)} .m-sonnet{background:var(--sonnet)} .m-haiku{background:var(--haiku)} .m-human{background:var(--human)} .m-none{background:var(--wait)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.toolbar .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.chip{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.chip:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+@media (max-width:1100px){.main{grid-template-columns:minmax(0,1fr)}}
+.canvas-box{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto;overflow-y:hidden}
+.canvas{position:relative}
+.canvas svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.lane-head{position:absolute;top:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 0 0 2px;display:flex;gap:8px;align-items:baseline}
+.lane-head span{font-family:var(--f-mono);letter-spacing:0;text-transform:none;font-weight:500}
+.lane-bg{position:absolute;top:0;bottom:0;border-right:1px dashed var(--line)}
+.card{position:absolute;text-align:left;font:inherit;color:inherit;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px 8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;overflow:hidden;transition:opacity .15s,border-color .15s}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--wait)}
+.card.s-done::before{background:var(--done)} .card.s-in-progress::before{background:var(--prog)}
+.card.s-blocked::before{background:var(--block)} .card.s-INCOMPLETE::before{background:var(--inc)}
+.card.s-ready::before{background:var(--accent)}
+.card.s-ready{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.card.group{background:var(--surface)}
+.card.dim{opacity:.28}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.card .top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.card .id{font-family:var(--f-mono);font-size:12px;font-weight:500}
+.card .t{font-size:12.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .foot{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);min-width:0}
+.card .foot .ag{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .mini{height:4px;border-radius:2px;background:var(--wait-soft);overflow:hidden}
+.card .mini span{display:block;height:100%;background:var(--done)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:1100px){.panel{position:static;max-height:none}}
+.panel h3{margin:0;font-size:17px;line-height:1.3;text-wrap:balance}
+.panel .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px}
+.panel .kv dt{color:var(--muted)} .panel .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.panel code,.mono{font-family:var(--f-mono);font-size:12px}
+.panel h4{margin:6px 0 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prose{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;max-width:65ch}
+.empty{color:var(--muted);font-style:italic}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:12px;align-items:center}
+.how{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--muted)}
+.how b{color:var(--ink)} .how code{font-family:var(--f-mono);font-size:12px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>GMST Review Graph</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </header>
+
+  <section class="tiles" id="tiles" aria-label="Summary"></section>
+
+  <div class="toolbar" role="group" aria-label="Filters">
+    <span class="lbl">Model</span><span class="row" id="f-model"></span>
+    <span class="lbl">State</span><span class="row" id="f-state"></span>
+  </div>
+
+  <div class="main">
+    <div class="canvas-box"><div class="canvas" id="canvas"></div></div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <div class="how">
+    <b>Growing the graph.</b> Add <code>tasks/&lt;parent&gt;.&lt;n&gt;-slug.md</code> from <code>templates/node.md</code>,
+    with <code>parent:</code> and a model, then run <code>python3 graph.py</code> and republish. A node that gains
+    children becomes a group; a group is done when every child is done and its own synthesis is done.
+    Source of truth: the node files in <code>review/checkpoint-1/tasks/</code>.
+  </div>
+</div>
+
+<script>
+const DATA = {
+ "generated": "2026-09-28 06:16 UTC",
+ "basis": "checkpoint-1 (8beade7)",
+ "branch": "review-checkpoint-1",
+ "stages": [
+  {
+   "id": "review",
+   "label": "Review"
+  },
+  {
+   "id": "triage",
+   "label": "Triage"
+  },
+  {
+   "id": "plan",
+   "label": "Evidence plan"
+  },
+  {
+   "id": "evidence",
+   "label": "Evidence"
+  },
+  {
+   "id": "decision",
+   "label": "Decisions"
+  },
+  {
+   "id": "fix",
+   "label": "Fixes"
+  },
+  {
+   "id": "close",
+   "label": "Close-out"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "F",
+   "title": "Fixes (group; T1 creates F.1 …)",
+   "parent": null,
+   "stage": "fix",
+   "kind": "group",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1",
+    "H1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F-fixes.md",
+   "summary": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
+   "instructions": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1",
+    "H1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "H1",
+   "title": "Your decisions",
+   "parent": null,
+   "stage": "decision",
+   "kind": "task",
+   "agent": "human",
+   "model": "human",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1",
+    "X"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/H1-decisions.md",
+   "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
+   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1",
+    "X"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R1",
+   "title": "Streaming seams: reconcile, endpointer, stream loop, turns",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R1-streaming-seams.md",
+   "summary": "Review line by line `src/gmst/reconcile.py`, `src/gmst/segment/endpointer.py`, `src/gmst/segment/turns.py` and `src/gmst/pipeline/stream.py` against the invariants in `CLAUDE.md` (\"Streaming reconciliation\") and `PLAN.md` (\"`reconcile.py` edge cases\", \"`Segment` timestamp contract\", the Ctrl-C and forced-commit rows of \"Failure modes\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1",
+   "instructions": "Review line by line `src/gmst/reconcile.py`, `src/gmst/segment/endpointer.py`, `src/gmst/segment/turns.py` and `src/gmst/pipeline/stream.py` against the invariants in `CLAUDE.md` (\"Streaming reconciliation\") and `PLAN.md` (\"`reconcile.py` edge cases\", \"`Segment` timestamp contract\", the Ctrl-C and forced-commit rows of \"Failure modes\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nWhat counts as a finding: any input sequence that (a) commits a word twice, (b) makes committed spans non-monotonic, (c) re-commits a revised prefix, (d) loses text that was committed or was flushable at shutdown, (e) lets the real buffer grow past one utterance because the trim/rebase is skipped, or (f) writes to the sink from a thread other than the reconcile thread. Demonstrate each with a probe in `scripts/R1/` built on `tests/fakes.py` and the audio-reactive `_marked` / `_marked_engine` helpers in `tests/test_stream_pipeline.py` — a fixed script that ignores the audio it is handed cannot show a seam bug (CLAUDE.md \"Testing\"). Also check: the 600-character prompt cap, the 4000-word cap, the stall counter using the sample clock not wall time, and the second-Ctrl-C path.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R2",
+   "title": "Language ID and engine backends",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R2-language-id-and-backends.md",
+   "summary": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nOwn the onboarding lead in `review/checkpoint-1/PLAN.md`: does `resolve_language` ever restrict the detector to the meeting's languages, and what does GMST do when the top label is `bg`, `ja`, `be`, `pl`…? Confirm with a probe on the local clips (`eval/results/data/uk/`, offline, `tiny` and `small` only — rule 4), saved in `scripts/R2/`. Also check: the sticky threshold and uk/ru tie-break compose as the module docstring says; the ≥ 0.5 s LID window around a segment; `multilingual=True` is only requested when `per_segment_lid` is off; `vad_filter=False` on every streaming call; `no_speech_threshold` and temperature fallback left on; `ModelUnavailable` carries \"run `gmst warmup`\". For `mlx_whisper.py`, read for bugs visible without running it (the `ModelHolder.get_model` reuse and the release in `gmst bench` are open Mac items — record, don't run).",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R3",
+   "title": "Capture, failure modes and shutdown",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R3-capture-and-failure-modes.md",
+   "summary": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoi",
+   "instructions": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nA row with no implementation, or an implementation that differs from the policy, is a finding. Specific checks: the capture callback does only downmix → persistent `soxr.ResampleStream` → enqueue; drop-oldest and the `[lagging]` flag reach the sink; PortAudio status flags are counted, not swallowed; `DeviceLost` after the drain → exit 3; `sink.close()` runs even when the final decode raises; the SSE per-client queue is bounded at 512 with drop-oldest and a heartbeat; the JSONL/SSE event schema matches the pinned one. You may run `gmst devices` / `gmst listen` briefly on this Linux machine; BlackHole is rule 6.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R4",
+   "title": "Test-suite adequacy",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R4-test-suite-adequacy.md",
+   "summary": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nFor each promised test, name the test that covers it or record that none does. Own the onboarding lead: `tests/fixtures/en.wav` / `uk.wav`. Then check that the tests would actually fail if the code were wrong: for the five riskiest guards (your pick, justified — start with `_align`'s −1 on contradiction, the overlap anchor, `trim_to`/`rebase`, the unconditional `sink.close()`, and the drop-oldest queue), apply a one-line mutation in a **scratch copy** of the tree (never the working tree), run the suite there, and record whether it goes red. Save the mutations and outputs in `scripts/R4/`. Run `uv run pytest -m slow` once (offline) and record the result.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R5",
+   "title": "Eval and bench methodology",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "code-reviewer",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R5-eval-and-bench-method.md",
+   "summary": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nQuestions: (1) Are the WER numbers comparable to the `egorsmkv/speech-recognition-uk` leaderboard they are meant to reproduce (same test set, same normalization — casing, punctuation, apostrophes ʼ/'/’, numerals)? (2) Do the synthetic `mixed` inter/intra clips and `real_cs` measure what they are named for, and are per-language WER and `switch_detected` computed correctly? (3) Is `gmst bench`'s \"streaming amplification\" the quantity `PLAN.md` \"Latency budget\" defines? (4) What sample size per set is needed to separate the four candidates at the leaderboard's gaps (13.7 / 20.5 / 22.8 / 12.8 % WER) — compute it, don't guess. (5) Is `eval/results/` reproducible from the scripts (the onboarding lead on `tiny` vs `large-v3`)? You may re-score from cached hypotheses (`--score-only`) and run ≤ 10 min with `tiny`; propose anything bigger as child nodes for V1.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R6",
+   "title": "Documents vs code",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "doc-consistency-auditor",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R6-docs-vs-code.md",
+   "summary": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.",
+   "instructions": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nEvery disagreement is a finding with both locators. Own the onboarding leads on `eval/` being undocumented and the ruff E501. Also list anything a new user would need to run it on Linux (the PulseAudio/PipeWire monitor source) that the README does not say.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "R7",
+   "title": "Clean-clone reproduction",
+   "parent": null,
+   "stage": "review",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "low",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/R7-clean-clone-repro.md",
+   "summary": "From a clean clone of tag `checkpoint-1` in your scratchpad (`git clone --branch checkpoint-1 <repo> <scratch>/gmst` — cloning is the one git use allowed), follow `README.md` \"Setup\" and \"Usage\" literally, offline where the model is cached. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
+   "instructions": "From a clean clone of tag `checkpoint-1` in your scratchpad (`git clone --branch checkpoint-1 <repo> <scratch>/gmst` — cloning is the one git use allowed), follow `README.md` \"Setup\" and \"Usage\" literally, offline where the model is cached. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nRecord every step that fails or needs knowledge the docs don't give. Run: `uv sync`, `uv run pytest -q`, `uv run pytest -m slow -q`, `uv run ruff check .`, `uv run gmst devices`, `uv run gmst batch` on one clip from `eval/results/data/uk/` with `--language uk` and with auto LID, and `uv run gmst bench` on one clip with a reference, all with `GMST_MODEL=tiny`. Compare counts and outputs with what the docs claim. Delete the clone when done.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "T1",
+   "title": "Triage: merge, dedupe and number the findings",
+   "parent": null,
+   "stage": "triage",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "high",
+   "status": "todo",
+   "depends_on": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/T1-triage.md",
+   "summary": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
+   "instructions": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "V1",
+   "title": "Evidence plan: design the measurements",
+   "parent": null,
+   "stage": "plan",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/V1-evidence-plan.md",
+   "summary": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
+   "instructions": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "T1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X",
+   "title": "Evidence runs (group; V1 creates X.1 …)",
+   "parent": null,
+   "stage": "evidence",
+   "kind": "group",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "V1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X-evidence.md",
+   "summary": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
+   "instructions": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "V1"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "Z1",
+   "title": "Close-out and checkpoint-2",
+   "parent": null,
+   "stage": "close",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/Z1-close-out.md",
+   "summary": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
+   "instructions": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
+   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "F"
+   ],
+   "depth": 0,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  }
+ ]
+};
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  if(!DATA){ $("#canvas").innerHTML = '<p class="empty" style="padding:20px">No graph data. Run graph.py.</p>'; return; }
+  const STATE_ORDER = ["done","in-progress","ready","waiting","blocked","INCOMPLETE"];
+  const STATE_LABEL = {"done":"Done","in-progress":"In progress","ready":"Ready","waiting":"Waiting","blocked":"Blocked","INCOMPLETE":"Incomplete"};
+  const MODELS = ["opus","sonnet","haiku","human"];
+  const nodes = DATA.nodes, byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const leaves = nodes.filter(n => !n.children.length);
+  const mclass = m => MODELS.includes(m) ? "m-"+m : "m-none";
+  const pill = s => `<span class="pill st-${s}"><i></i>${STATE_LABEL[s]||s}</span>`;
+  const sevs = t => [["b","blocking"],["s","serious"],["m","minor"]].filter(([,k]) => t[k]).map(([c,k]) => `<span class="sev ${c}" title="${k}">${t[k]}${c}</span>`).join("");
+
+  // header
+  $("#meta").innerHTML = `<span>basis <b>${esc(DATA.basis)}</b></span><span>branch <b>${esc(DATA.branch)}</b></span><span>generated <b>${esc(DATA.generated)}</b></span>`;
+  $("#legend").innerHTML = STATE_ORDER.map(pill).join("");
+
+  // tiles
+  const count = s => leaves.filter(n => n.state === s).length;
+  const done = count("done"), total = leaves.length;
+  const sevAll = {blocking:0,serious:0,minor:0}; nodes.forEach(n => { for(const k in sevAll) sevAll[k] += n.severity[k]; });
+  const segs = STATE_ORDER.map(s => [s, count(s)]).filter(([,c]) => c);
+  const segColor = {"done":"var(--done)","in-progress":"var(--prog)","ready":"var(--accent)","waiting":"var(--wait)","blocked":"var(--block)","INCOMPLETE":"var(--inc)"};
+  const byModel = MODELS.map(m => [m, leaves.filter(n => n.model === m)]).filter(([,a]) => a.length);
+  const ready = leaves.filter(n => n.state === "ready");
+  $("#tiles").innerHTML = `
+    <div class="tile"><h2>Progress</h2><div class="big">${done}<small> / ${total} nodes done</small></div>
+      <div class="bar" role="img" aria-label="${segs.map(([s,c]) => c+' '+STATE_LABEL[s]).join(', ')}">${segs.map(([s,c]) => `<span style="width:${100*c/total}%;background:${segColor[s]}"></span>`).join("")}</div>
+      <div class="row">${segs.map(([s,c]) => `<span class="pill st-${s}"><i></i>${c} ${STATE_LABEL[s].toLowerCase()}</span>`).join("")}</div></div>
+    <div class="tile"><h2>Findings</h2><div class="big">${sevAll.blocking+sevAll.serious+sevAll.minor}<small> recorded</small></div>
+      <div class="row"><span class="pill st-blocked"><i></i>${sevAll.blocking} blocking</span><span class="pill st-in-progress"><i></i>${sevAll.serious} serious</span><span class="pill st-waiting"><i></i>${sevAll.minor} minor</span></div></div>
+    <div class="tile"><h2>Can start now</h2><div class="big">${ready.length}<small> ready</small></div>
+      <div class="row">${ready.map(n => `<button class="chip" data-go="${esc(n.id)}"><span class="mono">${esc(n.id)}</span><span class="model ${mclass(n.model)}">${esc(n.model)}</span></button>`).join("") || '<span class="empty">nothing</span>'}</div></div>
+    <div class="tile"><h2>Model mix</h2>
+      ${byModel.map(([m,a]) => `<div style="display:flex;align-items:center;gap:8px"><span class="model ${mclass(m)}" style="min-width:58px;text-align:center">${m}</span><div class="bar" style="flex:1"><span style="width:${100*a.filter(n=>n.state==='done').length/a.length}%;background:var(--done)"></span></div><span class="mono">${a.filter(n=>n.state==='done').length}/${a.length}</span></div>`).join("")}</div>`;
+
+  // filters
+  const filt = {model:new Set(), state:new Set()};
+  const mk = (el, key, vals, lab) => { $(el).innerHTML = vals.map(v => `<button class="chip" id="f-${key}-${v}" aria-pressed="false" data-k="${key}" data-v="${v}">${lab(v)}</button>`).join(""); };
+  mk("#f-model","model", MODELS.filter(m => nodes.some(n => n.model === m)), m => `<span class="model ${mclass(m)}">${m}</span>`);
+  mk("#f-state","state", STATE_ORDER.filter(s => nodes.some(n => n.state === s)), s => STATE_LABEL[s]);
+  document.querySelectorAll(".toolbar .chip").forEach(b => b.addEventListener("click", () => {
+    const set = filt[b.dataset.k]; set.has(b.dataset.v) ? set.delete(b.dataset.v) : set.add(b.dataset.v);
+    b.setAttribute("aria-pressed", set.has(b.dataset.v)); applyDim();
+  }));
+
+  // layout: one lane per stage; inside a lane, depth-first tree order with indentation
+  const LANE_W = 244, GAP_X = 34, PAD = 16, HEAD = 40, CARD_H = 92, GAP_Y = 10, INDENT = 16;
+  const stages = DATA.stages.filter(s => nodes.some(n => n.stage === s.id));
+  const pos = {};
+  let maxY = 0;
+  stages.forEach((st, i) => {
+    const x0 = PAD + i * (LANE_W + GAP_X);
+    const inLane = nodes.filter(n => n.stage === st.id);
+    const ids = new Set(inLane.map(n => n.id));
+    const roots = inLane.filter(n => !n.parent || !ids.has(n.parent));
+    let y = HEAD;
+    const place = (n) => {
+      const d = n.parent && ids.has(n.parent) ? (pos[n.parent].d + 1) : 0;
+      pos[n.id] = {x: x0 + d*INDENT, y, w: LANE_W - d*INDENT, h: CARD_H, d, lane:i};
+      y += CARD_H + GAP_Y;
+      n.children.map(c => byId[c]).filter(c => ids.has(c.id)).forEach(place);
+    };
+    roots.forEach(place);
+    maxY = Math.max(maxY, y);
+  });
+  const W = PAD*2 + stages.length*LANE_W + (stages.length-1)*GAP_X, H = maxY + PAD;
+  const canvas = $("#canvas");
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  let html = stages.map((st,i) => {
+    const x = PAD + i*(LANE_W+GAP_X), inLane = leaves.filter(n => n.stage === st.id);
+    return `${i ? `<div class="lane-bg" style="left:${x - GAP_X/2}px"></div>` : ""}<div class="lane-head" style="left:${x}px">${esc(st.label)} <span>${inLane.filter(n=>n.state==='done').length}/${inLane.length}</span></div>`;
+  }).join("");
+  html += `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--edge)"/></marker><marker id="ahh" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--edge-hot)"/></marker></defs><g id="edges"></g></svg>`;
+  html += nodes.map(n => {
+    const p = pos[n.id], g = n.children.length > 0, t = n.severity_total;
+    const frac = n.leaves_total ? n.leaves_done / n.leaves_total : 0;
+    return `<button class="card s-${n.state}${g ? " group" : ""}" id="card-${esc(n.id)}" data-id="${esc(n.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px" aria-label="${esc(n.id)} ${esc(n.title)}, ${STATE_LABEL[n.state]}">
+      <div class="top"><span class="id">${esc(n.id)}</span><span class="row">${sevs(t)}${pill(n.state)}</span></div>
+      <div class="t">${esc(n.title)}</div>
+      ${g ? `<div class="mini" title="${n.leaves_done}/${n.leaves_total} child nodes done"><span style="width:${100*frac}%"></span></div>` : ""}
+      <div class="foot"><span class="model ${mclass(n.model)}">${esc(n.model)}</span><span class="ag">${esc(n.agent)}${g ? ` · ${n.leaves_done}/${n.leaves_total}` : ""}</span></div>
+    </button>`;
+  }).join("");
+  canvas.innerHTML = html;
+
+  // edges: dependencies (curves) and parent → child (tree connectors)
+  const edges = [];
+  nodes.forEach(n => n.depends_on.forEach(d => edges.push({from:d, to:n.id, kind:"dep"})));
+  nodes.forEach(n => { if(n.parent && pos[n.parent] && pos[n.parent].lane === pos[n.id].lane) edges.push({from:n.parent, to:n.id, kind:"tree"}); });
+  const path = e => {
+    const a = pos[e.from], b = pos[e.to];
+    if(e.kind === "tree"){ const x = a.x + 7; return `M${x},${a.y + a.h} L${x},${b.y + b.h/2} L${b.x},${b.y + b.h/2}`; }
+    if(a.lane === b.lane){ const x = Math.max(a.x+a.w, b.x+b.w) + 10; return `M${a.x+a.w},${a.y+a.h/2} C${x},${a.y+a.h/2} ${x},${b.y+b.h/2} ${b.x+b.w},${b.y+b.h/2}`; }
+    const x1 = a.x + a.w, y1 = a.y + a.h/2, x2 = b.x, y2 = b.y + b.h/2, mx = (x1 + x2)/2;
+    return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2-1},${y2}`;
+  };
+  let selected = null;
+  const drawEdges = () => {
+    const rel = selected ? new Set([selected, ...byId[selected].depends_on, ...nodes.filter(n => n.depends_on.includes(selected)).map(n => n.id)]) : null;
+    $("#edges").innerHTML = edges.map(e => {
+      const hot = selected && (e.from === selected || e.to === selected);
+      const faint = rel && !hot;
+      const w = e.kind === "tree" ? 1.2 : (hot ? 2 : 1.3);
+      return `<path d="${path(e)}" fill="none" stroke="var(${hot ? "--edge-hot" : "--edge"})" stroke-width="${w}" ${e.kind === "tree" ? 'stroke-dasharray="3 3"' : `marker-end="url(#${hot ? "ahh" : "ah"})"`} opacity="${faint ? .35 : 1}"/>`;
+    }).join("");
+  };
+
+  const applyDim = () => {
+    nodes.forEach(n => {
+      const okM = !filt.model.size || filt.model.has(n.model);
+      const okS = !filt.state.size || filt.state.has(n.state);
+      document.getElementById("card-"+n.id).classList.toggle("dim", !(okM && okS));
+    });
+  };
+
+  const list = (ids) => ids.length ? ids.map(i => `<button class="chip" data-go="${esc(i)}"><span class="mono">${esc(i)}</span>${pill(byId[i].state)}</button>`).join("") : '<span class="empty">none</span>';
+  const showPanel = (id) => {
+    const n = byId[id];
+    const dependents = nodes.filter(m => m.depends_on.includes(id)).map(m => m.id);
+    $("#panel").innerHTML = `
+      <div class="row" style="justify-content:space-between;align-items:center"><span class="mono" style="font-size:14px">${esc(n.id)}</span>${pill(n.state)}</div>
+      <h3>${esc(n.title)}</h3>
+      <dl class="kv">
+        <dt>Agent</dt><dd>${esc(n.agent)}</dd>
+        <dt>Model</dt><dd><span class="model ${mclass(n.model)}">${esc(n.model)}</span>${n.effort ? ` <span class="mono">effort ${esc(n.effort)}</span>` : ""}</dd>
+        <dt>Stage</dt><dd>${esc((DATA.stages.find(s => s.id === n.stage)||{}).label)}</dd>
+        <dt>Kind</dt><dd>${n.children.length ? `group · ${n.leaves_done}/${n.leaves_total} done${n.promoted ? " (promoted)" : ""}` : "task"}</dd>
+        <dt>File</dt><dd><code>review/checkpoint-1/${esc(n.file)}</code></dd>
+        <dt>Finding</dt><dd>${n.finding ? `<code>${esc(n.finding)}</code>` : '<span class="empty">not yet</span>'} ${sevs(n.severity_total)}</dd>
+      </dl>
+      ${n.waiting_on.length ? `<h4>Waiting on</h4><div class="row">${list(n.waiting_on)}</div>` : ""}
+      ${n.parent ? `<h4>Parent</h4><div class="row">${list([n.parent])}</div>` : ""}
+      ${n.children.length ? `<h4>Children</h4><div class="row">${list(n.children)}</div>` : ""}
+      <h4>Depends on</h4><div class="row">${list(n.depends_on)}</div>
+      <h4>Unblocks</h4><div class="row">${list(dependents)}</div>
+      <h4>Instructions</h4><p class="prose">${esc(n.instructions) || '<span class="empty">none</span>'}</p>
+      <h4>Findings</h4>${n.findings_text && !n.findings_text.startsWith("_(") ? `<p class="prose">${esc(n.findings_text)}</p>` : '<p class="empty">No findings recorded yet.</p>'}`;
+    $("#panel").querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => select(b.dataset.go, true)));
+  };
+  const select = (id, scroll) => {
+    if(selected) document.getElementById("card-"+selected)?.classList.remove("sel");
+    selected = id;
+    const c = document.getElementById("card-"+id); c.classList.add("sel");
+    if(scroll) c.scrollIntoView({block:"nearest", inline:"center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+    drawEdges(); showPanel(id);
+    try { localStorage.setItem("rg-selected", id); } catch(e) {}
+  };
+  canvas.addEventListener("click", ev => { const c = ev.target.closest(".card"); if(c) select(c.dataset.id, false); });
+  document.querySelectorAll("#tiles [data-go]").forEach(b => b.addEventListener("click", () => select(b.dataset.go, true)));
+
+  let start = null;
+  try { start = localStorage.getItem("rg-selected"); } catch(e) {}
+  if(!start || !byId[start]) start = (ready[0] || nodes.find(n => n.state === "in-progress") || nodes[0]).id;
+  drawEdges(); select(start, false);
+})();
+</script>
