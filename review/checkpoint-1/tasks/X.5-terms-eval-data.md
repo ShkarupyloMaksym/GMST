@@ -6,7 +6,7 @@ kind: task
 agent: general-purpose
 model: sonnet
 effort: high
-status: in-progress
+status: done
 depends-on: -
 
 # X.5 — DECIDE-06: find public Ukrainian speech with English terms, and build a terms eval set
@@ -179,6 +179,14 @@ speakers/episodes.
   "buildable" clause is satisfied on the manifest evidence, but the actual deliverable files do
   not exist yet. `build_terms_set.py` is ready to produce them as soon as the archive finishes
   downloading.
+
+### Orchestrator close-out (2026-09-28)
+
+The archive finished downloading (5,241,232,164 bytes, `gzip -t` ok). `build_terms_set.py` first
+failed on a path bug (`parents[3]` pointed at `review/`, fixed to `parents[4]`); rerun:
+`candidate clips (Latin term in otherwise-Ukrainian text): 1062 from 187 episodes` → `selected 200
+clips from 187 episodes` → `eval/results/data/terms/*.wav` + `terms.jsonl`
+(`scripts/X.5/build_terms_set.out`). Rule: holds (≥ 150 clips, ≥ 10 episodes).
 
 ## Could not check
 

@@ -17,6 +17,12 @@ Extend R5's `scripts/R5/p4_amplification.py` into `scripts/X.4/`: `large-v2` the
 
 Read first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.4/`. Write the clip list to `scripts/X.4/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.
 
+**Amended 2026-09-28 (before any X.4 run), after F.17 made streaming two-pass:** also time the
+**final pass** — one `transcribe` of a whole utterance, plus one `detect_language` on it — for
+utterances of 2, 5, 10 and 15 s (median of 5 after a warm-up), per model. That is the latency of
+the final text after an utterance ends. Report it next to the per-update cost; the pre-registered
+rule for the per-update cost is unchanged.
+
 ## What was read / measured
 
 _(write as you go: files and line ranges read, commands run, where you stopped)_
