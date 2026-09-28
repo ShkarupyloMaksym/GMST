@@ -280,6 +280,10 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | `lid_threshold` | `0.7` | below this, keep previous language |
 | `lid_tiebreak_margin` | `0.15` | `uk`/`ru` tie-break window |
 | `lid_languages` | `["en", "uk"]` | LID picks only among these; `ru` folds into `uk` unless listed (DECIDE-02) |
+| `glossary` | `[]` | terms fed to every decode as prompt head + faster-whisper `hotwords` (DECIDE-08) |
+| `glossary_autogrow` | `false` | add Latin-script terms committed inside Ukrainian text |
+| `glossary_path` | `None` | file the grown list is loaded from and saved to |
+| `glossary_max_terms` | `100` | most recent kept |
 | `lid_settle_seconds` | `3.0` | stream re-detects until the utterance has this much audio and commits nothing before (DECIDE-04; `0` = detect once) |
 | `input_device` | `None` | sounddevice id or name substring |
 | `block_ms` | `100` | capture block |

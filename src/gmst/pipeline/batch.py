@@ -24,6 +24,7 @@ from pathlib import Path
 from gmst.audio.file_source import decode_file
 from gmst.audio.types import SAMPLE_RATE, AudioArray, duration_seconds
 from gmst.config import Config
+from gmst.glossary import make_glossary
 from gmst.segment.vad import make_vad
 from gmst.sink.base import Sink
 from gmst.transcribe.engine import Engine
@@ -64,14 +65,32 @@ def speech_regions(audio: AudioArray, cfg: Config) -> list[tuple[int, int]]:
 def transcribe_by_region(audio: AudioArray, cfg: Config, engine: Engine) -> list[Segment]:
     """Decode ``audio`` as batch does: whole-file when the language is pinned, otherwise each
     speech region in its own detected language. Segment times are file-relative."""
-    if cfg.language is not None:
-        return engine.transcribe(audio, language=cfg.language)
+    glossary = make_glossary(cfg)
+
+    def decode(clip, lang):
+        if not glossary:  # DECIDE-08: terms as prompt + hotwords only when there are any
+            return engine.transcribe(clip, language=lang)
+        segs = engine.transcribe(clip, language=lang, prompt=glossary.prompt(None, max_chars=600),
+                                 hotwords=glossary.hotwords())
+        for s in segs:
+            glossary.observe(s.text, lang=lang)
+        return segs
+
+    try:
+        if cfg.language is not None:
+            return decode(audio, cfg.language)
+        return _by_region(audio, cfg, engine, decode)
+    finally:
+        glossary.save()
+
+
+def _by_region(audio: AudioArray, cfg: Config, engine: Engine, decode) -> list[Segment]:
     out: list[Segment] = []
     prev_lang: str | None = None
     for a, b in speech_regions(audio, cfg):
         lang, prob = engine.detect_language(audio[a:b], prev_lang=prev_lang)
         off = a / SAMPLE_RATE
-        for s in engine.transcribe(audio[a:b], language=lang):
+        for s in decode(audio[a:b], lang):
             out.append(Segment(
                 s.start + off, s.end + off, s.text, lang, s.is_final, prob, s.turn,
                 [Word(w.text, w.start + off, w.end + off) for w in s.words],

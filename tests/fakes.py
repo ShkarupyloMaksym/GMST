@@ -40,9 +40,11 @@ class FakeEngine:
         *,
         language: str | None = None,
         prompt: str | None = None,
+        hotwords: str | None = None,
     ) -> list[Segment]:
         idx = len(self.calls)
-        self.calls.append({"samples": len(audio), "language": language, "prompt": prompt})
+        self.calls.append({"samples": len(audio), "language": language, "prompt": prompt,
+                           "hotwords": hotwords})
         if self._callable is not None:
             src = self._callable(audio, idx)
         else:

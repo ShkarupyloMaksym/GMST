@@ -34,6 +34,12 @@ class Config:
     lid_languages: tuple[str, ...] = ("en", "uk")  # LID picks only among these; ru counts as uk
     lid_settle_seconds: float = 3.0    # stream: re-detect until the utterance has this much audio
 
+    # --- term glossary (DECIDE-08): English terms inside Ukrainian speech ---
+    glossary: tuple[str, ...] = ()     # terms fed to every decode (prompt head + hotwords)
+    glossary_autogrow: bool = False    # learn Latin-script terms committed inside Ukrainian text
+    glossary_path: Path | None = None  # where the grown list persists (one term per line)
+    glossary_max_terms: int = 100
+
     # --- audio capture (stream / listen) ---
     input_device: int | str | None = None   # sounddevice id, or name substring
     block_ms: int = 100                      # capture callback block size
@@ -87,9 +93,10 @@ _NUMERIC: dict[str, tuple[type, float, float | None]] = {
     "overlap_seconds": (float, 0.0, None),
     "sse_port": (int, 1, 65535),
     "turn_gap_seconds": (float, 0.0, None),
+    "glossary_max_terms": (int, 1, None),
 }
 
-_BOOLS = frozenset({"word_timestamps"})
+_BOOLS = frozenset({"word_timestamps", "glossary_autogrow"})
 _STRINGS = frozenset({"model_size", "model_repo"})
 _LANGUAGES = frozenset({"en", "uk"})  # `stream --language` already restricts to these
 _LANG_CODE_LEN = (2, 3)  # Whisper language codes: "en", "uk", "haw", "yue"
@@ -142,6 +149,12 @@ def _coerce(key: str, value: object) -> object:
                 f'language: {value!r} is not one of {sorted(_LANGUAGES)} (or "auto")'
             )
         return value
+    if key == "glossary":
+        if not isinstance(value, (list, tuple)) or not all(
+            isinstance(v, str) and v.strip() for v in value
+        ):
+            raise ValueError('glossary: expected a list of terms such as ["deploy", "Kubernetes"]')
+        return tuple(v.strip() for v in value)
     if key == "lid_languages":
         if isinstance(value, str):  # GMST_LID_LANGUAGES="en,uk"
             value = [v.strip() for v in value.split(",") if v.strip()]
@@ -166,7 +179,7 @@ def _merge(base: Config, data: dict[str, object]) -> Config:
         raise ValueError(f"unknown config keys: {', '.join(sorted(unknown))}")
     updates: dict[str, object] = {}
     for key, value in data.items():
-        if key == "out_path" and value is not None:
+        if key in ("out_path", "glossary_path") and value is not None:
             value = Path(str(value))
         else:
             if key == "language" and value == "auto":

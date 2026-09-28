@@ -126,6 +126,11 @@ word-level EN↔UK within a sentence is not solved.
   (X.2: restricted LID ≥ 95 % at 3 s, 88–90 % on Ukrainian at 2 s). A short utterance commits at
   its endpoint with its last detection. Word-level EN terms *inside* Ukrainian are DECIDE-08's
   glossary, not LID.
+- **Term glossary (DECIDE-08, `gmst/glossary.py`):** `glossary` terms go to every decode as the
+  head of the prompt (inside the 600-character cap) and as faster-whisper `hotwords`
+  (`Engine.transcribe(..., hotwords=)`, passed only when there are terms; mlx ignores it).
+  `glossary_autogrow` learns Latin-script tokens committed inside `uk` text (never from `en`
+  utterances), capped, persisted to `glossary_path`. Off by default — it costs decode time.
 - `gmst stream --language en|uk` bypasses LID for known-monolingual meetings.
 - Never rely on global `language=None` autodetect — it biases to English.
 

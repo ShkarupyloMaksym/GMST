@@ -49,10 +49,12 @@ class FasterWhisperEngine:
         *,
         language: str | None = None,
         prompt: str | None = None,
+        hotwords: str | None = None,
     ) -> list[Segment]:
         audio = np.ascontiguousarray(audio, dtype=np.float32)
         fw_segments, info = self._model.transcribe(
             audio,
+            hotwords=hotwords,
             language=language,
             multilingual=language is None and not self._per_segment_lid,
             initial_prompt=prompt,

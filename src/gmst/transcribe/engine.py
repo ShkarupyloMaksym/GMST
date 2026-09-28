@@ -28,8 +28,11 @@ class Engine(Protocol):
         *,
         language: str | None = None,
         prompt: str | None = None,
+        hotwords: str | None = None,
     ) -> list[Segment]:
         """Transcribe one buffer. ``language=None`` lets the backend detect per segment.
+        ``hotwords`` carries the term glossary (DECIDE-08); callers pass it only when there are
+        terms, and a backend without such a parameter may ignore it (the prompt carries them too).
 
         Streaming callers always pass ``vad_filter=False`` semantics (silence is cut upstream by
         ``segment/vad.py``); batch callers may let the backend filter.

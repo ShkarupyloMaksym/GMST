@@ -50,6 +50,7 @@ class MlxWhisperEngine:
         *,
         language: str | None = None,
         prompt: str | None = None,
+        hotwords: str | None = None,  # no such mlx_whisper option: the prompt carries the terms
     ) -> list[Segment]:
         import mlx_whisper
 

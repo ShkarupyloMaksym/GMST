@@ -36,6 +36,7 @@ from dataclasses import dataclass
 
 from gmst.audio.types import SAMPLE_RATE
 from gmst.config import Config
+from gmst.glossary import make_glossary
 from gmst.reconcile import LocalAgreement
 from gmst.segment.endpointer import Endpointer
 from gmst.segment.turns import TurnTracker
@@ -93,6 +94,7 @@ def run_stream(
     ep = Endpointer(cfg, vad)
     agree = LocalAgreement()
     turns = TurnTracker(cfg.turn_gap_seconds)
+    glossary = make_glossary(cfg)
     stats = StreamStats()
 
     committed: list[str] = []
@@ -108,6 +110,8 @@ def run_stream(
         t0 = ep.t0_seconds + words[0].start
         t1 = ep.t0_seconds + words[-1].end
         turn = turns.update(t0, t1) if final else turns.turn
+        if final:
+            glossary.observe(" ".join(w.text for w in words), lang=lang)
         abs_words = [Word(w.text, ep.t0_seconds + w.start, ep.t0_seconds + w.end) for w in words]
         sink.emit(
             Segment(t0, t1, " ".join(w.text for w in words), lang or "",
@@ -127,8 +131,14 @@ def run_stream(
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
             settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
-        prompt = " ".join(committed[-_PROMPT_WORDS:])[-_PROMPT_CHARS:] or None
-        segs = engine.transcribe(audio, language=call_lang, prompt=prompt)
+        tail = " ".join(committed[-_PROMPT_WORDS:])
+        if glossary:  # terms first, inside the same cap (DECIDE-08)
+            prompt = glossary.prompt(tail, max_chars=_PROMPT_CHARS)
+            segs = engine.transcribe(audio, language=call_lang, prompt=prompt,
+                                     hotwords=glossary.hotwords())
+        else:
+            prompt = tail[-_PROMPT_CHARS:] or None
+            segs = engine.transcribe(audio, language=call_lang, prompt=prompt)
         stats.decodes += 1
         return _words_of(segs), call_lang
 
@@ -247,6 +257,10 @@ def run_stream(
         except Exception:  # noqa: BLE001 - never lose the sink because the final flush failed
             logging.getLogger(__name__).exception("final flush failed; closing sink anyway")
         finally:
+            try:
+                glossary.save()
+            except OSError:  # a read-only glossary_path must not cost the transcript
+                logging.getLogger(__name__).exception("could not save the glossary")
             sink.close()
 
     return stats

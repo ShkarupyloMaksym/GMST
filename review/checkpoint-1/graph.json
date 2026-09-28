@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 11:25 UTC",
+ "generated": "2026-09-28 11:27 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -78,12 +78,11 @@
     "F.4",
     "F.5",
     "F.6",
-    "F.7",
-    "F.12"
+    "F.7"
    ],
    "depth": 0,
    "leaves_total": 12,
-   "leaves_done": 7,
+   "leaves_done": 8,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -495,11 +494,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -509,13 +508,13 @@
    "file": "tasks/F.12-auto-growing-glossary.md",
    "summary": "Implement DECIDE-08. Config: `glossary` (list of terms, default empty), `glossary_autogrow` (bool, default false), `glossary_path` (optional file the grown list persists to, one term per line), `glossary_max_terms` (cap, default 100). Every decode (batch and stream) passes the glossary to the engine: as a leading part of `initial_prompt` (before the committed-text tail, within the existing 600-cha",
    "instructions": "Implement DECIDE-08. Config: `glossary` (list of terms, default empty), `glossary_autogrow` (bool, default false), `glossary_path` (optional file the grown list persists to, one term per line), `glossary_max_terms` (cap, default 100). Every decode (batch and stream) passes the glossary to the engine: as a leading part of `initial_prompt` (before the committed-text tail, within the existing 600-character cap — terms first) and, for faster-whisper, as `hotwords`. Autogrow adds Latin-script tokens of ≥ 2 letters that appear in *committed* text (they are what the model already got right, so later occurrences stay consistent), de-duplicated case-insensitively, most-recent kept under the cap, written to `glossary_path` on sink close. Off by default and fully removable for speed (the user's words). Extend the `Engine` protocol only if needed (a `hotwords` keyword with a default keeps `FakeEngine` and mlx compatible). Tests: prompt contains the terms; autogrow picks up `deploy` from a committed Ukrainian sentence and not Cyrillic words; the cap holds; disabled → prompt unchanged. X.5's terms set, when built, measures term recall with and without it.\n\nProtocol: `verify-then-integrate` skill — regression test first, watch it fail, then fix;\n`uv run pytest -q` and `uv run ruff check .` green; commit with an explicit pathspec. The decision:\nroot PLAN.md \"Review decisions\".",
-   "findings_text": "_(what changed, with the commit)_",
+   "findings_text": "- `gmst/glossary.py`: `Glossary` (`observe`, `prompt`, `hotwords`, `save`) and `make_glossary`.\n- Config: `glossary`, `glossary_autogrow`, `glossary_path`, `glossary_max_terms`, all validated.\n- `Engine.transcribe` gains `hotwords=None`; faster-whisper passes it through, mlx ignores it,\n  `FakeEngine` records it. Callers pass it only with a non-empty glossary, so every existing\n  engine and test double stays compatible.\n- Stream: prompt = terms + committed tail inside 600 chars; finals feed `observe`; saved before\n  `sink.close()` (a failed save is logged, never costs the transcript). Batch: the same per call,\n  saved at the end.\n- Docs: `gmst.example.toml`, PLAN.md config table, CLAUDE.md \"Language mixture\".",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,

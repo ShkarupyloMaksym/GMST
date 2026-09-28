@@ -5,7 +5,7 @@ stage: fix
 kind: task
 agent: orchestrator
 model: sonnet
-status: todo
+status: done
 depends-on: T1
 
 # F.12 — DECIDE-08 fix: config-enabled, auto-growing term glossary
@@ -20,14 +20,28 @@ root PLAN.md "Review decisions".
 
 ## What was read / measured
 
-_(write as you go: files and line ranges read, commands run, where you stopped)_
+Tests first (`tests/test_glossary.py`, 8 tests; collection failed before the module existed):
+autogrow from Ukrainian text only, case-insensitive de-dup + cap keeping the most recent,
+disabled autogrow, persistence round-trip, prompt with terms first inside the cap, config
+validation, stream passes prompt + `hotwords`, no glossary → `hotwords=None`. `uv run pytest -q`
+187 passed; ruff clean. `faster_whisper` 1.2.1 `WhisperModel.transcribe` has `hotwords` (checked
+by `inspect.signature`). `gmst batch` with `glossary = ["Kubernetes", "deploy"]`, tiny, on
+`mix-inter-000.wav` runs end to end (term fidelity itself is unmeasured until X.5's set exists).
 
 ## Findings
 
-_(what changed, with the commit)_
+- `gmst/glossary.py`: `Glossary` (`observe`, `prompt`, `hotwords`, `save`) and `make_glossary`.
+- Config: `glossary`, `glossary_autogrow`, `glossary_path`, `glossary_max_terms`, all validated.
+- `Engine.transcribe` gains `hotwords=None`; faster-whisper passes it through, mlx ignores it,
+  `FakeEngine` records it. Callers pass it only with a non-empty glossary, so every existing
+  engine and test double stays compatible.
+- Stream: prompt = terms + committed tail inside 600 chars; finals feed `observe`; saved before
+  `sink.close()` (a failed save is logged, never costs the transcript). Batch: the same per call,
+  saved at the end.
+- Docs: `gmst.example.toml`, PLAN.md config table, CLAUDE.md "Language mixture".
 
 ## Could not check
 
-_(and why)_
+Whether the glossary actually keeps English terms in Latin script (and its latency cost) needs X.5's terms set: term recall with vs without, measured when it exists.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded
