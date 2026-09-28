@@ -1,0 +1,11 @@
+--- /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/reconcile.py.orig	2026-09-28 09:35:57.168653776 +0300
++++ /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/reconcile.py	2026-09-28 09:35:57.169695594 +0300
+@@ -51,7 +51,7 @@
+         for k in range(min(len(words), len(self._committed)), 0, -1):
+             if [_norm(w) for w in words[:k]] == [_norm(w) for w in self._committed[-k:]]:
+                 return k
+-        return -1
++        return 0  # MUTATION 1: contradiction disabled
+ 
+     def push(self, hypothesis: list[str]) -> tuple[list[str], list[str]]:
+         """Feed a new full-hypothesis token list. Returns ``(newly_committed, pending)``."""

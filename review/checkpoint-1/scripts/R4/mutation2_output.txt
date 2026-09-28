@@ -1,0 +1,32 @@
+........F....                                                            [100%]
+=================================== FAILURES ===================================
+_____ test_forced_cut_never_re_commits_the_overlap_or_moves_time_backwards _____
+
+    def test_forced_cut_never_re_commits_the_overlap_or_moves_time_backwards():
+        # max_buffer_seconds=1.0 with overlap_seconds=0.5 forces a cut roughly every second, and the
+        # retained half-second is handed straight back to the engine.
+        cfg = _cfg(
+            min_chunk_seconds=0.5,
+            max_buffer_seconds=1.0,
+            overlap_seconds=0.5,
+            min_silence_ms=100_000,  # all-speech input; only forced cuts can fire
+        )
+        audio = _marked(6)  # 3 s, one word per 0.5 s
+        blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+        sink = RecSink()
+    
+        run_stream(cfg, ListSource(blocks), _marked_engine(), sink, language="en")
+    
+        words = sink.final_words()
+        assert words, "nothing was committed"
+>       assert len(words) == len(set(words)), f"the seam was committed twice: {words}"
+E       AssertionError: the seam was committed twice: ['w10', 'w15', 'w15', 'w20', 'w20', 'w25', 'w25', 'w30', 'w30', 'w35', 'w35']
+E       assert 11 == 6
+E        +  where 11 = len(['w10', 'w15', 'w15', 'w20', 'w20', 'w25', ...])
+E        +  and   6 = len({'w10', 'w15', 'w20', 'w25', 'w30', 'w35'})
+E        +    where {'w10', 'w15', 'w20', 'w25', 'w30', 'w35'} = set(['w10', 'w15', 'w15', 'w20', 'w20', 'w25', ...])
+
+tests/test_stream_pipeline.py:283: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stream_pipeline.py::test_forced_cut_never_re_commits_the_overlap_or_moves_time_backwards
+1 failed, 12 passed in 0.28s

@@ -1,0 +1,75 @@
+FF.......F...                                                            [100%]
+=================================== FAILURES ===================================
+_____________ test_progressive_commit_endpoint_and_shutdown_flush ______________
+
+    def test_progressive_commit_endpoint_and_shutdown_flush():
+        blocks = [_loud(0.1)] * 5 + [_silent(0.1)] * 4
+        src = ListSource(blocks)
+        engine = FakeEngine(
+            [
+                [Segment(0.0, 0.5, "hello", "en")],
+                [Segment(0.0, 0.6, "hello world", "en")],
+                [Segment(0.0, 0.6, "hello world", "en")],
+            ]
+        )
+        sink = RecSink()
+    
+        stats = run_stream(_cfg(), src, engine, sink, language="en")
+    
+        assert sink.closed is True
+>       assert sink.final_words() == ["hello", "world"]
+E       AssertionError: assert ['hello', 'he...llo', 'world'] == ['hello', 'world']
+E         
+E         At index 1 diff: 'hello' != 'world'
+E         Left contains 3 more items, first extra item: 'world'
+E         Use -v to get more diff
+
+tests/test_stream_pipeline.py:100: AssertionError
+___________ test_language_is_detected_per_utterance_when_not_pinned ____________
+
+    def test_language_is_detected_per_utterance_when_not_pinned():
+        src = ListSource([_loud(0.1)] * 4 + [_silent(0.1)] * 3)
+        engine = FakeEngine(
+            [[Segment(0.0, 0.4, "привіт", "uk")], [Segment(0.0, 0.4, "привіт", "uk")]],
+            lang="uk",
+            lang_prob=0.93,
+        )
+        sink = RecSink()
+    
+        run_stream(_cfg(), src, engine, sink, language=None)
+    
+>       assert [s.language for s in sink.segs if s.is_final] == ["uk"]
+E       AssertionError: assert ['uk', 'uk'] == ['uk']
+E         
+E         Left contains one more item: 'uk'
+E         Use -v to get more diff
+
+tests/test_stream_pipeline.py:121: AssertionError
+_____ test_committed_audio_is_trimmed_so_the_decoded_buffer_stays_bounded ______
+
+    def test_committed_audio_is_trimmed_so_the_decoded_buffer_stays_bounded():
+        cfg = _cfg(min_chunk_seconds=0.5, max_buffer_seconds=15.0, min_silence_ms=100_000)
+        audio = _marked(40)  # 20 s of unbroken speech — no endpoint, no forced cut
+        blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+        engine = _marked_engine()
+        sink = RecSink()
+    
+        run_stream(cfg, ListSource(blocks), engine, sink, language="en")
+    
+        biggest = max(c["samples"] for c in engine.calls)
+        assert biggest < 4 * SAMPLE_RATE, f"buffer grew to {biggest / SAMPLE_RATE:.1f}s without a trim"
+        words = sink.final_words()
+        assert len(words) >= 30
+>       assert len(words) == len(set(words)), "a trimmed word was committed twice"
+E       AssertionError: a trimmed word was committed twice
+E       assert 60 == 40
+E        +  where 60 = len(['w10', 'w10', 'w15', 'w20', 'w20', 'w25', ...])
+E        +  and   40 = len({'w10', 'w100', 'w105', 'w110', 'w115', 'w120', ...})
+E        +    where {'w10', 'w100', 'w105', 'w110', 'w115', 'w120', ...} = set(['w10', 'w10', 'w15', 'w20', 'w20', 'w25', ...])
+
+tests/test_stream_pipeline.py:306: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stream_pipeline.py::test_progressive_commit_endpoint_and_shutdown_flush
+FAILED tests/test_stream_pipeline.py::test_language_is_detected_per_utterance_when_not_pinned
+FAILED tests/test_stream_pipeline.py::test_committed_audio_is_trimmed_so_the_decoded_buffer_stays_bounded
+3 failed, 10 passed in 0.13s

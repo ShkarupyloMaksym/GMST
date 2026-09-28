@@ -1,0 +1,17 @@
+--- /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/audio/device_source.py.orig	2026-09-28 09:42:55.377872629 +0300
++++ /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/audio/device_source.py	2026-09-28 09:42:59.646898508 +0300
+@@ -150,12 +150,8 @@
+         try:
+             self._q.put_nowait(block)
+         except queue.Full:
+-            try:
+-                self._q.get_nowait()
+-                self._stats.blocks_dropped += 1
+-            except queue.Empty:
+-                pass
+-            self._q.put_nowait(block)
++            # MUTATION 5: drop the newest block instead of the oldest (queue left untouched).
++            self._stats.blocks_dropped += 1
+ 
+     def blocks(self):
+         """Yield 16 kHz mono float32 blocks until ``close()``, then drain what was captured.

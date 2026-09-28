@@ -1,0 +1,12 @@
+--- /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/pipeline/stream.py.orig	2026-09-28 09:36:54.599922673 +0300
++++ /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/pipeline/stream.py	2026-09-28 09:37:46.825446237 +0300
+@@ -184,7 +184,8 @@
+                 if cut > 0:
+                     done = o + len(newly)
+                     agree.rebase(
+-                        [w.text for w in hyp[:done] if w.end > cut],
++                        # MUTATION 3b: no anchor survives the trim at all.
++                        [],
+                         [w.text for w in hyp[done:]],
+                     )
+                     last_pending = []  # its spans are relative to the pre-trim buffer

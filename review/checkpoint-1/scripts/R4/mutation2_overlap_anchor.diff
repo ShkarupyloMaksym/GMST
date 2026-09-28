@@ -1,0 +1,13 @@
+--- /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/pipeline/stream.py.orig	2026-09-28 09:36:20.576105885 +0300
++++ /tmp/claude-1000/-home-maxymus-code-for-soul-GMST/ad1c5e12-5552-4a68-8411-df525b643eee/scratchpad/gmst_mut/src/gmst/pipeline/stream.py	2026-09-28 09:36:25.878560297 +0300
+@@ -166,7 +166,9 @@
+                     cut = max(0.0, ep.buffer_seconds - cfg.overlap_seconds)
+                     done = o + len(newly) + len(rest)
+                     agree.rebase(
+-                        [w.text for w in hyp[:done] if w.end > cut],
++                        # MUTATION 2: drop the overlap anchor (as if none of the committed
++                        # words survived the cut) while the audio itself is still retained.
++                        [],
+                         [w.text for w in hyp[done:] if w.end > cut],
+                     )
+                 else:

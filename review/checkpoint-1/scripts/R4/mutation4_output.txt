@@ -1,0 +1,38 @@
+.......F.....                                                            [100%]
+=================================== FAILURES ===================================
+__________ test_sink_is_closed_even_when_the_engine_dies_mid_meeting ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-maxymus/pytest-10/test_sink_is_closed_even_when_0')
+
+    def test_sink_is_closed_even_when_the_engine_dies_mid_meeting(tmp_path):
+        """An engine failure must not cost the transcript: SrtSink only writes its file in close()."""
+    
+        class DyingEngine(FakeEngine):
+            def transcribe(self, audio, *, language=None, prompt=None):
+                if len(self.calls) >= 3:
+                    self.calls.append({"samples": len(audio), "language": language, "prompt": prompt})
+                    raise RuntimeError("engine died")
+                return super().transcribe(audio, language=language, prompt=prompt)
+    
+        p = tmp_path / "o.srt"
+        engine = DyingEngine(
+            [
+                [Segment(0.0, 0.1, "w0", "en")],
+                [Segment(0.0, 0.2, "w0 w1", "en")],
+                [Segment(0.0, 0.3, "w0 w1", "en")],
+            ]
+        )
+        sink = SrtSink(p)
+    
+        with pytest.raises(RuntimeError, match="engine died"):
+            run_stream(_cfg(), ListSource([_loud(0.1)] * 6), engine, sink, language="en")
+    
+>       assert p.exists()
+E       AssertionError: assert False
+E        +  where False = exists()
+E        +    where exists = PosixPath('/tmp/pytest-of-maxymus/pytest-10/test_sink_is_closed_even_when_0/o.srt').exists
+
+tests/test_stream_pipeline.py:261: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stream_pipeline.py::test_sink_is_closed_even_when_the_engine_dies_mid_meeting
+1 failed, 12 passed in 0.18s

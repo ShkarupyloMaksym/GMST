@@ -1,0 +1,39 @@
+........................................................................ [ 52%]
+............FF..................................................         [100%]
+=================================== FAILURES ===================================
+_____________________ test_revised_prefix_never_re_commits _____________________
+
+    def test_revised_prefix_never_re_commits():
+        la = LocalAgreement()
+        la.push(tokenize("hello world"))
+        la.push(tokenize("hello world foo"))          # commits hello, world
+        assert la.committed == ["hello", "world"]
+    
+        # the model now revises a word it already emitted as final ("hello" -> "hi").
+        # Committing from index 0 would put "hello world" in the transcript a second time.
+>       assert la.push(tokenize("hi world foo")) == ([], [])
+E       AssertionError: assert ([], ['hi', 'world', 'foo']) == ([], [])
+E         
+E         At index 1 diff: ['hi', 'world', 'foo'] != []
+E         Use -v to get more diff
+
+tests/test_reconcile.py:67: AssertionError
+___________________ test_flush_drops_a_tail_it_cannot_place ____________________
+
+    def test_flush_drops_a_tail_it_cannot_place():
+        la = LocalAgreement()
+        la.push(tokenize("hello world"))
+        la.push(tokenize("hello world foo"))          # commits hello, world
+        la.push(tokenize("hi world foo"))             # contradicts the committed prefix
+>       assert la.flush() == []                       # dropping beats duplicating the utterance
+        ^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert ['hi', 'world', 'foo'] == []
+E         
+E         Left contains 3 more items, first extra item: 'hi'
+E         Use -v to get more diff
+
+tests/test_reconcile.py:82: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reconcile.py::test_revised_prefix_never_re_commits - Assert...
+FAILED tests/test_reconcile.py::test_flush_drops_a_tail_it_cannot_place - Ass...
+2 failed, 134 passed, 4 deselected in 4.44s
