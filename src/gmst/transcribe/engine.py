@@ -2,8 +2,9 @@
 
 Backends live in ``transcribe/backends/`` and each implement this Protocol:
 
-- ``faster_whisper`` — portable default; CPU ``int8`` on Apple Silicon, CUDA elsewhere. LID is done
-  in-pass (``multilingual=True``), so ``detect_language`` shares the decode work.
+- ``faster_whisper`` — portable default; CPU ``int8`` on Apple Silicon, CUDA elsewhere.
+  ``detect_language`` is one separate encoder pass (``WhisperModel.detect_language``), not the
+  decode's in-pass LID, which has no uk/ru handling and no per-segment result to read back.
 - ``mlx_whisper`` — Mac fast path (Apple GPU). ``detect_language`` costs one extra encoder pass.
 - ``canary`` — optional (Phase 4); no built-in LID, needs an external one.
 
@@ -40,7 +41,7 @@ class Engine(Protocol):
     ) -> tuple[str, float]:
         """Return ``(iso_code, probability)`` for the dominant language in ``audio``.
 
-        Applies GMST's LID policy (uk/ru tie-break + sticky threshold vs ``prev_lang``); see
-        ``transcribe/lid.py``.
+        Applies GMST's LID policy (restricted to ``cfg.lid_languages``, ``ru`` folded into ``uk``,
+        sticky threshold vs ``prev_lang``); see ``transcribe/lid.py``.
         """
         ...

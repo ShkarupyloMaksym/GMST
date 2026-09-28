@@ -75,9 +75,13 @@ Candidate set for the Phase 1 benchmark: `large-v2`, `large-v3`, `large-v3-turbo
 Mac) or have no MLX implementation (mlx-whisper exposes LID only as
 `mlx_whisper.decoding.detect_language(model, mel)`, which needs an already-loaded model).
 
-- `faster_whisper` backend: use the in-pass detector — `transcribe(..., multilingual=True,
+- `faster_whisper` backend: ~~use the in-pass detector — `transcribe(..., multilingual=True,
   language_detection_threshold=cfg.lid_threshold, language_detection_segments=1)` does per-segment
-  LID inside the single decode pass. Cheaper than a separate encoder pass.
+  LID inside the single decode pass. Cheaper than a separate encoder pass.~~ *(Corrected
+  2026-09-28, review R2 F8: the code never did this. `detect_language` runs `WhisperModel.
+  detect_language` — one **separate** encoder pass per utterance (stream) or per VAD region
+  (batch) — because faster-whisper 1.2.1's in-pass LID has no uk/ru handling and exposes no
+  per-segment language to read back. It is in the latency budget below for both backends.)*
 - `mlx_whisper` backend: `decoding.detect_language` on the loaded model + mel; counts as one extra
   encoder pass — include it in the latency budget.
 - **Restricted to `lid_languages`** (default `["en", "uk"]`, DECIDE-02, 2026-09-28): probabilities
@@ -103,12 +107,13 @@ file), so Phase 1 must measure it on the target machine before the streaming pha
 class Engine(Protocol):
     def transcribe(self, audio: AudioArray, *, language: str | None = None,
                    prompt: str | None = None) -> list[Segment]: ...
-    def detect_language(self, audio: AudioArray) -> tuple[str, float]: ...
+    def detect_language(self, audio: AudioArray, *,
+                        prev_lang: str | None = None) -> tuple[str, float]: ...
 ```
 
 | Backend | Use | Notes |
 |---|---|---|
-| `faster_whisper` | portable default (Linux/Windows/CI), CPU `int8` or CUDA | in-pass LID; `vad_filter` available but pipeline-owned (see VAD) |
+| `faster_whisper` | portable default (Linux/Windows/CI), CPU `int8` or CUDA | LID = one separate `detect_language` encoder pass per utterance / region; `vad_filter` available but pipeline-owned (see VAD) |
 | `mlx_whisper` | Mac fast path | Apple GPU; `path_or_hf_repo` e.g. `mlx-community/whisper-large-v3-turbo`; no `vad_filter` param; last release 2025-08-29 and pulls `torch` — pin it, fall back to `whisper.cpp` + Core ML if it goes stale |
 | `canary` (NeMo) | optional, Phase 4 | Linux/GPU only; needs external LID; batch/40 s-chunk |
 
@@ -131,7 +136,7 @@ Decomposition, worst-case per committed word:
 | capture block | `block_ms` = 100 ms |
 | endpoint trailing silence | `min_silence_ms` = 600 ms |
 | VAD over the buffer, once per decode (`endpointer.assess`) | Silero: ~10 ms/s of buffer |
-| LID pass (mlx path only) | ~150 ms |
+| LID pass, once per utterance (both backends; R2 F8) | mlx ~150 ms (unmeasured); faster-whisper CPU: R5 measured 0.42 s median for `tiny` on 3 s — large models are X.4 |
 | decode of the unconfirmed buffer | RTF × `buffer_seconds` |
 | agreement lag (≥ 1 extra update by construction) | `update_interval` |
 | **sum** | **≤ 3000 ms** |
@@ -163,7 +168,7 @@ Every row has a defined policy; none of this is optional.
 | Engine falls behind real time | drop-oldest (above) keeps latency bounded; if sustained > 10 s, log a warning suggesting a smaller model |
 | Input device disconnects mid-call | `finished_callback` → `DeviceSource.blocks()` drains what was captured, then raises `DeviceLost`; the shutdown flush still runs, `gmst stream` logs and **exits 3** (auto-reconnect is a later feature) |
 | Device refuses 16 kHz | open at the device's native rate, resample in `resample.py` (never rely on PortAudio silent conversion) |
-| BlackHole / loopback not installed | `gmst devices` and `gmst stream` print the routing setup doc and exit 2 |
+| BlackHole / loopback not installed | ~~`gmst devices` and `gmst stream` print the routing setup doc and exit 2~~ *(amended 2026-09-28, review R3/FIX-25a: never built, and a missing loopback cannot be told from any other missing device.)* A device that does not open exits **1** (bad input, as CLAUDE.md, README and `test_stream_bad_device_returns_1` say) with a one-line pointer to README "Audio routing" |
 | Model not cached | `load_engine` wraps the load; `ModelUnavailable` carries "run `gmst warmup`" and every CLI handler **exits 2** (an unimplemented backend the same way) |
 | All-silence input | VAD emits nothing; sink shows an idle indicator, no hallucinated text |
 | Never-agreeing tail (stutter/disfluency) | force a commit after `max_unconfirmed_seconds` (default 8) **of audio** or `_MAX_STALLED_PUSHES` = 3 updates without progress — both conditions only while something is actually pending |
@@ -199,7 +204,7 @@ src/gmst/
       __init__.py      # load_engine(cfg) factory — lazy import of the chosen backend only
       faster_whisper.py
       mlx_whisper.py
-      canary.py        # optional, Phase 4
+      (canary.py)      # optional, Phase 4 — not created; load_engine raises NotImplementedError
 
   segment/
     vad.py            # speech_regions(): Silero (faster-whisper bundle) or energy RMS gate  [stream]
@@ -218,6 +223,13 @@ src/gmst/
   pipeline/
     batch.py          # file_source -> [VAD regions -> detect_language] -> engine -> sink (DECIDE-03)
     stream.py         # device_source -> endpointer -> engine.detect_language -> engine -> reconcile -> sink
+
+  bench.py            # `gmst bench`: throughput + measured per-update cost per candidate
+  metrics.py          # the shared normalizer; word/char error counts (corpus WER)
+
+eval/                 # not part of the package; data + results in git-ignored eval/results/
+  build_sets.py       # uk (cleaned CV10), en (LibriSpeech test-clean), mixed (inter / nopause)
+  run_eval.py         # GMST vs raw faster-whisper: corpus WER + CIs, LID / switch metrics, --compare
 ```
 
 ### `Segment` timestamp contract (`transcribe/types.py`)

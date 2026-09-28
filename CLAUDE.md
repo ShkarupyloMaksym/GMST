@@ -42,7 +42,13 @@ git-ignored `eval/results/`.
 - `uv run pytest -q` — test suite (model-downloading tests are `@pytest.mark.slow`, deselected by
   default via `addopts = "-m 'not slow'"`; `uv run pytest -m slow` to include them)
 - `uv run pytest tests/test_config.py::test_env_beats_toml` — single test
-- `uv run ruff check .` / `uv run ruff format .` — lint / format
+- `uv run ruff check .` / `uv run ruff format .` — lint / format (`review/` is excluded: frozen
+  evidence probes)
+- `uv run python eval/build_sets.py` — build `eval/results/data/{uk,en,mixed}` from the corpora in
+  `eval/results/raw/` (cleaned CV10 uk, LibriSpeech test-clean)
+- `uv run python eval/run_eval.py --systems gmst-batch,fw-large-v2-forced --gmst-model large-v2` —
+  decode + score (hypotheses cached per system and model in `eval/results/hyp/`);
+  `--score-only` rescans, `--compare A,B` gives the paired WER difference with a 95 % CI
 
 Python pin: `.python-version` is 3.12; `requires-python` is `>=3.11,<3.15`.
 

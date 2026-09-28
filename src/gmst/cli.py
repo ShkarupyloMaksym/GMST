@@ -173,7 +173,9 @@ def _cmd_stream(args: argparse.Namespace, cfg: Config) -> int:
     try:
         source = DeviceSource(cfg, device=args.device).open()
     except (OSError, ValueError) as exc:
-        print(f"cannot open input: {exc}", file=sys.stderr)
+        print(f"cannot open input: {exc}\n"
+              "to capture Meet, route its output through a loopback device — see README "
+              "\"Audio routing\"; `gmst devices` lists the inputs", file=sys.stderr)
         return 1
 
     engine = _load_engine_or_report(cfg, per_segment_lid=False)  # the pipeline runs its own LID
