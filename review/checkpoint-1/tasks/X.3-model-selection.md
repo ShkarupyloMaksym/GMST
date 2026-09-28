@@ -6,7 +6,7 @@ kind: task
 agent: repro-runner
 model: sonnet
 effort: medium
-status: todo
+status: in-progress
 depends-on: F.2
 
 # X.3 — EVID-03: model selection on the full cleaned CV10 uk set

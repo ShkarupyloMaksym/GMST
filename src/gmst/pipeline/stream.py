@@ -50,7 +50,7 @@ from gmst.transcribe.types import Segment, Word
 
 # faster-whisper keeps the last 223 prompt tokens. Ukrainian runs ~0.39 tokens/char (R1: 600
 # chars = 235 tokens), so 560 chars stays inside the window; English is bound first by
-# _PROMPT_WORDS (100 words ~ 126 tokens). Glossary terms (DECIDE-08) share this cap, first.
+# _PROMPT_WORDS (100 words ~ 126 tokens). The glossary is never in the prompt (X.6, F.18).
 _PROMPT_CHARS = 560
 _PROMPT_WORDS = 100  # words scanned before the character cap does the real trimming
 _MAX_COMMITTED = 4000  # the session's committed word list is bounded (2 h+ meetings)
@@ -214,16 +214,12 @@ def run_stream(
             lang = language
             if lang is None:
                 lang, _ = engine.detect_language(clip, prev_lang=prev_lang)
-            if glossary:
-                segs = engine.transcribe(clip, language=lang,
-                                         prompt=glossary.prompt(None, max_chars=_PROMPT_CHARS),
-                                         hotwords=glossary.hotwords())
-            else:
-                segs = engine.transcribe(clip, language=lang)
+            segs = engine.transcribe(clip, language=lang)
             stats.decodes += 1
             emitted = False
             for s in segs:
                 words = [Word(w.text, off + w.start, off + w.end) for w in _words_of([s])]
+                words = glossary.correct_words(words)  # terms back to Latin (DECIDE-08, F.18)
                 if not words:
                     continue
                 text = " ".join(w.text for w in words)
@@ -271,15 +267,10 @@ def run_stream(
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
             settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
-        # this utterance's live-committed words only (F.16), anchor words included (F.15)
-        tail = " ".join(utt_words[-_PROMPT_WORDS:])
-        if glossary:  # terms first, inside the same cap (DECIDE-08)
-            prompt = glossary.prompt(tail, max_chars=_PROMPT_CHARS)
-            segs = engine.transcribe(audio, language=call_lang, prompt=prompt,
-                                     hotwords=glossary.hotwords())
-        else:
-            prompt = tail[-_PROMPT_CHARS:] or None
-            segs = engine.transcribe(audio, language=call_lang, prompt=prompt)
+        # this utterance's live-committed words only (F.16), anchor words included (F.15); the
+        # glossary is never in the prompt (X.6, F.18)
+        prompt = " ".join(utt_words[-_PROMPT_WORDS:])[-_PROMPT_CHARS:] or None
+        segs = engine.transcribe(audio, language=call_lang, prompt=prompt)
         stats.decodes += 1
         return _words_of(segs), call_lang
 

@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 20:08 UTC",
+ "generated": "2026-09-28 22:31 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -210,13 +210,14 @@ const DATA = {
     "F.14",
     "F.15",
     "F.16",
-    "F.17"
+    "F.17",
+    "F.18"
    ],
    "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
-   "leaves_total": 17,
-   "leaves_done": 17,
+   "leaves_total": 18,
+   "leaves_done": 18,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -836,6 +837,42 @@ const DATA = {
    }
   },
   {
+   "id": "F.18",
+   "title": "Glossary as a post-decode corrector; never in the decoder's context",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.6"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.18-glossary-post-correction.md",
+   "summary": "DECIDE-08 revised by the user (2026-09-29, after X.6): \"Correct after decoding\". Remove the glossary from every decode; correct Cyrillic transliterations of the terms in the decoded text.",
+   "instructions": "DECIDE-08 revised by the user (2026-09-29, after X.6): \"Correct after decoding\". Remove the\nglossary from every decode; correct Cyrillic transliterations of the terms in the decoded text.",
+   "findings_text": "- `glossary.py`: `correct_words` / `correct` (transliteration → sound-alike key, SequenceMatcher\n  ≥ 0.75, first letter, ≥ 4 letters, ±35 % length, ≤ 2 trailing letters, run ≤ term words);\n  `prompt` / `hotwords` removed.\n- `stream.py`: live and final decodes carry no glossary; final words corrected. `batch.py`:\n  segments corrected (words or text) and observed.\n- Docs: CLAUDE.md, PLAN.md (config table, prompt row, DECIDE-08 struck and revised),\n  `gmst.example.toml`, `engine.py` (the `hotwords` parameter stays, unused by GMST).",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -857,7 +894,7 @@ const DATA = {
    },
    "file": "tasks/H1-decisions.md",
    "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
-   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.",
+   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.\n\n\n2026-09-29 — **DECIDE-08 revised** after X.6 (the glossary fed to Whisper made WER +28 to +61 pts\nworse): **\"Correct after decoding\"** — the glossary corrects the decoded text and is never fed to\nWhisper (F.18; measured by X.6b).\n- **DECIDE-09 → two-pass streaming** (2026-09-28, after X.1c): live text provisional, each\n  utterance decoded whole as final (F.17; X.1d holds).",
    "findings_text": "All eight DECIDE items answered on 2026-09-28 (see above and root PLAN.md \"Review decisions\").",
    "children": [],
    "state": "done",
@@ -1220,20 +1257,20 @@ const DATA = {
     "X.6",
     "X.1b",
     "X.1c",
-    "X.1d"
+    "X.1d",
+    "X.6b"
    ],
    "state": "in-progress",
    "waiting_on": [
     "X.3",
-    "X.4",
-    "X.6"
+    "X.6b"
    ],
    "depth": 0,
-   "leaves_total": 9,
-   "leaves_done": 6,
+   "leaves_total": 10,
+   "leaves_done": 8,
    "severity_total": {
-    "blocking": 5,
-    "serious": 6,
+    "blocking": 9,
+    "serious": 9,
     "minor": 1
    }
   },
@@ -1353,7 +1390,7 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [
     "F.2"
    ],
@@ -1369,7 +1406,7 @@ const DATA = {
    "instructions": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnight, one model at a time, resumable.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.3/`. Write the clip list to `scripts/X.3/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.\n\n**Amended 2026-09-28 (user, before any X.3 run):** scope is **800** cleaned-CV10 `uk` clips (first\n800 in a fixed seed-0 shuffle, written to `scripts/X.3/clips.txt` first) and the same 500 `en`\nclips, candidates `large-v2`, `large-v3`, `large-v3-turbo`, `Yehor/whisper-large-v3-turbo-quantized-uk`\n— downloads approved for the two turbo models (faster-whisper maps `large-v3-turbo` to\n`mobiuslabsgmbh/faster-whisper-large-v3-turbo`, already partly cached; check whether the turbo-uk\nrepo is CTranslate2-loadable, and convert with `ct2-transformers-converter` into\n`eval/results/models/` if it is not). Per R5 this resolves large-v2 vs large-v3 (~73 paired clips)\nand large-v3 vs turbo (~761) but **not** turbo-uk vs large-v2 (~2,893): report that pair's CI\nas-is, with no ranking claimed unless it excludes 0. The pre-registered rule is otherwise\nunchanged. Runs after X.1 and X.4 (one large model at a time); overnight.",
    "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
@@ -1389,28 +1426,28 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
-    "serious": 0,
+    "serious": 1,
     "minor": 0
    },
    "file": "tasks/X.4-per-update-cost.md",
    "summary": "Extend R5's `scripts/R5/p4_amplification.py` into `scripts/X.4/`: `large-v2` then `large-v3`, CPU int8, buffers 2/4/8/15 s cut from `eval/results/data/en` speech, 10 repetitions each after 2 warm-up calls, median and p90 wall time; `detect_language` on 3 s. Record `nproc`, threads used, and anything else running.",
    "instructions": "Extend R5's `scripts/R5/p4_amplification.py` into `scripts/X.4/`: `large-v2` then `large-v3`, CPU int8, buffers 2/4/8/15 s cut from `eval/results/data/en` speech, 10 repetitions each after 2 warm-up calls, median and p90 wall time; `detect_language` on 3 s. Record `nproc`, threads used, and anything else running.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.4/`. Write the clip list to `scripts/X.4/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.\n\n**Amended 2026-09-28 (before any X.4 run), after F.17 made streaming two-pass:** also time the\n**final pass** — one `transcribe` of a whole utterance, plus one `detect_language` on it — for\nutterances of 2, 5, 10 and 15 s (median of 5 after a warm-up), per model. That is the latency of\nthe final text after an utterance ends. Report it next to the per-update cost; the pre-registered\nrule for the per-update cost is unchanged.",
-   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "findings_text": "**EVID-04 rule:** \"(wall at 4 s + LID) ≤ 1.0 s → 1 update/s is feasible on this CPU; otherwise\nrecord the smallest feasible update interval.\"\n\nRaw numbers (CPU int8, 16 cores, load avg ~4.2–4.6/16 during runs, nothing else large running):\n\n| model | buf 2s med/p90 | buf 4s med/p90 | buf 8s med/p90 | buf 15s med/p90 | LID(3s) med/p90 |\n|---|---|---|---|---|---|\n| large-v2 | 4.035 / 4.300 | 4.536 / 4.745 | 5.014 / 5.703 | 6.402 / 7.616 | 3.533 / 3.559 |\n| large-v3 | 4.377 / 4.498 | 4.818 / 5.141 | 5.448 / 5.755 | 6.534 / 6.748 | 4.030 / 4.044 |\n\nRule check at buffer=4s: large-v2: 4.536 + 3.533 = **8.069 s** → **FAILS** (script's own printed\nverdict: `FAILS`). large-v3: 4.818 + 4.030 = **8.848 s** → **FAILS**.\n\nSmallest feasible update interval on this CPU: none of the tested buffers reach ≤1 s even\nexcluding LID — even the smallest buffer (2 s, effectively a floor since Whisper pads every call\ntoward its internal window) costs 4.0–4.4 s of wall time alone; the per-update decode floor by\nitself is already 4–4.5× the 1 s target before LID is added. 1 update/s is infeasible for either\nlarge model on this CPU; the smallest observed per-call cost (buffer=2s, large-v2, median 4.035 s,\nLID excluded) implies a feasible update interval on the order of ≥5 s if LID is included, ≥4 s if\nnot — both far outside PLAN.md's implicit 1 Hz cadence.\n\n- [fails] EVID-04's rule fails for both `large-v2` and `large-v3` on this CPU (int8): per-update\n  cost at the 4 s reference buffer plus LID is 8.07 s (large-v2) / 8.85 s (large-v3), roughly 8×\n  the 1.0 s budget, not a close miss. `PLAN.md`'s latency budget (`RTF ≤ ~0.15` for a 15 s buffer\n  at 1 update/s, CLAUDE.md \"Latency & throughput\") is not met by either large model on x86 CPU\n  int8 — consistent with CLAUDE.md's own framing that faster_whisper/CPU is the \"portable\n  fallback,\" not the latency-critical path (that's `mlx_whisper` on Apple GPU, MAC-only, not\n  measurable here). This is not new information (R5/EVID-04's own premise already expected this),\n  but it makes the smallest-feasible-interval number concrete: on this CPU, 1 update/s is not\n  reachable by any margin with either large model — a real streaming deployment on the\n  faster_whisper/CPU path would need either a much smaller model, a much larger update interval\n  (≥5–9 s), or a smaller buffer than 4 s — none of which is currently configured as the default\n  (`update_interval`/1.0 s literal in `bench.py:38` is not exposed as a `Config` field at all, so\n  there is no way to raise it without a code change).\n\n**Amended final-pass timing** (F.17 two-pass: one whole-utterance `transcribe` + one\n`detect_language`, median of 5, after 1 warm-up):\n\n| model | utt 2s | utt 5s | utt 10s | utt 15s |\n|---|---|---|---|---|\n| large-v2 transcribe | 4.259 | 4.892 | 5.919 | 6.783 |\n| large-v2 detect_language | 3.487 | 3.526 | 3.535 | 3.521 |\n| large-v2 total | 7.746 | 8.418 | 9.454 | 10.304 |\n| large-v3 transcribe | 4.547 | 5.119 | 5.864 | 6.634 |\n| large-v3 detect_language | 4.024 | 4.020 | 4.030 | 4.006 |\n| large-v3 total | 8.570 | 9.139 | 9.894 | 10.639 |\n\n- [serious] Under F.17's two-pass design, the *final* text for an utterance (the thing CLAUDE.md's\n  \"Streaming reconciliation\" section treats as the reconciled, committed output) is not available\n  until 7.7–10.6 s after the utterance ends, on this CPU, for either large model — this is on top\n  of whatever live LocalAgreement-2 provisional latency already exists. `detect_language` alone\n  costs 3.5–4.0 s regardless of utterance length (it is a fixed per-call cost, not proportional to\n  input, matching R5's finding that Whisper pads every call toward its internal window) and is run\n  a *second* time per utterance under F.17 (once live during LID pinning/detection, once again in\n  `final_pass`) — CLAUDE.md's \"End-to-end target is ≲ 3 s (Phase 3)\" is already stated as aspirational\n  for Phase 3, but F.17's two-pass final-text latency alone (final `transcribe` + final\n  `detect_language`) exceeds tha",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
-    "serious": 0,
+    "serious": 1,
     "minor": 0
    }
   },
@@ -1457,32 +1494,30 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "X.4"
    ],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
-    "serious": 0,
+    "blocking": 4,
+    "serious": 2,
     "minor": 0
    },
    "file": "tasks/X.6-glossary-term-recall.md",
    "summary": "Data: `eval/results/data/terms.jsonl` (200 uk-pods clips from 187 episodes, each reference holding ≥ 1 Latin-script term inside Ukrainian text; built by X.5). Pre-registered here (2026-09-28, before any run):",
    "instructions": "Data: `eval/results/data/terms.jsonl` (200 uk-pods clips from 187 episodes, each reference holding\n≥ 1 Latin-script term inside Ukrainian text; built by X.5). Pre-registered here (2026-09-28,\nbefore any run):\n\n- **Metric:** term recall = share of the reference's Latin terms (the `terms` field) that appear in\n  the hypothesis as the same Latin token, case-insensitive, edge punctuation stripped; plus corpus\n  WER (`gmst.metrics.word_errors`) on the same clips.\n- **Path:** batch per clip, language pinned `uk` (`gmst.pipeline.batch.transcribe_by_region` with\n  `Config(language=\"uk\", ...)`), `small` and `large-v2`.\n- **Conditions:** (a) no glossary; (b) static glossary = the 100 most frequent Latin terms (same\n  tokenizer as X.5) in `eval/results/raw/uk-pods_pods_train.json` `text_no_preprocessing`, which\n  does not include the 200 test clips — check and report the overlap of clip ids; (c) autogrow\n  only — `glossary_autogrow = true`, starting empty, one `Glossary` object carried across the 200\n  clips in manifest order (the `Glossary` API in `src/gmst/glossary.py`: decode each clip with its\n  prompt/hotwords, then `observe` the output).\n- **Rule:** recommend enabling a glossary (b or c) only if its term recall is ≥ 10.0 pts above (a)\n  **and** its WER is ≤ (a)'s + 1.0 pt, for both models. Otherwise record that it does not earn its\n  latency and leave it off by default.\n\nAlso report decode time per clip for each condition (the latency cost the user accepted), and 10\nexample terms that (a) got wrong and (b)/(c) got right, and vice versa. Read first: root\n`CLAUDE.md`, `src/gmst/glossary.py`, `tasks/X.5-*.md`, this file. Offline, one large model at a\ntime (`pgrep -af python` first), main tree `.venv`, no clone; write only this node file and\n`scripts/X.6/`.",
-   "findings_text": "_(numbers against the rule)_",
+   "findings_text": "Summary table (term recall = hit/total Latin terms, corpus WER, both pre-registered; `n_to` =\nclips that hit the per-clip decode timeout used to keep this probe inside budget — 30 s for\n`small`, 45 s for `large-v2`):\n\n| model | n | cond | wall_s | s/clip | recall | Δrecall | WER | ΔWER | n_to |\n|---|---|---|---|---|---|---|---|---|---|\n| small | 200 | (a) none | 254.3 | 1.3 | 0.438 | — | 0.208 | — | 0 |\n| small | 200 | (b) static-100 | 1090.5 | 5.5 | 0.414 | **−2.4** | 0.822 | **+61.4** | 0 |\n| small | 200 | (c) autogrow | 1226.6 | 6.1 | 0.464 | **+2.6** | 0.632 | **+42.4** | 0 |\n| large-v2 | 100 | (a) none | 651.7 | 6.5 | 0.617 | — | 0.110 | — | 0 |\n| large-v2 | 100 | (b) static-100 | 1386.7 | 13.9 | 0.346 | **−27.1** | 0.544 | **+43.4** | **10** |\n| large-v2 | 100 | (c) autogrow | 791.8 | 7.9 | 0.463 | **−15.4** | 0.392 | **+28.2** | 0 |\n\n(`scripts/X.6/results_small_200.json`, `scripts/X.6/results_large-v2_100.json`.)\n\n- **[blocking] Against the pre-registered decision rule (recall ≥ (a)+10 pts AND WER ≤ (a)+1.0 pt,\n  both required, for both models), both glossary conditions fail on both models, on both legs, by\n  a wide margin.** (b)'s recall delta is *negative* on both models (−2.4, −27.1 pts); (c)'s recall\n  delta reaches the required direction but never close to +10 pts (+2.6, −15.4 — also negative on\n  large-v2), and every WER delta is catastrophic (+28 to +61 points). The glossary should stay off\n  by default, and — beyond the pre-registered rule's own \"doesn't earn its keep\" framing — turning\n  it on is actively harmful to both accuracy and latency, not merely a slower path that trades\n  speed for fidelity as `PLAN.md`'s DECIDE-08 rationale implies (\"off for speed\").\n\n- **[blocking] Root cause, found by reading the vendored dependency, not just observing behaviour:\n  `faster_whisper.transcribe.WhisperModel.get_prompt` (`.venv/lib/python3.12/site-packages/faster_whisper/transcribe.py:1532-1550`)\n  puts `hotwords` and `initial_prompt` into the *same* `sot_prev` context block** —\n  `prompt.append(tokenizer.sot_prev)`, then `if hotwords: prompt.extend(hotwords_tokens)`, then\n  `if previous_tokens: prompt.extend(previous_tokens...)` where `previous_tokens` carries the\n  `initial_prompt` tokens (built at line 1143-1149 of the same file). `src/gmst/pipeline/batch.py:72-76`\n  and `src/gmst/pipeline/stream.py:220,279` call `engine.transcribe(..., prompt=glossary.prompt(...),\n  hotwords=glossary.hotwords())` — i.e. **every decode with a non-empty glossary puts the same term\n  list into the decoder's context twice** (once as the `initial_prompt` head via `Glossary.prompt`,\n  `src/gmst/glossary.py:76-84`, once again as `hotwords`, `src/gmst/glossary.py:73-74`). This\n  doubles the amount of glossary content ahead of the actual decode and is a plausible mechanism\n  for the observed failure, not just a correlation — confirmed by the qualitative pattern below,\n  where several worst-case hypotheses are close to *literally the glossary content itself*.\n\n- **[blocking] The failure mode is not just lower accuracy — it materially changes what comes out**,\n  in ways a user could not simply \"accept as a tradeoff\":\n  - Repetition loops of glossary terms replacing the actual transcript, e.g. clip\n    `751dbede-1265-4654-95eb-d7714d75c4b4_0164` (small, cond b): reference \"Він записав історію про\n    те, як він сам бореться з anxiety...\"; hypothesis: `\"on, go, Podcasts, Free, on, go, Podcasts,\n    Free, on, go,\"` — no audio content at all, just glossary-adjacent tokens looping.\n  - Whole hypotheses reduced to what looks like glossary vocabulary dumped verbatim, e.g. clip\n    `b5379c68-ba83-4ffa-8244-b4ef8f1748e4_0050` (small, cond c, once glossary reached its 100-term\n    cap): reference \"До такої моделі Smart City є ряд випросів.\"; hypothesis: `\"ForSage Super Mario\n    Vengeance Batman overhyped Shadow of the Ramboot\"` — six glossary-style terms, none of which\n    are in the reference, replacing the sentence entirely.\n  - Ukrainian decoded as ",
    "children": [],
-   "state": "waiting",
-   "waiting_on": [
-    "X.4"
-   ],
+   "state": "done",
+   "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
+    "blocking": 4,
+    "serious": 2,
     "minor": 0
    }
   },
@@ -1665,6 +1700,42 @@ const DATA = {
    "severity_total": {
     "blocking": 0,
     "serious": 1,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.6b",
+   "title": "DECIDE-08 revised: glossary as post-decode correction, scored on X.6's no-glossary outputs",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "F.18"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.6b-glossary-post-correction.md",
+   "summary": "User, 2026-09-29, after X.6: \"Correct after decoding\" — the glossary no longer goes into Whisper; it corrects Cyrillic transliterations of English terms in the decoded text. Pre-registered here, **before the corrector exists** (F.18), so nothing is tuned on these clips:",
+   "instructions": "User, 2026-09-29, after X.6: \"Correct after decoding\" — the glossary no longer goes into Whisper;\nit corrects Cyrillic transliterations of English terms in the decoded text. Pre-registered here,\n**before the corrector exists** (F.18), so nothing is tuned on these clips:\n\n- **Inputs:** X.6's condition (a) hypotheses — `scripts/X.6/results_small_200.json` `a_hyps`\n  (200 clips) and `results_large-v2_100.json` `a_hyps` (100) — no decoding.\n- **Glossaries:** (b') the 100 most frequent Latin terms in `uk-pods_pods_train.json`\n  `text_no_preprocessing` **excluding every clip id in `terms.jsonl`** (X.6's static list leaked\n  179/200); (c') autogrow only — correction plus `observe` over the clips in manifest order,\n  starting empty.\n- **Metric and rule:** X.6's, unchanged — recommend (b') or (c') only if term recall ≥ (a) + 10.0\n  pts and WER ≤ (a) + 1.0 pt, for both models. Also report every replacement the corrector made\n  that is *not* a reference term (false positives), with the text.\n- **Corrector design fixed in F.18 before scoring:** transliterate Cyrillic runs of 1–3 tokens,\n  compare to each term on a crude sound-alike key (SequenceMatcher ≥ 0.75, first letter equal,\n  length within ±35 %, ≥ 4 letters, up to 2 trailing letters tolerated for Ukrainian case\n  endings). No threshold may be changed after the first score. *(Amended before any score, from\n  the unit tests' own examples: a run may not have more words than the term — the ending\n  tolerance was swallowing the next short word, \"деплой на\" → \"deploy\".)*",
+   "findings_text": "_(numbers against the rule)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
     "minor": 0
    }
   },

@@ -44,6 +44,12 @@ The orchestrator lists every `DECIDE-nn` here with the options, the evidence for
   GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.
 
 
+2026-09-29 — **DECIDE-08 revised** after X.6 (the glossary fed to Whisper made WER +28 to +61 pts
+worse): **"Correct after decoding"** — the glossary corrects the decoded text and is never fed to
+Whisper (F.18; measured by X.6b).
+- **DECIDE-09 → two-pass streaming** (2026-09-28, after X.1c): live text provisional, each
+  utterance decoded whole as final (F.17; X.1d holds).
+
 ## What was read / measured
 
 2026-09-28, answered in session:

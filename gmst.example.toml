@@ -23,10 +23,10 @@
 #                                     # audio, committing nothing before (0 = detect once)
 
 # --- term glossary: English terms inside Ukrainian speech (DECIDE-08) ---
-# glossary            = ["deploy", "pull request", "Kubernetes"]  # prompt head + hotwords
+# glossary            = ["deploy", "pull request", "Kubernetes"]  # "деплой" -> "deploy" after decoding
 # glossary_autogrow   = false         # learn Latin-script terms committed inside Ukrainian text
 # glossary_path       = "glossary.txt" # grown list persists here (one term per line)
-# glossary_max_terms  = 100           # a longer glossary costs decode time; empty = off
+# glossary_max_terms  = 100           # most recent kept; empty glossary = off
 
 # --- audio capture ---
 # input_device = "BlackHole"          # sounddevice id (int) or name substring; see `gmst devices`

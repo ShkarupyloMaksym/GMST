@@ -129,11 +129,14 @@ word-level EN↔UK within a sentence is not solved.
   (X.2: restricted LID ≥ 95 % at 3 s, 88–90 % on Ukrainian at 2 s). A short utterance commits at
   its endpoint with its last detection. Word-level EN terms *inside* Ukrainian are DECIDE-08's
   glossary, not LID.
-- **Term glossary (DECIDE-08, `gmst/glossary.py`):** `glossary` terms go to every decode as the
-  head of the prompt (inside the 600-character cap) and as faster-whisper `hotwords`
-  (`Engine.transcribe(..., hotwords=)`, passed only when there are terms; mlx ignores it).
-  `glossary_autogrow` learns Latin-script tokens committed inside `uk` text (never from `en`
-  utterances), capped, persisted to `glossary_path`. Off by default — it costs decode time.
+- **Term glossary (DECIDE-08, `gmst/glossary.py`) — a post-decode corrector, never a decoder
+  input.** `Glossary.correct_words` replaces runs of 1–3 Cyrillic words that sound like a term
+  ("деплой", "пул реквест") with the term, keeping word timings; applied to final text (stream)
+  and batch output. `glossary_autogrow` learns Latin-script tokens written inside `uk` text
+  (never from `en` utterances), capped, persisted to `glossary_path`. Until F.18 it was fed to
+  Whisper as prompt head + faster-whisper `hotwords` (which share one context block, so the terms
+  went in twice): review X.6 measured WER +28 to +61 pts, loops and >45 s decodes. **Do not put
+  the glossary back into the decoder's context.**
 - `gmst stream --language en|uk` bypasses LID for known-monolingual meetings.
 - Never rely on global `language=None` autodetect — it biases to English.
 
@@ -162,7 +165,7 @@ trailing punctuation) but emitting original text. Plus: forced commit after
 `initial_prompt` = the committed text **of the current utterance** (cleared at each endpoint —
 a session-long prompt was regurgitated on short buffers, replaying earlier utterances: 79 % WER on
 unseen Ukrainian vs 14 % batch, X.1c/F.16), **including** the anchor words still in the buffer,
-capped at 560 characters, glossary terms first. (F.14 briefly excluded them, as UFAL does: English stream matched batch, but
+capped at 560 characters. (F.14 briefly excluded them, as UFAL does: English stream matched batch, but
 Ukrainian decodes lost confidence, fell into temperature-fallback sampling and hallucinated —
 28–45 % WER across runs vs 27 % stable, X.1b/X.1b.1. Superseded 2026-09-28 by F.15.) With the
 anchor in the prompt Whisper usually skips it and may stretch the next new word back over its

@@ -265,7 +265,7 @@ eval/                 # not part of the package; data + results in git-ignored e
 | `initial_prompt` overlap with the buffer | ~~prompt only with committed words whose audio was trimmed out (F.14)~~ — superseded 2026-09-28 (F.15): excluding the anchor made Ukrainian decodes unstable (X.1b.1). The prompt keeps the anchor; Whisper then skips it and may stretch the next new word over its audio, so the time cut drops only words that resemble a recent committed word |
 | Re-emitted phrase longer than the surviving anchor | text and n-gram checks compare against the last 5 committed words (a text-only history that survives `rebase`), not just the anchor (X.1b.1: "to tell himself" committed twice) |
 | `initial_prompt` scope | the current utterance's committed words only, cleared at each endpoint — a session-long prompt was replayed by Whisper on short buffers (X.1c: 79 % vs 14 % batch on unseen Ukrainian; F.16) |
-| `initial_prompt` growth | cap to the last 560 characters (glossary terms first, then committed text) — inside faster-whisper's 223-token prompt window for Ukrainian |
+| `initial_prompt` growth | cap to the last 560 characters of the utterance's committed text (the glossary is never in it — X.6, F.18) — inside faster-whisper's 223-token prompt window for Ukrainian |
 | Buffer trim mid-word | trim just before the last committed word (its start minus `_TRIM_BACKOFF_S` = 0.2 s), so it survives whole; `rebase` keeps the words whose audio survived, with their times, so they are not committed twice |
 | Re-heard anchor spelled differently / dropped | align by text, then by time: drop hypothesis words ending within the committed audio (`_TIME_TOLERANCE_S` = 0.02 s), then de-duplicate a ≤ 5-word repeat of the committed tail (DECIDE-01; R1 showed text-only alignment losing ~85 % of a real stream) |
 | Forced cut with `overlap_seconds` retained | the retained audio is decoded again — keep the committed words inside the overlap as the anchor, or those words commit a second time with timestamps that run backwards |
@@ -309,7 +309,7 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | `lid_threshold` | `0.7` | below this, keep previous language |
 | `lid_tiebreak_margin` | `0.15` | `uk`/`ru` tie-break window |
 | `lid_languages` | `["en", "uk"]` | LID picks only among these; `ru` folds into `uk` unless listed (DECIDE-02) |
-| `glossary` | `[]` | terms fed to every decode as prompt head + faster-whisper `hotwords` (DECIDE-08) |
+| `glossary` | `[]` | terms the decoded text is corrected to — Cyrillic transliterations replaced (DECIDE-08, revised after X.6: never fed to Whisper) |
 | `glossary_autogrow` | `false` | add Latin-script terms committed inside Ukrainian text |
 | `glossary_path` | `None` | file the grown list is loaded from and saved to |
 | `glossary_max_terms` | `100` | most recent kept |
@@ -365,9 +365,12 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   or a long monologue reaching `max_buffer_seconds`) its whole audio is decoded once — like batch —
   and that is the **final** text, superseding the provisional words. Final text lands ~one decode
   after the utterance ends.
-- **DECIDE-08 — auto-growing glossary.** A config-enabled term list passed to Whisper (prompt and
-  faster-whisper `hotwords`) on every decode, growing with English terms seen in the session; off
-  for speed. Targets term fidelity inside Ukrainian decoding, which per-utterance LID cannot fix.
+- **DECIDE-08 — auto-growing glossary.** ~~A config-enabled term list passed to Whisper (prompt
+  and faster-whisper `hotwords`) on every decode~~ *(revised 2026-09-29 by the user after X.6:
+  fed to Whisper it made WER +28 to +61 pts worse)* — a config-enabled term list that **corrects
+  the decoded text** (Cyrillic transliterations → the term), growing with English terms written
+  in Latin inside Ukrainian text. Targets term fidelity inside Ukrainian decoding, which
+  per-utterance LID cannot fix. X.6b measures it.
 
 ## Phases
 
