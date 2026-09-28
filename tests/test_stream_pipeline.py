@@ -499,3 +499,28 @@ def test_the_prompt_fits_whispers_prompt_window_in_ukrainian():
     """R1: 600 Ukrainian characters are ~235 Whisper tokens, over faster-whisper's 223."""
     assert stream_mod._PROMPT_CHARS * 235 / 600 <= 223
 
+
+
+def test_a_new_utterance_is_not_prompted_with_the_previous_one():
+    """X.1c: Whisper regurgitates its prompt on short buffers. With the whole session's committed
+    text as the prompt, the stream replayed earlier utterances ("Розпочали рити котлован ..." twice)
+    and unseen Ukrainian clips went to 79 % WER against 14 % batch. The prompt is this utterance's
+    committed words only (glossary terms aside)."""
+    seen = []
+
+    class Rec(FakeEngine):
+        def transcribe(self, audio, *, language=None, prompt=None, hotwords=None):
+            second = bool(np.any(np.isclose(audio, 0.5)))
+            seen.append((second, prompt or ""))
+            word = "друге" if second else "перше"
+            return [Segment(0.0, len(audio) / SAMPLE_RATE, word, "uk",
+                            words=[Word(word, 0.0, len(audio) / SAMPLE_RATE)])]
+
+    utt2 = np.full(2 * SAMPLE_RATE, 0.5, dtype=np.float32)
+    audio = np.concatenate([_loud(2.0), _silent(1.5), utt2, _silent(1.5)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+    run_stream(_cfg(min_chunk_seconds=0.5, min_silence_ms=600), ListSource(blocks), Rec([]),
+               RecSink(), language="uk")
+
+    assert any(s for s, _ in seen), "the second utterance was never decoded"
+    assert not [p for s, p in seen if s and "перше" in p], seen

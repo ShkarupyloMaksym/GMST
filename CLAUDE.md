@@ -147,8 +147,10 @@ and temperature fallback on.
 prefix of two consecutive hypotheses, comparing **normalized** word tokens (casefold, strip
 trailing punctuation) but emitting original text. Plus: forced commit after
 `max_unconfirmed_seconds` **of audio** (or 3 updates without progress) when the tail never agrees;
-`initial_prompt` = the committed text **including** the anchor words still in the buffer, capped
-at 560 characters. (F.14 briefly excluded them, as UFAL does: English stream matched batch, but
+`initial_prompt` = the committed text **of the current utterance** (cleared at each endpoint —
+a session-long prompt was regurgitated on short buffers, replaying earlier utterances: 79 % WER on
+unseen Ukrainian vs 14 % batch, X.1c/F.16), **including** the anchor words still in the buffer,
+capped at 560 characters, glossary terms first. (F.14 briefly excluded them, as UFAL does: English stream matched batch, but
 Ukrainian decodes lost confidence, fell into temperature-fallback sampling and hallucinated —
 28–45 % WER across runs vs 27 % stable, X.1b/X.1b.1. Superseded 2026-09-28 by F.15.) With the
 anchor in the prompt Whisper usually skips it and may stretch the next new word back over its

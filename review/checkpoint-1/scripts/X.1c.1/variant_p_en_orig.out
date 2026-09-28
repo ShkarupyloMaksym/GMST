@@ -1,0 +1,41 @@
+model=small ref_words=417 out_words=412 edits=20 (del 6, sub 13, ins 1)
+time/ngram-path skips: 14 pushes, 25 words
+deletions whose word was skipped by the time/ngram path: 5
+
+# errors with context (ref index, op, ref, hyp)
+  39 sub     beggar's -> beggars      | pride beaten and in [beggar's] weeds that they
+ 109 sub        asked -> ask          | bringing back our king [asked] the voice in
+ 128 sub       tonnay -> tony         | difficult replied mademoiselle de [tonnay] charente laughing loudly
+ 129 sub     charente -> chauin       | replied mademoiselle de tonnay [charente] laughing loudly socrates
+ 169 del         with -> None         | as it then was [with] a population that
+ 170 sub            a -> the          | it then was with [a] population that remembered
+ 182 sub      leaving -> leaping      | the crowd drifts off [leaving] the hero and
+ 186 ins         None -> hero         | leaving the hero and [] alone in the
+ 186 sub      heroine -> in           | leaving the hero and [heroine] alone in the
+ 307 del          out -> None         | me so to pour [out] gratitude as thou
+ 311 sub         dost -> dust         | out gratitude as thou [dost] good how it
+ 323 del           to -> None         | he refused at first [to] listen to the
+ 344 del         that -> None         | resolved to tell them [that] repenting of his
+ 352 sub          her -> a            | violence and moved by [her] tears he had
+ 353 sub        tears -> tear         | and moved by her [tears] he had only
+ 359 del         half -> None         | had only carried her [half] way towards his
+ 360 sub          way -> halfway      | only carried her half [way] towards his house
+ 384 sub behaviourist -> behaviorist  | different times if the [behaviourist] feels confident that
+ 410 del         have -> None         | assures him that there [have] been other times
+ 416 sub   eighteenth -> 18th         | other times tuesday august [eighteenth] 
+
+# time/ngram-path skips
+  skipped=['to', 'tell', 'himself'] spans=[[0.0, 0.06], [0.06, 0.2], [0.2, 0.46]] end=0.45999999999999996 tail=['tell', 'himself'] next=['that', 'if', 'he']
+  skipped=['Then', 'ye.'] spans=[[0.0, 0.22], [0.22, 0.48]] end=0.54 tail=['than', 'ye.'] next=['Why', 'then', 'did']
+  skipped=['in', 'the', 'hypothesis'] spans=[[0.0, 0.12], [0.12, 0.22], [0.22, 0.82]] end=0.7200000000000002 tail=['the', 'hypothesis'] next=['that', 'the', "world's"]
+  skipped=['with'] spans=[[0.0, 0.44]] end=0.48 tail=['then', 'was,'] next=['the', 'population', 'that']
+  skipped=['with'] spans=[[0.0, 0.44]] end=0.48 tail=['then', 'was,'] next=['the', 'population', 'that']
+  skipped=['ould', 'be', 'told', 'that'] spans=[[0.0, 0.48], [0.48, 0.48], [0.48, 0.48], [0.48, 0.74]] end=0.7200625 tail=['told', 'that'] next=['all', 'trades,', 'profession']
+  skipped=['of', 'the', 'social', 'hierarchy'] spans=[[0.0, 0.12], [0.12, 0.24], [0.24, 0.52], [0.52, 1.3]] end=0.96 tail=['the', 'social', 'hierarchy'] next=['and', 'all', 'forms']
+  skipped=['out'] spans=[[0.0, 0.46]] end=0.45999999999999996 tail=['to', 'pour'] next=['gratitude', 'as', 'thou']
+  skipped=['out'] spans=[[0.0, 0.42]] end=0.45999999999999996 tail=['to', 'pour'] next=['gratitude,', 'as', 'thou']
+  skipped=['to'] spans=[[0.0, 0.24]] end=0.45999999999999996 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['to'] spans=[[0.0, 0.3]] end=0.45999999999999996 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['that'] spans=[[0.0, 0.4]] end=0.42000000000000004 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['that'] spans=[[0.0, 0.38]] end=0.42000000000000004 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['have'] spans=[[0.0, 0.26]] end=0.3400000000000003 tail=['that', 'there'] next=['been', 'other', 'times.']

@@ -8,8 +8,8 @@ Loop per decode (buffer has >= ``min_chunk_seconds`` new audio and contains spee
    utterance that opens with an English term must not be committed as English; X.2 measured
    restricted LID >= 95 % at 3 s, 88-90 % on Ukrainian at 2 s). An utterance that ends first
    commits with its last detection.
-2. transcribe the whole buffer, prompted with the glossary terms and the tail of the committed text
-   (<= 560 characters)
+2. transcribe the whole buffer, prompted with the glossary terms and the words committed so far
+   *in this utterance* (<= 560 characters)
 3. push the hypothesis' words through LocalAgreement-2 → emit newly-agreed words as **final**,
    the unconfirmed tail as a **partial**; spans use per-word timestamps when the engine provides
    them, else an even split of the segment span
@@ -165,6 +165,7 @@ def run_stream(
     stats = StreamStats()
 
     committed: list[str] = []
+    utt_words: list[str] = []  # committed words of the current utterance: the prompt source
     prev_lang = language
     utt_lang: str | None = language
     settled = language is not None  # pinned: nothing to settle
@@ -187,6 +188,7 @@ def run_stream(
 
     def commit(words: list[str]) -> None:
         committed.extend(words)
+        utt_words.extend(words)
         stats.committed_words += len(words)
         if len(committed) > _MAX_COMMITTED:
             del committed[:-_MAX_COMMITTED]
@@ -198,7 +200,10 @@ def run_stream(
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
             settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
-        tail = " ".join(committed[-_PROMPT_WORDS:])
+        # this utterance's committed words only: Whisper regurgitates its prompt on short
+        # buffers, and a session-long prompt replayed earlier utterances (X.1c: 79 % WER on
+        # unseen Ukrainian vs 14 % batch). The anchor words stay in (F.15).
+        tail = " ".join(utt_words[-_PROMPT_WORDS:])
         if glossary:  # terms first, inside the same cap (DECIDE-08)
             prompt = glossary.prompt(tail, max_chars=_PROMPT_CHARS)
             segs = engine.transcribe(audio, language=call_lang, prompt=prompt,
@@ -242,6 +247,7 @@ def run_stream(
                     last_pending = []
                     if a.is_endpoint:
                         stats.utterances += 1
+                        utt_words.clear()
                     last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
                 else:
                     last_pending = hyp
@@ -292,6 +298,7 @@ def run_stream(
                 ep.reset(keep_overlap=keep_overlap)
                 last_pending = []
                 if a.is_endpoint:  # a forced cut / stall is not a new utterance
+                    utt_words.clear()
                     stats.utterances += 1
                 last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
             elif new_words:

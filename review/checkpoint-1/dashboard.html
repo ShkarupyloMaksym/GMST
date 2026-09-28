@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 17:14 UTC",
+ "generated": "2026-09-28 18:15 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -208,15 +208,16 @@ const DATA = {
     "F.12",
     "F.13",
     "F.14",
-    "F.15"
+    "F.15",
+    "F.16"
    ],
    "state": "in-progress",
    "waiting_on": [
     "F.7"
    ],
    "depth": 0,
-   "leaves_total": 15,
-   "leaves_done": 14,
+   "leaves_total": 16,
+   "leaves_done": 15,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -764,6 +765,42 @@ const DATA = {
    }
   },
   {
+   "id": "F.16",
+   "title": "Prompt with the current utterance's committed words only",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.1c.1"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.16-utterance-local-prompt.md",
+   "summary": "Implement X.1c.1's variant P.",
+   "instructions": "Implement X.1c.1's variant P.",
+   "findings_text": "- `run_stream`: `utt_words` (committed words of the current utterance) feeds the prompt; cleared\n  at every real endpoint (a forced cut / stall continues the utterance). Glossary terms still lead.\n- CLAUDE.md \"Streaming reconciliation\", PLAN.md edge-case table, `stream.py` docstring.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -1157,10 +1194,10 @@ const DATA = {
    ],
    "depth": 0,
    "leaves_total": 7,
-   "leaves_done": 3,
+   "leaves_done": 4,
    "severity_total": {
-    "blocking": 2,
-    "serious": 4,
+    "blocking": 3,
+    "serious": 5,
     "minor": 1
    }
   },
@@ -1453,11 +1490,11 @@ const DATA = {
    "title": "EVID-01 after F.15, on the original clips and on unseen clips",
    "parent": "X",
    "stage": "evidence",
-   "kind": "task",
+   "kind": "group",
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [
     "F.15"
    ],
@@ -1472,15 +1509,52 @@ const DATA = {
    "summary": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here (2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk with `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19) and **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s. Run each stream ",
    "instructions": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here\n(2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk\nwith `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19)\nand **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s.\nRun each stream **twice** and report both (Ukrainian decoding was non-deterministic under F.14).\nThen `large-v2` on (b) en and uk, once, within ~60 min. Copy `scripts/X.1/run_wer.py` to\n`scripts/X.1c/` adding only a row-offset option and output paths; save full outputs. Read first:\nroot `CLAUDE.md`, `review/checkpoint-1/PLAN.md`, `tasks/V1-*.md`, `tasks/X.1*.md`, this file.\nOffline, one large model at a time (`pgrep -af python` first), main tree `.venv`, no clone; write\nonly this node file and `scripts/X.1c/`.",
    "findings_text": "_(numbers against the rule)_",
-   "children": [],
-   "state": "ready",
+   "children": [
+    "X.1c.1"
+   ],
+   "promoted": true,
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
+    "blocking": 1,
+    "serious": 1,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1c.1",
+   "title": "Unseen Ukrainian at 79 % stream WER — attribution and the utterance-local prompt",
+   "parent": "X.1c",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [],
+   "finding": "findings",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 1,
+    "serious": 1,
+    "minor": 0
+   },
+   "file": "tasks/X.1c.1-prompt-replay-attribution.md",
+   "summary": "X.1c (interim, small): unseen uk (rows 20–39) stream 79.37 % vs batch 14.29 %, identical on both runs. Attribute before X.1c finishes.",
+   "instructions": "X.1c (interim, small): unseen uk (rows 20–39) stream 79.37 % vs batch 14.29 %, identical on both\nruns. Attribute before X.1c finishes.",
+   "findings_text": "- [blocking] The session-long prompt made the stream replay earlier utterances on unseen\n  Ukrainian (79 % WER). Fixed by F.16 (utterance-local prompt).\n- [serious] After F.16, unseen Ukrainian with `small` is still +7.1 pts over batch, from\n  misrecognitions of words committed from partial audio — not a reconciliation defect. Whether\n  large-v2 narrows it is X.1c's large-v2 run (on F.15 code — its process started before F.16).",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 2,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 1,
+    "serious": 1,
     "minor": 0
    }
   },
