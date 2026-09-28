@@ -1,0 +1,7 @@
+=== model=large-v2 sets=['en'] ===
+engine loaded in 4.1s
+--- en: 20 clips, 162.6s audio ---
+[large-v2/en] batch  WER=0.0168 (edits=7 ref_words=417) 115.1s
+[large-v2/en] stream WER=0.0288 (edits=12 ref_words=417) 2145.7s decodes=180 contradicted=0/180
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1b/large-v2_results.json)
+DONE

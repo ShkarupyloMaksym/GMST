@@ -1,0 +1,193 @@
+{
+  "model": "large-v2",
+  "sets": {
+    "en": {
+      "batch": {
+        "mode": "batch",
+        "edits": 7,
+        "ref_words": 417,
+        "wer": 0.016786570743405275,
+        "elapsed_s": 115.11620554099864,
+        "per_clip": [
+          {
+            "id": "en-4446-2275-0030",
+            "edits": 0,
+            "ref_words": 8,
+            "hyp": " Yes, Hilda, I know that,\" he said simply."
+          },
+          {
+            "id": "en-1089-134691-0012",
+            "edits": 1,
+            "ref_words": 44,
+            "hyp": " It was idle for him to move himself to be generous towards them, to tell himself that  if he ever came to their gates, stripped of his pride, beaten, and in beggars' weeds,  that they would be generous towards him, loving him as themselves."
+          },
+          {
+            "id": "en-260-123440-0014",
+            "edits": 0,
+            "ref_words": 9,
+            "hyp": " And I declare it's too bad that it is."
+          },
+          {
+            "id": "en-8224-274384-0004",
+            "edits": 0,
+            "ref_words": 48,
+            "hyp": " And the men of Israel answered the men of Judah, and said,  We have ten parts in the king, and we have also more right in David than ye.  Why then did ye despise us, that our advice should not be first had in bringing back our king?"
+          },
+          {
+            "id": "en-1284-1181-0021",
+            "edits": 0,
+            "ref_words": 6,
+            "hyp": " asked the voice in scornful accents."
+          },
+          {
+            "id": "en-7021-85628-0025",
+            "edits": 0,
+            "ref_words": 6,
+            "hyp": " But his mother hugged him close."
+          },
+          {
+            "id": "en-7127-75947-0023",
+            "edits": 2,
+            "ref_words": 11,
+            "hyp": " \"'It is too difficult,' replied Mademoiselle Detenue Charente, laughing loudly."
+          },
+          {
+            "id": "en-2961-961-0000",
+            "edits": 0,
+            "ref_words": 10,
+            "hyp": " Socrates begins the Timaeus with a summary of the Republic."
+          },
+          {
+            "id": "en-6829-68769-0041",
+            "edits": 0,
+            "ref_words": 5,
+            "hyp": " I'm not electioneering just now."
+          },
+          {
+            "id": "en-8230-279154-0004",
+            "edits": 0,
+            "ref_words": 31,
+            "hyp": " There is no logical impossibility in the hypothesis that the world sprang into being five minutes  ago, exactly as it then was, with a population that remembered a wholly unreal past."
+          },
+          {
+            "id": "en-7176-92135-0036",
+            "edits": 0,
+            "ref_words": 21,
+            "hyp": " The crowd drifts off, leaving the hero and heroine alone in the middle of the stage.  And then you can begin."
+          },
+          {
+            "id": "en-8463-294828-0006",
+            "edits": 0,
+            "ref_words": 23,
+            "hyp": " From rubbing shoulders with scientists in our little universe by the botanical gardens,  the boy had come to know a thing or two."
+          },
+          {
+            "id": "en-4992-41797-0015",
+            "edits": 0,
+            "ref_words": 30,
+            "hyp": " Cyril there must be some better way of doing I just draw the outline of an animal and then I put hairs or feathers on it  They have no bodies"
+          },
+          {
+            "id": "en-4507-16021-0020",
+            "edits": 0,
+            "ref_words": 49,
+            "hyp": " We may be stopped, the fact may be put to us in general terms, which is one way of attenuating  it.  We may be told that all trades, professions, it may be added, all the accidents of the  social hierarchy and all forms of intelligence have their own slang."
+          },
+          {
+            "id": "en-908-31957-0016",
+            "edits": 0,
+            "ref_words": 12,
+            "hyp": " Dearest, teach me so to pour out gratitude, As thou dost good."
+          },
+          {
+            "id": "en-672-122797-0029",
+            "edits": 0,
+            "ref_words": 6,
+            "hyp": " how it will shine this evening."
+          },
+          {
+            "id": "en-3575-170457-0048",
+            "edits": 0,
+            "ref_words": 17,
+            "hyp": " He refused at first to listen to the careful advice. It was repugnant to his liberal nature"
+          },
+          {
+            "id": "en-5639-40744-0016",
+            "edits": 2,
+            "ref_words": 33,
+            "hyp": " On the contrary, he resolved to tell them that, repenting of his violence, and moved  by her tears, he had only carried her halfway towards his house, and then let her go."
+          },
+          {
+            "id": "en-8230-279154-0007",
+            "edits": 1,
+            "ref_words": 45,
+            "hyp": " Habit is a concept involving the occurrence of similar events at different times.  If the behaviorist feels confident that there is such a phenomenon as habit,  that can only be because he trusts his memory, when it assures him that there have been other times."
+          },
+          {
+            "id": "en-260-123286-0020",
+            "edits": 1,
+            "ref_words": 3,
+            "hyp": " Tuesday August 18th"
+          }
+        ]
+      },
+      "stream": {
+        "mode": "stream",
+        "edits": 12,
+        "ref_words": 417,
+        "wer": 0.02877697841726619,
+        "elapsed_s": 2145.7236149750024,
+        "audio_s": 192.6,
+        "decodes": 180,
+        "committed_words": 416,
+        "out_words": 416,
+        "counts": {
+          "pushes": 180,
+          "contradicted": 0,
+          "flush_dropped_words": 0,
+          "flushes_dropping": 0
+        },
+        "examples": {},
+        "sample_segments": [
+          {
+            "text": "Yes, Hilda I",
+            "start": 0.0,
+            "end": 0.98,
+            "lang": "en",
+            "is_final": false
+          },
+          {
+            "text": "Yes, Hilda, I",
+            "start": 0.0,
+            "end": 1.0,
+            "lang": "en",
+            "is_final": true
+          },
+          {
+            "text": "know that,\" he said simply.",
+            "start": 1.0,
+            "end": 1.98,
+            "lang": "en",
+            "is_final": false
+          },
+          {
+            "text": "know that,\" he said simply.",
+            "start": 0.98,
+            "end": 2.16,
+            "lang": "en",
+            "is_final": true
+          },
+          {
+            "text": "It was August.",
+            "start": 4.359999999999999,
+            "end": 4.98,
+            "lang": "en",
+            "is_final": false
+          }
+        ],
+        "ref_preview": "YES HILDA I KNOW THAT HE SAID SIMPLY IT WAS IDLE FOR HIM TO MOVE HIMSELF TO BE GENEROUS TOWARDS THEM TO TELL HIMSELF THAT IF HE EVER CAME TO THEIR GATES STRIPPED OF HIS PRIDE BEATEN AND IN BEGGAR'S WEEDS THAT THEY WOULD BE GENEROUS TOWARDS HIM LOVING HIM AS THEMSELVES AND I DECLARE IT'S TOO BAD THAT",
+        "out_preview": "Yes, Hilda, I know that,\" he said simply. It was idle for him to move himself to be generous towards them, to tell himself that if he ever came to their gates, stripped of his beaten and in beggars' weeds, that they would be generous to him. generous towards him, loving him as themselves. And I decl"
+      }
+    }
+  }
+}

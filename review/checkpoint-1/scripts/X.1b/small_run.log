@@ -1,0 +1,15 @@
+=== model=small sets=['en', 'uk', 'mixed'] ===
+engine loaded in 0.7s
+--- en: 20 clips, 162.6s audio ---
+[small/en] batch  WER=0.0264 (edits=11 ref_words=417) 24.1s
+[small/en] stream WER=0.0264 (edits=11 ref_words=417) 392.8s decodes=179 contradicted=0/179
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1b/small_results.json)
+--- uk: 20 clips, 103.0s audio ---
+[small/uk] batch  WER=0.2378 (edits=34 ref_words=143) 22.2s
+[small/uk] stream WER=0.4545 (edits=65 ref_words=143) 161.4s decodes=98 contradicted=0/98
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1b/small_results.json)
+--- mixed: 20 clips, 298.8s audio ---
+[small/mixed] batch  WER=0.1102 (edits=65 ref_words=590) 89.1s
+[small/mixed] stream WER=0.1949 (edits=115 ref_words=590) 699.8s decodes=294 contradicted=0/209
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1b/small_results.json)
+DONE
