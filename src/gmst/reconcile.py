@@ -5,15 +5,19 @@ consecutive hypotheses. Comparison is on **normalized** tokens (``metrics.normal
 casefold, unify apostrophes, drop edge punctuation); the **original** token is what gets emitted.
 
 Whisper re-emits the whole utterance on every decode, so each new hypothesis is realigned against
-the committed words rather than sliced by index: first by text (drop the leading run that matches
-the committed tail), then — when the caller passes word ``spans`` — by time, as UFAL's
-``whisper_streaming`` does: words that *end* by the last committed word's end (plus
-``_TIME_TOLERANCE_S``) re-hear committed audio and are dropped, then an up-to-``_MAX_NGRAM`` repeat
-of the committed tail is de-duplicated. Ends, not starts (UFAL uses starts): after a trim Whisper
-often skips the anchor word and stretches the first *new* word back to the buffer head, so its
-start says "committed audio" while its end does not. That is what keeps a re-heard word that the
-model spells differently ("idle" → "title") from blocking the rest of the utterance (PLAN.md
-"Review decisions", DECIDE-01).
+the committed words rather than sliced by index (PLAN.md "Review decisions", DECIDE-01, and the
+review's X.1.1 / X.1b.1 attribution):
+
+1. **text** — drop the leading run that repeats the last committed words. The comparison is
+   against a text-only history of the last ``_MAX_NGRAM`` committed words, not just the anchor
+   words whose audio survived the trim: prompted with "... to tell himself", Whisper re-emits the
+   whole phrase from the leftover sliver, and matching the one-word anchor committed it twice;
+2. **time**, when the caller passes word ``spans`` — drop leading words that end within the
+   committed audio (``_TIME_TOLERANCE_S``) **and resemble** a recent committed word (a re-heard or
+   mis-heard anchor, "idle" -> "title"). Not resembling means new speech that Whisper stretched
+   back over the anchor's audio ("to" timed 0.0-0.4 s against a 0.54 s committed end): kept.
+   The ungated cut dropped 20 of 21 such words on English (X.1.1);
+3. then an up-to-``_MAX_NGRAM`` repeat of the history is de-duplicated.
 
 Edge cases (PLAN.md "reconcile.py edge cases"):
 - tail never agrees → ``flush()`` force-commits everything still pending
@@ -29,6 +33,7 @@ Edge cases (PLAN.md "reconcile.py edge cases"):
 from __future__ import annotations
 
 from collections.abc import Sequence
+from difflib import SequenceMatcher
 
 from gmst.metrics import normalize_token as _norm  # one normalizer, shared with WER scoring
 
@@ -45,9 +50,18 @@ def tokenize(text: str) -> list[str]:
     return text.split()
 
 
+_RESEMBLES = 0.5  # SequenceMatcher ratio: "idle"/"tidle" 0.89, "w30"/"p30" 0.67, "to"/"them" 0.33
+
+
+def _resembles(word: str, tail: list[str]) -> bool:
+    """``word`` looks like a re-hearing of one of the recent committed words (or is empty)."""
+    return not word or any(w and SequenceMatcher(None, word, w).ratio() >= _RESEMBLES for w in tail)
+
+
 class LocalAgreement:
     def __init__(self) -> None:
         self._committed: list[str] = []
+        self._history: list[str] = []  # last committed words, text only; survives rebase
         self._committed_end: float | None = None  # end of the last committed word, if timed
         self._prev: list[str] = []
         self._prev_spans: list[Span] | None = None
@@ -70,18 +84,24 @@ class LocalAgreement:
         non-empty, and no prefix of it matches the committed tail — the model revised something
         already emitted as final. Falling back to ``0`` there would commit those words again.
         """
-        if not self._committed or not words:
+        hist = self._history[-_MAX_NGRAM:] if len(self._history) > len(self._committed) \
+            else self._committed
+        if not hist or not words:
             return 0
-        for k in range(min(len(words), len(self._committed)), 0, -1):
-            if [_norm(w) for w in words[:k]] == [_norm(w) for w in self._committed[-k:]]:
+        for k in range(min(len(words), len(hist)), 0, -1):
+            if [_norm(w) for w in words[:k]] == [_norm(w) for w in hist[-k:]]:
                 return k
+        if not self._committed:
+            return 0
         if spans is None or self._committed_end is None:
             return -1
         h = 0
-        while h < len(words) and spans[h][1] <= self._committed_end + _TIME_TOLERANCE_S:
+        tail = [_norm(w) for w in self._committed[-_MAX_NGRAM:]]
+        while (h < len(words) and spans[h][1] <= self._committed_end + _TIME_TOLERANCE_S
+               and _resembles(_norm(words[h]), tail)):
             h += 1
-        for n in range(min(_MAX_NGRAM, len(self._committed), len(words) - h), 0, -1):
-            if [_norm(w) for w in words[h : h + n]] == [_norm(w) for w in self._committed[-n:]]:
+        for n in range(min(_MAX_NGRAM, len(hist), len(words) - h), 0, -1):
+            if [_norm(w) for w in words[h : h + n]] == [_norm(w) for w in hist[-n:]]:
                 return h + n
         return h
 
@@ -116,6 +136,7 @@ class LocalAgreement:
                 break
 
         self._committed.extend(agreed)
+        self._history = (self._history + agreed)[-_MAX_NGRAM:]
         if agreed:
             self._committed_end = spans[h0 + len(agreed) - 1][1] if spans is not None else None
         self._prev = list(hypothesis)
@@ -137,6 +158,7 @@ class LocalAgreement:
         a = self._align(self._prev, self._prev_spans)
         rest = [] if a < 0 else self._prev[a:]
         self._committed.extend(rest)
+        self._history = (self._history + rest)[-_MAX_NGRAM:]
         if rest:
             self._committed_end = self._prev_spans[-1][1] if self._prev_spans else None
         return rest
@@ -153,6 +175,7 @@ class LocalAgreement:
         h0 = self._align(hypothesis, spans)
         start = h0 if h0 > 0 else 0
         self._committed.extend(hypothesis[start:])
+        self._history = (self._history + hypothesis[start:])[-_MAX_NGRAM:]
         self._prev = list(hypothesis)
         self._prev_spans = list(spans) if spans is not None else None
         self.contradicted = False
@@ -179,6 +202,7 @@ class LocalAgreement:
 
     def reset(self) -> None:
         self._committed.clear()
+        self._history.clear()
         self._committed_end = None
         self._prev.clear()
         self._prev_spans = None

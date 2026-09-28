@@ -145,7 +145,7 @@ def test_a_repeated_committed_ngram_timed_past_the_boundary_is_not_committed_aga
     la.push(["a", "b", "c"], _spans(3))
     la.rebase(["a", "b"], ["c"], spans=_spans(3))  # committed end = 0.6 s
 
-    hyp = ["uh", "a", "b", "c"]
+    hyp = ["aa", "a", "b", "c"]  # a mis-heard sliver of "a", then "a b" re-emitted
     newly, _ = la.push(hyp, [(0.0, 0.2), (0.8, 1.0), (1.0, 1.2), (1.2, 1.5)])
     assert newly == ["c"]
     assert la.committed == ["a", "b", "c"]
@@ -184,3 +184,41 @@ def test_a_punctuation_only_token_does_not_block_agreement():
     la.push(["Так", "-", "звісно,", "давайте"])
     newly, _ = la.push(["Так", "-", "звісно,", "давайте", "далі"])
     assert newly == ["Так", "-", "звісно,", "давайте"]
+
+
+def test_a_rehearing_of_words_trimmed_out_of_the_anchor_is_not_committed_twice():
+    """X.1b.1: after a trim the anchor holds only the words whose audio survived ("himself"), but
+    Whisper, prompted with "... to tell himself", re-emits "to tell himself" from the sliver.
+    Matching against the anchor alone committed the phrase twice; the check uses the last
+    committed words, as UFAL's n-gram de-dup does."""
+    la = LocalAgreement()
+    words = ["to", "tell", "himself"]
+    la.push(words, _spans(3))
+    la.push(words + ["that"], _spans(4))
+    la.rebase(["himself"], ["that"], spans=[(0.2, 0.5), (0.5, 0.8)])
+    # timed after the committed end (0.5 s), so the time cut cannot catch the repeat — only text
+    hyp, spans = ["to", "tell", "himself", "that", "if"], _spans(5, start=0.6, step=0.2)
+    first, _ = la.push(hyp, spans)
+    second, _ = la.push(hyp + ["he"], spans + [(1.6, 1.8)])
+    assert first + second == ["that", "if"]  # the re-heard "to tell himself" is not re-committed
+
+
+def test_the_time_cut_only_drops_words_that_resemble_committed_ones():
+    """X.1.1 / X.1b.1: a genuinely new word that Whisper stretched back over the anchor's audio
+    ("to" timed 0.0-0.4, committed end 0.54) is kept; a mis-heard anchor ("idle" -> "title") that
+    sits over the committed audio is dropped."""
+    la = LocalAgreement()
+    la.push(["towards", "them"], _spans(2))
+    la.push(["towards", "them", "to"], _spans(3))
+    la.rebase(["them"], ["to"], spans=[(0.2, 0.54), (0.54, 0.8)])
+    newly, _ = la.push(["to", "tell"], [(0.0, 0.4), (0.4, 0.8)])
+    la.push(["to", "tell", "him"], [(0.0, 0.4), (0.4, 0.8), (0.8, 1.0)])
+    assert "to" in la.committed
+
+    lb = LocalAgreement()
+    lb.push(["was", "idle"], _spans(2))
+    lb.push(["was", "idle", "for"], _spans(3))
+    lb.rebase(["idle"], ["for"], spans=[(0.2, 0.42), (0.42, 0.68)])
+    lb.push(["tidle", "for", "him"], [(0.0, 0.42), (0.42, 0.7), (0.7, 0.9)])
+    lb.push(["tidle", "for", "him", "to"], [(0.0, 0.42), (0.42, 0.7), (0.7, 0.9), (0.9, 1.0)])
+    assert "tidle" not in lb.committed and "for" in lb.committed

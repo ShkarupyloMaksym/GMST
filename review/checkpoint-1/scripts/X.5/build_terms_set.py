@@ -44,7 +44,7 @@ import re
 import tarfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]  # repo root
+ROOT = Path(__file__).resolve().parents[4]  # repo root (was [3]: pointed at review/ — fixed by the orchestrator 2026-09-28)
 RAW = ROOT / "eval" / "results" / "raw"
 OUT_DIR = ROOT / "eval" / "results" / "data" / "terms"
 OUT_JSONL = ROOT / "eval" / "results" / "data" / "terms.jsonl"

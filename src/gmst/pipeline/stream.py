@@ -198,12 +198,7 @@ def run_stream(
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
             settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
-        # only text whose audio is no longer in the buffer (UFAL whisper_streaming): prompting
-        # with the anchor words the buffer still holds makes Whisper skip them in the audio and
-        # time the next *new* word from the buffer head, where the time cut drops it (X.1.1)
-        in_buffer = len(agree.committed)
-        before = committed[:-in_buffer] if in_buffer else committed
-        tail = " ".join(before[-_PROMPT_WORDS:])
+        tail = " ".join(committed[-_PROMPT_WORDS:])
         if glossary:  # terms first, inside the same cap (DECIDE-08)
             prompt = glossary.prompt(tail, max_chars=_PROMPT_CHARS)
             segs = engine.transcribe(audio, language=call_lang, prompt=prompt,

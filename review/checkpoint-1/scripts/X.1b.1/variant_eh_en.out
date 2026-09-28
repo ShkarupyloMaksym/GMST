@@ -1,0 +1,40 @@
+model=small ref_words=417 out_words=418 edits=22 (del 4, sub 13, ins 5)
+time/ngram-path skips: 11 pushes, 25 words
+deletions whose word was skipped by the time/ngram path: 3
+
+# errors with context (ref index, op, ref, hyp)
+  39 sub     beggar's -> beggars      | pride beaten and in [beggar's] weeds that they
+ 109 sub        asked -> ask          | bringing back our king [asked] the voice in
+ 119 sub          him -> them         | but his mother hugged [him] close it is
+ 128 del       tonnay -> None         | difficult replied mademoiselle de [tonnay] charente laughing loudly
+ 129 sub     charente -> tenechon     | replied mademoiselle de tonnay [charente] laughing loudly socrates
+ 135 sub      timaeus -> temeas       | loudly socrates begins the [timaeus] with a summary
+ 170 sub            a -> the          | it then was with [a] population that remembered
+ 175 ins         None -> holy         | population that remembered a [] unreal past the
+ 175 ins         None -> ________________________________________________________________ | population that remembered a [] unreal past the
+ 175 ins         None -> the          | population that remembered a [] unreal past the
+ 175 sub       wholly -> holy         | population that remembered a [wholly] unreal past the
+ 186 ins         None -> hero         | leaving the hero and [] alone in the
+ 186 sub      heroine -> in           | leaving the hero and [heroine] alone in the
+ 198 ins         None -> be           | and then you can [] from rubbing shoulders
+ 311 sub         dost -> dust         | out gratitude as thou [dost] good how it
+ 323 del           to -> None         | he refused at first [to] listen to the
+ 344 del         that -> None         | resolved to tell them [that] repenting of his
+ 352 sub          her -> a            | violence and moved by [her] tears he had
+ 353 sub        tears -> tear         | and moved by her [tears] he had only
+ 384 sub behaviourist -> behaviorist  | different times if the [behaviourist] feels confident that
+ 412 del        other -> None         | that there have been [other] times tuesday august
+ 416 sub   eighteenth -> 18th         | other times tuesday august [eighteenth] 
+
+# time/ngram-path skips
+  skipped=['to', 'tell', 'himself'] spans=[[0.0, 0.06], [0.06, 0.2], [0.2, 0.46]] end=0.45999999999999996 tail=['tell', 'himself'] next=['that', 'if', 'he']
+  skipped=['that', 'our', 'advice'] spans=[[0.0, 0.18], [0.18, 0.46], [0.46, 0.96]] end=0.9000000000000001 tail=['our', 'advice'] next=['should', 'not', 'be']
+  skipped=['It', 'is', 'too', 'difficult,'] spans=[[0.0, 0.06], [0.06, 0.06], [0.06, 0.22], [0.22, 0.66]] end=0.6400000000000001 tail=['too', 'difficult,'] next=['replied', 'Mademoiselle', 'de']
+  skipped=['Then', 'you', 'can'] spans=[[0.0, 0.1], [0.1, 0.18], [0.18, 0.34]] end=0.47999999999999954 tail=['you', 'can', 'be'] next=['begin.']
+  skipped=['Then', 'you', 'can'] spans=[[0.0, 0.1], [0.1, 0.18], [0.18, 0.34]] end=0.47999999999999954 tail=['you', 'can', 'be'] next=['begin.']
+  skipped=['of', 'the', 'social', 'hierarchy'] spans=[[0.0, 0.12], [0.12, 0.22], [0.22, 0.52], [0.52, 1.3]] end=0.88 tail=['the', 'social', 'hierarchy'] next=['and', 'all', 'forms']
+  skipped=['to'] spans=[[0.0, 0.24]] end=0.41999999999999993 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['to'] spans=[[0.0, 0.3]] end=0.41999999999999993 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['that'] spans=[[0.0, 0.4]] end=0.42000000000000004 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['that'] spans=[[0.0, 0.38]] end=0.42000000000000004 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['other'] spans=[[0.0, 0.38]] end=0.40000000000000013 tail=['there', 'have', 'been'] next=['times.']

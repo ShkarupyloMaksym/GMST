@@ -1,0 +1,39 @@
+model=small ref_words=417 out_words=434 edits=32 (del 1, sub 13, ins 18)
+time/ngram-path skips: 0 pushes, 0 words
+deletions whose word was skipped by the time/ngram path: 0
+
+# errors with context (ref index, op, ref, hyp)
+  21 ins         None -> to           | be generous towards them [] tell himself that
+  21 ins         None -> tell         | be generous towards them [] tell himself that
+  21 ins         None -> himself      | be generous towards them [] tell himself that
+  39 sub     beggar's -> beggars      | pride beaten and in [beggar's] weeds that they
+  96 ins         None -> that         | did ye despise us [] our advice should
+  96 ins         None -> our          | did ye despise us [] our advice should
+  96 ins         None -> advice       | did ye despise us [] our advice should
+ 109 sub        asked -> ask          | bringing back our king [asked] the voice in
+ 119 sub          him -> them         | but his mother hugged [him] close it is
+ 121 ins         None -> it           | mother hugged him close [] is too difficult
+ 121 ins         None -> is           | mother hugged him close [] is too difficult
+ 121 ins         None -> too          | mother hugged him close [] is too difficult
+ 121 ins         None -> difficult    | mother hugged him close [] is too difficult
+ 128 sub       tonnay -> tony         | difficult replied mademoiselle de [tonnay] charente laughing loudly
+ 129 sub     charente -> chauhan      | replied mademoiselle de tonnay [charente] laughing loudly socrates
+ 170 sub            a -> the          | it then was with [a] population that remembered
+ 173 ins         None -> remembered   | with a population that [] a wholly unreal
+ 173 ins         None -> a            | with a population that [] a wholly unreal
+ 173 ins         None -> holy         | with a population that [] a wholly unreal
+ 175 sub       wholly -> holy         | population that remembered a [wholly] unreal past the
+ 182 sub      leaving -> leaping      | the crowd drifts off [leaving] the hero and
+ 288 ins         None -> of           | added all the accidents [] the social hierarchy
+ 288 ins         None -> the          | added all the accidents [] the social hierarchy
+ 288 ins         None -> social       | added all the accidents [] the social hierarchy
+ 288 ins         None -> hierarchy    | added all the accidents [] the social hierarchy
+ 311 sub         dost -> dust         | out gratitude as thou [dost] good how it
+ 352 ins         None -> a            | violence and moved by [] tears he had
+ 352 sub          her -> their        | violence and moved by [her] tears he had
+ 359 del         half -> None         | had only carried her [half] way towards his
+ 360 sub          way -> halfway      | only carried her half [way] towards his house
+ 384 sub behaviourist -> behaviorist  | different times if the [behaviourist] feels confident that
+ 416 sub   eighteenth -> 18th         | other times tuesday august [eighteenth] 
+
+# time/ngram-path skips

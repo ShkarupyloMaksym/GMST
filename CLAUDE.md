@@ -147,10 +147,13 @@ and temperature fallback on.
 prefix of two consecutive hypotheses, comparing **normalized** word tokens (casefold, strip
 trailing punctuation) but emitting original text. Plus: forced commit after
 `max_unconfirmed_seconds` **of audio** (or 3 updates without progress) when the tail never agrees;
-`initial_prompt` built only from committed text whose audio is **no longer in the buffer** (as
-UFAL does — prompting with the anchor words still in the buffer made Whisper skip them and time the
-next new word from the buffer head, where the time cut dropped it: 20 of 21 stream deletions, X.1.1)
-and capped at 560 characters (faster-whisper keeps 223 prompt tokens; Ukrainian runs
+`initial_prompt` = the committed text **including** the anchor words still in the buffer, capped
+at 560 characters. (F.14 briefly excluded them, as UFAL does: English stream matched batch, but
+Ukrainian decodes lost confidence, fell into temperature-fallback sampling and hallucinated —
+28–45 % WER across runs vs 27 % stable, X.1b/X.1b.1. Superseded 2026-09-28 by F.15.) With the
+anchor in the prompt Whisper usually skips it and may stretch the next new word back over its
+audio, so the aligner's time cut only drops words that **resemble** a recent committed word, and
+the text / n-gram checks run against the last 5 committed words, not just the surviving anchor (faster-whisper keeps 223 prompt tokens; Ukrainian runs
 ~0.39 tokens/char, so 600 was 235 tokens — R1; English is bound first by the 100-word pre-cap);
 buffer trimmed on every commit to just before the last committed word (`Endpointer.trim_to` is
 passed that word's **start**, minus a 0.2 s back-off, so the word survives whole as the anchor) with

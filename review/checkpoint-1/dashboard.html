@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 12:19 UTC",
+ "generated": "2026-09-28 17:14 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -207,15 +207,16 @@ const DATA = {
     "F.11",
     "F.12",
     "F.13",
-    "F.14"
+    "F.14",
+    "F.15"
    ],
    "state": "in-progress",
    "waiting_on": [
     "F.7"
    ],
    "depth": 0,
-   "leaves_total": 14,
-   "leaves_done": 13,
+   "leaves_total": 15,
+   "leaves_done": 14,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -727,6 +728,42 @@ const DATA = {
    }
   },
   {
+   "id": "F.15",
+   "title": "Keep the anchor in the prompt; gate the time cut by resemblance; check repeats against history",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.1b.1"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.15-anchor-prompt-gated-cut-history.md",
+   "summary": "Implement X.1b.1's E+H variant; supersede F.14 (still DECIDE-01: LocalAgreement-2 with UFAL-style time and n-gram alignment).",
+   "instructions": "Implement X.1b.1's E+H variant; supersede F.14 (still DECIDE-01: LocalAgreement-2 with UFAL-style\ntime and n-gram alignment).",
+   "findings_text": "- `stream.py`: back to the pre-F.14 prompt (anchor included), byte-identical to `0dfd92a`.\n- `reconcile.py`: `_history` (last 5 committed words, survives `rebase`, cleared by `reset`) for\n  the text and n-gram checks; the time cut requires `_resembles` (SequenceMatcher ≥ 0.5, set once,\n  not tuned). Docstring rewritten.\n- CLAUDE.md \"Streaming reconciliation\", PLAN.md edge-case table: F.14's rule struck with a dated\n  note.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -1108,21 +1145,22 @@ const DATA = {
     "X.3",
     "X.4",
     "X.5",
-    "X.1b"
+    "X.1b",
+    "X.1c"
    ],
    "state": "in-progress",
    "waiting_on": [
     "X.3",
     "X.4",
     "X.5",
-    "X.1b"
+    "X.1c"
    ],
    "depth": 0,
-   "leaves_total": 6,
-   "leaves_done": 2,
+   "leaves_total": 7,
+   "leaves_done": 3,
    "severity_total": {
-    "blocking": 1,
-    "serious": 2,
+    "blocking": 2,
+    "serious": 4,
     "minor": 1
    }
   },
@@ -1342,13 +1380,86 @@ const DATA = {
    "title": "EVID-01 re-measured after F.14 (same pre-registered rule)",
    "parent": "X",
    "stage": "evidence",
+   "kind": "group",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "done",
+   "depends_on": [
+    "F.14"
+   ],
+   "finding": "findings",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 1,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.1b-stream-vs-batch-rerun.md",
+   "summary": "Re-run `scripts/X.1/run_wer.py` unchanged (copy it to `scripts/X.1b/` first, adding only output paths) on the same clips with `small` then `large-v2`, en and uk (language pinned); mixed with `small` only (auto LID, now after F.11 and F.14). Report against V1's EVID-01 rule, unchanged: holds if stream ≤ batch + 3.0 pts on en and uk with small and contradicted pushes ≤ 10 %. Also save the full strea",
+   "instructions": "Re-run `scripts/X.1/run_wer.py` unchanged (copy it to `scripts/X.1b/` first, adding only output\npaths) on the same clips with `small` then `large-v2`, en and uk (language pinned); mixed with\n`small` only (auto LID, now after F.11 and F.14). Report against V1's EVID-01 rule, unchanged:\nholds if stream ≤ batch + 3.0 pts on en and uk with small and contradicted pushes ≤ 10 %. Also save\nthe full stream output text per set. Read first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md`,\n`tasks/V1-evidence-plan.md`, `tasks/X.1-*.md`, `tasks/X.1.1-*.md`, this file. Offline; you are the\nonly process loading models; work from the main tree's `.venv` (no clone); write only this node\nfile and `scripts/X.1b/`.",
+   "findings_text": "Pre-registered rule (V1, EVID-01, unchanged): **holds** if corpus stream WER ≤ batch WER + 3.0 pts\non en and uk with `small`, and contradicted-push share ≤ 10%.\n\n**`small` run** (`scripts/X.1b/run_wer.py small en uk mixed`, `small_results.json`; shipped defaults,\nsame 20/20/20 clips as X.1 — `clips.txt` identical):\n\n| set | mode | WER | edits/ref | elapsed | decodes | contradicted/pushes |\n|---|---|---|---|---|---|---|\n| en | batch | 2.64% | 11/417 | 24.1s | — | — |\n| en | stream | **2.64%** | 11/417 | 392.8s | 179 | 0/179 |\n| uk | batch | 23.78% | 34/143 | 22.2s | — | — |\n| uk | stream | **45.45%** | 65/143 | 161.4s | 98 | 0/98 |\n| mixed-inter | batch | 11.02% | 65/590 | 89.1s | — | — |\n| mixed-inter | stream | 19.49% | 115/590 | 699.8s | 294 dec / 209 pushes | 0/209 |\n\n- en: stream − batch = 2.64 − 2.64 = **0.00 pts**, and the edit count matches exactly (11/417 both\n  ways) — passes the margin cleanly. Confirms X.1.1's attribution and F.14's fix: the prompt no\n  longer overlaps buffer audio, so the word-dropping at utterance joins X.1 measured (+4.32 pts\n  pre-fix) is gone on this set.\n- uk: stream − batch = 45.45 − 23.78 = **+21.67 pts**, six times the pre-fix gap X.1 measured\n  (+3.50 pts) and roughly seven times the 3.0-pt threshold. **[blocking]** F.14 did not just fail to\n  close the uk gap — it made it dramatically worse. `small_results.json`'s uk stream `out_preview`\n  contains inserted tokens that are not language output at all: `\"Zum2i\"`, `\"оssoof1\"` (mixed\n  Latin/Cyrillic garbage, not present anywhere in `ref_preview` or in the batch hyps for the same\n  clips) — e.g. stream out `...Тому, може не зробити це прайдень, і ті бутті, Zum2i, і осьoof1,\n  вигнути, то, це все. Так, Zum2i величається тут...` against ref `...тут великоросам нема сенсу\n  лукавити хто попіксся окропом на воду дує...`. `committed_words` (169) exceeds `ref_words` (143)\n  for this set — the stream path is *inserting* words on uk, not only dropping them, which is a\n  different failure mode than the one F.14 targeted (X.1.1 only found deletions, on en).\n- mixed-inter (not part of the pre-registered rule, reported as instructed): stream − batch =\n  19.49 − 11.02 = **+8.47 pts**, better than X.1's pre-F.14 +22.37 pts but still far over the\n  3.0-pt bar that applies to en/uk; sample text in `out_preview` is legible (no garbage tokens seen\n  in the first 300 chars), unlike uk.\n- contradicted-push share: en 0/179, uk 0/98, mixed 0/209 = **0%** on every set — same as X.1,\n  F.8's fix still holds; the uk regression is not a contradiction-path failure.\n\n**Net against the rule:** en now passes (0.00 pts); uk fails far more severely than before F.14\n(+21.67 pts vs the pre-fix +3.50 pts). The rule requires both en **and** uk to pass — it does not,\nso **DECIDE-01 remains reopened**, now on stronger and more specific evidence: F.14's prompt change\n(removing the anchor-word overlap from the prompt) trades an en deletion bug for a uk\nhallucination/insertion bug of much larger magnitude on this sample. The shipped-default streaming\npath is not safe for Ukrainian audio as measured here, independent of whether the underlying model is\n`small` or `large-v2` (see below — large-v2 batch is unaffected, and X.1 already showed the pre-fix\nstream/batch gap does not close by upsizing the model).\n\n**`large-v2`, en only (partial — see Could not check for uk and for the stream number):** batch\n1.68% (7/417, 115.1s) — identical to X.1's pre-F.14 large-v2 en batch number, as expected (batch does\nnot use the stream prompt). The stream side did not finish inside this node's budget/tooling window,\nso no large-v2 stream WER (en) and no large-v2 uk numbers (batch or stream) were obtained in this\nnode.",
+   "children": [
+    "X.1b.1"
+   ],
+   "promoted": true,
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 1,
+    "serious": 2,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1b.1",
+   "title": "Why F.14 hurt Ukrainian, and a variant that holds on both languages",
+   "parent": "X.1b",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [],
+   "finding": "findings",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 2,
+    "minor": 0
+   },
+   "file": "tasks/X.1b.1-uk-regression-attribution.md",
+   "summary": "X.1b: F.14 closed the English gap (2.64 = 2.64 %) but Ukrainian stream went to 45.45 % with hallucinated tokens (\"Zum2i\", \"осьoof1\"). Attribute, and find a variant that holds on both.",
+   "instructions": "X.1b: F.14 closed the English gap (2.64 = 2.64 %) but Ukrainian stream went to 45.45 % with\nhallucinated tokens (\"Zum2i\", \"осьoof1\"). Attribute, and find a variant that holds on both.",
+   "findings_text": "- [serious] F.14 made Ukrainian decoding non-deterministic: without the anchor words in the prompt\n  the model's confidence drops and temperature-fallback sampling produces hallucinations\n  (27.97–45.45 % across three runs, vs 27.27 % twice before). English is unaffected.\n- [serious] With the anchor in the prompt, Whisper re-emits phrases longer than the surviving\n  anchor (\"to tell himself\" from a one-word anchor \"himself\"): matching against the anchor alone\n  doubled them (variant C, 18 insertions). A 5-word text history fixes it (E+H).\n- The ungated time cut is what dropped new words (X.1.1); gating it by resemblance keeps them.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 2,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 2,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1c",
+   "title": "EVID-01 after F.15, on the original clips and on unseen clips",
+   "parent": "X",
+   "stage": "evidence",
    "kind": "task",
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
    "status": "todo",
    "depends_on": [
-    "F.14"
+    "F.15"
    ],
    "finding": null,
    "has_read_section": true,
@@ -1357,9 +1468,9 @@ const DATA = {
     "serious": 0,
     "minor": 0
    },
-   "file": "tasks/X.1b-stream-vs-batch-rerun.md",
-   "summary": "Re-run `scripts/X.1/run_wer.py` unchanged (copy it to `scripts/X.1b/` first, adding only output paths) on the same clips with `small` then `large-v2`, en and uk (language pinned); mixed with `small` only (auto LID, now after F.11 and F.14). Report against V1's EVID-01 rule, unchanged: holds if stream ≤ batch + 3.0 pts on en and uk with small and contradicted pushes ≤ 10 %. Also save the full strea",
-   "instructions": "Re-run `scripts/X.1/run_wer.py` unchanged (copy it to `scripts/X.1b/` first, adding only output\npaths) on the same clips with `small` then `large-v2`, en and uk (language pinned); mixed with\n`small` only (auto LID, now after F.11 and F.14). Report against V1's EVID-01 rule, unchanged:\nholds if stream ≤ batch + 3.0 pts on en and uk with small and contradicted pushes ≤ 10 %. Also save\nthe full stream output text per set. Read first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md`,\n`tasks/V1-evidence-plan.md`, `tasks/X.1-*.md`, `tasks/X.1.1-*.md`, this file. Offline; you are the\nonly process loading models; work from the main tree's `.venv` (no clone); write only this node\nfile and `scripts/X.1b/`.",
+   "file": "tasks/X.1c-stream-vs-batch-heldout.md",
+   "summary": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here (2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk with `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19) and **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s. Run each stream ",
+   "instructions": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here\n(2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk\nwith `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19)\nand **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s.\nRun each stream **twice** and report both (Ukrainian decoding was non-deterministic under F.14).\nThen `large-v2` on (b) en and uk, once, within ~60 min. Copy `scripts/X.1/run_wer.py` to\n`scripts/X.1c/` adding only a row-offset option and output paths; save full outputs. Read first:\nroot `CLAUDE.md`, `review/checkpoint-1/PLAN.md`, `tasks/V1-*.md`, `tasks/X.1*.md`, this file.\nOffline, one large model at a time (`pgrep -af python` first), main tree `.venv`, no clone; write\nonly this node file and `scripts/X.1c/`.",
    "findings_text": "_(numbers against the rule)_",
    "children": [],
    "state": "ready",
