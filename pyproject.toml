@@ -32,6 +32,8 @@ packages = ["src/gmst"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+# review/ holds frozen evidence probes (never edited after their node reports)
+extend-exclude = ["review"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
