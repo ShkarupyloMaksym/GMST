@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 11:36 UTC",
+ "generated": "2026-09-28 11:37 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -210,12 +210,11 @@ const DATA = {
    ],
    "state": "in-progress",
    "waiting_on": [
-    "F.4",
     "F.7"
    ],
    "depth": 0,
    "leaves_total": 13,
-   "leaves_done": 11,
+   "leaves_done": 12,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -339,11 +338,11 @@ const DATA = {
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -353,13 +352,13 @@ const DATA = {
    "file": "tasks/F.4-backends.md",
    "summary": "- **FIX-15** declare `mlx-whisper` as a pinned optional extra with a `sys_platform == 'darwin'` marker; wrap `ImportError` in `load_engine` as `ModelUnavailable` (exit 2) with an install hint. - **FIX-16** `MlxWhisperEngine.__init__` loads the model (via `_load()`), so a missing repo fails at startup with exit 2 and bench's load time is real. Verification on hardware is MAC-01. - **FIX-17** attach",
    "instructions": "- **FIX-15** declare `mlx-whisper` as a pinned optional extra with a `sys_platform == 'darwin'` marker; wrap `ImportError` in `load_engine` as `ModelUnavailable` (exit 2) with an install hint.\n- **FIX-16** `MlxWhisperEngine.__init__` loads the model (via `_load()`), so a missing repo fails at startup with exit 2 and bench's load time is real. Verification on hardware is MAC-01.\n- **FIX-17** attach the \"run `gmst warmup`\" hint only to not-cached / offline errors.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
-   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "findings_text": "- **FIX-15** `[project.optional-dependencies] mac = [\"mlx-whisper==0.4.3 ; darwin arm64\"]`\n  (`uv sync --extra mac` on the Mac — README and the `ModelUnavailable` message say so); a missing\n  install is `ModelUnavailable` / exit 2 (`61faa68`).\n- **FIX-16** `MlxWhisperEngine.__init__` calls `_load()` (`61faa68`).\n- **FIX-17** warmup hint only on `OSError` (`61faa68`).",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,

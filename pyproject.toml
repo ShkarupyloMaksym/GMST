@@ -16,6 +16,11 @@ dependencies = [
 [project.scripts]
 gmst = "gmst.cli:main"
 
+[project.optional-dependencies]
+mac = [
+    "mlx-whisper==0.4.3 ; platform_machine == 'arm64' and sys_platform == 'darwin'",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8",
