@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 06:16 UTC",
+ "generated": "2026-09-28 06:27 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -122,7 +122,7 @@
    "agent": "code-reviewer",
    "model": "opus",
    "effort": "high",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [],
    "finding": null,
    "has_read_section": true,
@@ -136,7 +136,7 @@
    "instructions": "Review line by line `src/gmst/reconcile.py`, `src/gmst/segment/endpointer.py`, `src/gmst/segment/turns.py` and `src/gmst/pipeline/stream.py` against the invariants in `CLAUDE.md` (\"Streaming reconciliation\") and `PLAN.md` (\"`reconcile.py` edge cases\", \"`Segment` timestamp contract\", the Ctrl-C and forced-commit rows of \"Failure modes\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nWhat counts as a finding: any input sequence that (a) commits a word twice, (b) makes committed spans non-monotonic, (c) re-commits a revised prefix, (d) loses text that was committed or was flushable at shutdown, (e) lets the real buffer grow past one utterance because the trim/rebase is skipped, or (f) writes to the sink from a thread other than the reconcile thread. Demonstrate each with a probe in `scripts/R1/` built on `tests/fakes.py` and the audio-reactive `_marked` / `_marked_engine` helpers in `tests/test_stream_pipeline.py` — a fixed script that ignores the audio it is handed cannot show a seam bug (CLAUDE.md \"Testing\"). Also check: the 600-character prompt cap, the 4000-word cap, the stall counter using the sample clock not wall time, and the second-Ctrl-C path.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
@@ -156,7 +156,7 @@
    "agent": "code-reviewer",
    "model": "opus",
    "effort": "high",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [],
    "finding": null,
    "has_read_section": true,
@@ -170,7 +170,7 @@
    "instructions": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nOwn the onboarding lead in `review/checkpoint-1/PLAN.md`: does `resolve_language` ever restrict the detector to the meeting's languages, and what does GMST do when the top label is `bg`, `ja`, `be`, `pl`…? Confirm with a probe on the local clips (`eval/results/data/uk/`, offline, `tiny` and `small` only — rule 4), saved in `scripts/R2/`. Also check: the sticky threshold and uk/ru tie-break compose as the module docstring says; the ≥ 0.5 s LID window around a segment; `multilingual=True` is only requested when `per_segment_lid` is off; `vad_filter=False` on every streaming call; `no_speech_threshold` and temperature fallback left on; `ModelUnavailable` carries \"run `gmst warmup`\". For `mlx_whisper.py`, read for bugs visible without running it (the `ModelHolder.get_model` reuse and the release in `gmst bench` are open Mac items — record, don't run).",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
@@ -258,29 +258,29 @@
    "agent": "code-reviewer",
    "model": "opus",
    "effort": "high",
-   "status": "todo",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 2,
+    "serious": 7,
+    "minor": 2
    },
    "file": "tasks/R5-eval-and-bench-method.md",
-   "summary": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
-   "instructions": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nQuestions: (1) Are the WER numbers comparable to the `egorsmkv/speech-recognition-uk` leaderboard they are meant to reproduce (same test set, same normalization — casing, punctuation, apostrophes ʼ/'/’, numerals)? (2) Do the synthetic `mixed` inter/intra clips and `real_cs` measure what they are named for, and are per-language WER and `switch_detected` computed correctly? (3) Is `gmst bench`'s \"streaming amplification\" the quantity `PLAN.md` \"Latency budget\" defines? (4) What sample size per set is needed to separate the four candidates at the leaderboard's gaps (13.7 / 20.5 / 22.8 / 12.8 % WER) — compute it, don't guess. (5) Is `eval/results/` reproducible from the scripts (the onboarding lead on `tiny` vs `large-v3`)? You may re-score from cached hypotheses (`--score-only`) and run ≤ 10 min with `tiny`; propose anything bigger as child nodes for V1.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "summary": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: done` before starting.",
+   "instructions": "Review `eval/build_sets.py`, `eval/run_eval.py`, `src/gmst/bench.py` and `src/gmst/metrics.py` as the instruments that will pick the default model (`CLAUDE.md` \"Model default is provisional\"). Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: done` before starting.\n\nQuestions: (1) Are the WER numbers comparable to the `egorsmkv/speech-recognition-uk` leaderboard they are meant to reproduce (same test set, same normalization — casing, punctuation, apostrophes ʼ/'/’, numerals)? (2) Do the synthetic `mixed` inter/intra clips and `real_cs` measure what they are named for, and are per-language WER and `switch_detected` computed correctly? (3) Is `gmst bench`'s \"streaming amplification\" the quantity `PLAN.md` \"Latency budget\" defines? (4) What sample size per set is needed to separate the four candidates at the leaderboard's gaps (13.7 / 20.5 / 22.8 / 12.8 % WER) — compute it, don't guess. (5) Is `eval/results/` reproducible from the scripts (the onboarding lead on `tiny` vs `large-v3`)? You may re-score from cached hypotheses (`--score-only`) and run ≤ 10 min with `tiny`; propose anything bigger as child nodes for V1.",
+   "findings_text": "- [blocking] The hypothesis cache is keyed by system name and clip id only, not by model, so `run_eval --gmst-model large-v3` silently resumes a cached `tiny` run and scores the mix as one system; no hyp record names its model — `eval/run_eval.py:273-284`, `scripts/R5/p3_cache_mixes_models.py`.\n  Evidence: `done = {json.loads(x)[\"id\"] for x in hp.read_text().splitlines() ...}` / `if m[\"id\"] in done: continue` (run_eval.py:276, 283-284). Probe output: `records now in gmst-batch.jsonl: 18 | new decodes with large-v3: 6 | cached (tiny) records reused: 12` and `any record naming its model? False`. The only cached `gmst-batch.jsonl` today is a tiny run (its 4 en hyps score identical to `fw-tiny-*`: en WER 0.57 / CER 0.11 in all three), while the docstring says `gmst-batch FasterWhisperEngine(large-v3, ...)` (run_eval.py:6) and `--gmst-model` defaults to `large-v3` (run_eval.py:260). Answer to Q5: `scores.json` *is* reproducible from the cached hyps (`p1_rescore.py`: `rescore == scores.json: True` for all three systems), but which model produced `gmst-batch` is not recorded anywhere, and the next large-v3 run would be contaminated.\n- [blocking] The default set sizes cannot separate the candidates at the leaderboard's gaps, and neither `run_eval` nor `bench` reports a confidence interval — `eval/build_sets.py:182` (`--per-lang` default 60), `src/gmst/bench.py:73-102` (one clip), `scripts/R5/p5_sample_size.py`.\n  Evidence (clips needed, two-sided 95 %, 80 % power, corpus WER, cleaned-CV10 clips of 6.88 words, measured overdispersion phi = 1.90):\n  `turbo-uk vs large-v2  0.97 pts: 5294 unpaired / 2893 paired (rho=0.45)`; `large-v2 vs large-v3 6.81: 132 / 73`; `large-v3 vs turbo 2.30: 1392 / 761`; `turbo-uk vs large-v3 7.78: 99 / 55`. 95 % CI half-width at WER 13.7 %: `n=4 ±17.7 pts`, `n=60 ±4.6`, `n=200 ±2.5`; bootstrap check on `small`, n=60: `[20.3, 29.6] around 24.7`. So 60 clips can at best separate {large-v2, turbo-uk} from {large-v3, turbo}; ordering within either pair needs ~800 (v3/turbo) to ~2900 (v2/turbo-uk, i.e. essentially all 3204 test clips — the leaderboard's own 1-point gap is at the edge of what that set can resolve). rho is from tiny vs small; two large-family models likely correlate more, so the paired numbers are an upper-ish bound. The n = 4 numbers in `scores.json` carry ±18-21 pts.\n- [serious] `run_eval` reports the *mean of per-clip WER*, not corpus WER (total errors / total reference words), which is what the leaderboard and `jiwer.wer(list, list)` compute — so the numbers are not directly comparable to 13.72 / 20.53 / 22.83 / 12.75 — `eval/run_eval.py:210` (`_mean([_wer(m[\"text\"], hyps[m[\"id\"]][\"text\"]) for m in rows])`), `scripts/R5/p1_rescore.py`, `p5_sample_size.py`.\n  Evidence: tiny-auto uk `macro=68.21 corpus=62.07`; en `macro=0.57 corpus=0.92`; on 60 clips tiny `corpus 55.69 % / macro 58.62 %`, small `24.70 % / 25.79 %`. A 1-3 pt bias is the size of the turbo-uk/large-v2 and large-v3/turbo gaps. Macro weighting also over-weights the short (4-5 word) clips.\n- [serious] `real_cs` is empty and could never be non-empty: the cleaned CV10 labels contain no Latin script at all, and `run_eval` neither runs nor scores `real_cs` — `eval/build_sets.py:12-13,154-177`, `eval/run_eval.py:204,215,271`.\n  Evidence: `latin rows 0` of 3204; the only non-Cyrillic characters in the labels are `{' ': 19602, \"'\": 163, '-': 82}`; `eval/results/data/real_cs.jsonl` is a single empty line (`real_cs manifest lines: ['']`). run_eval's sets are `{\"en\": \"en\", \"uk\": \"uk\", \"mixed\": None}` and `score()` iterates `(\"en\", \"uk\")` and `(\"mixed\", \"mixed:inter\", \"mixed:intra\")`. There is therefore no real code-switched audio anywhere in the harness; the docstring's \"real embedded English (brand/product/person names)\" does not exist in this corpus (the cleaning evidently transliterated or removed them).\n- [serious] The raw faster-whisper baselines can never register a language switch, so `switch_detected` / `lid_recall` compare GMST against a",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 2,
+    "serious": 7,
+    "minor": 2
    }
   },
   {
@@ -388,7 +388,6 @@
     "R2",
     "R3",
     "R4",
-    "R5",
     "R6",
     "R7"
    ],
