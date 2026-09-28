@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 06:53 UTC",
+ "generated": "2026-09-28 06:55 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -58,13 +58,279 @@
    "summary": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
    "instructions": "Placeholder group. T1 creates one child per group of related FIX items (and H1 adds those its decisions imply). Each fix lands with a test that fails before it and passes after, and the full suite green.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
-   "children": [],
+   "children": [
+    "F.1",
+    "F.2",
+    "F.3",
+    "F.4",
+    "F.5",
+    "F.6",
+    "F.7"
+   ],
    "state": "waiting",
    "waiting_on": [
-    "T1",
-    "H1"
+    "H1",
+    "F.1",
+    "F.2",
+    "F.3",
+    "F.4",
+    "F.5",
+    "F.6",
+    "F.7"
    ],
    "depth": 0,
+   "leaves_total": 7,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.1",
+   "title": "Shutdown and CLI errors: SIGTERM, second Ctrl-C, --config traceback",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.1-shutdown-and-cli.md",
+   "summary": "- **FIX-01** install the SIGINT handler for SIGTERM too (`cli.py:169-188`); test: SIGTERM to a child running `run_stream` over a `ListSource` flushes and closes the sink (R3 `sigterm_probe.py`). - **FIX-02** a second Ctrl-C must abandon the final decode (`stream.py:191-195` finally path) and still close the sink; catch `KeyboardInterrupt` in `_cmd_stream` (R1 `probe_second_ctrl_c.py`). - **FIX-03*",
+   "instructions": "- **FIX-01** install the SIGINT handler for SIGTERM too (`cli.py:169-188`); test: SIGTERM to a child running `run_stream` over a `ListSource` flushes and closes the sink (R3 `sigterm_probe.py`).\n- **FIX-02** a second Ctrl-C must abandon the final decode (`stream.py:191-195` finally path) and still close the sink; catch `KeyboardInterrupt` in `_cmd_stream` (R1 `probe_second_ctrl_c.py`).\n- **FIX-03** `main()` turns a missing `--config` into a one-line error, exit 1.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.2",
+   "title": "Eval harness: cache key, corpus WER, CIs, mixed clips, metrics",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.2-eval-harness.md",
+   "summary": "- **FIX-04** key the hypothesis cache by system *and* model (`hyp/<system>__<model>.jsonl`), write the model into every record, refuse to mix (R5 `p3_cache_mixes_models.py`). - **FIX-05** corpus WER (total errors / total ref words) plus a bootstrap 95 % CI per set. - **FIX-06** report `switch_detected`/`lid_recall` as n/a for systems that cannot label segments; rename per-language WER to what it m",
+   "instructions": "- **FIX-04** key the hypothesis cache by system *and* model (`hyp/<system>__<model>.jsonl`), write the model into every record, refuse to mix (R5 `p3_cache_mixes_models.py`).\n- **FIX-05** corpus WER (total errors / total ref words) plus a bootstrap 95 % CI per set.\n- **FIX-06** report `switch_detected`/`lid_recall` as n/a for systems that cannot label segments; rename per-language WER to what it measures (LID × ASR).\n- **FIX-07** *intra*: cut at word timestamps; *inter*: gaps ≥ `min_silence_ms` + margin.\n- **FIX-08** `--systems X` merges into `scores.json` instead of overwriting.\n- **FIX-09** split hyphens in `normalize_words`; record the numerals bias in the docstring.\n- **FIX-10** the E501 at `eval/run_eval.py:6` (the line is also wrong: it says large-v3).\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.3",
+   "title": "Bench: shipped decode mode, UK/EN WER, amplification, exit code, warmup",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.3-bench.md",
+   "summary": "- **FIX-11** bench decodes through the shipped path (per-utterance LID via `detect_language`, or `run_stream` over the clip) and reports UK and EN WER separately when given per-language references. - **FIX-12** exit 2 when no candidate produced a row. - **FIX-13** amplification from measured wall time per decode of a typical-length buffer plus the LID pass, divided by `update_interval` (R5 `p4_amp",
+   "instructions": "- **FIX-11** bench decodes through the shipped path (per-utterance LID via `detect_language`, or `run_stream` over the clip) and reports UK and EN WER separately when given per-language references.\n- **FIX-12** exit 2 when no candidate produced a row.\n- **FIX-13** amplification from measured wall time per decode of a typical-length buffer plus the LID pass, divided by `update_interval` (R5 `p4_amplification.py`); PLAN.md latency budget amended after EVID-04.\n- **FIX-14** `gmst warmup --bench` downloads bench's candidates; README says so.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.4",
+   "title": "Backends: mlx dependency, eager load, warmup hint",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.4-backends.md",
+   "summary": "- **FIX-15** declare `mlx-whisper` as a pinned optional extra with a `sys_platform == 'darwin'` marker; wrap `ImportError` in `load_engine` as `ModelUnavailable` (exit 2) with an install hint. - **FIX-16** `MlxWhisperEngine.__init__` loads the model (via `_load()`), so a missing repo fails at startup with exit 2 and bench's load time is real. Verification on hardware is MAC-01. - **FIX-17** attach",
+   "instructions": "- **FIX-15** declare `mlx-whisper` as a pinned optional extra with a `sys_platform == 'darwin'` marker; wrap `ImportError` in `load_engine` as `ModelUnavailable` (exit 2) with an install hint.\n- **FIX-16** `MlxWhisperEngine.__init__` loads the model (via `_load()`), so a missing repo fails at startup with exit 2 and bench's load time is real. Verification on hardware is MAC-01.\n- **FIX-17** attach the \"run `gmst warmup`\" hint only to not-cached / offline errors.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.5",
+   "title": "Tests: queue content, real-audio fixtures, env isolation",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.5-tests.md",
+   "summary": "- **FIX-18** `test_bounded_queue_drops_oldest` asserts on block *content* after overflow (R4 `queue_content_probe.py`; mutation 5 must go red). - **FIX-19** commit short `tests/fixtures/en.wav` (LibriSpeech, CC BY 4.0, credit in the fixtures README) and `uk.wav` (Common Voice, CC0) and a slow test that `detect_language` returns `en`/`uk` on them. - **FIX-20** an autouse fixture in `tests/conftest.",
+   "instructions": "- **FIX-18** `test_bounded_queue_drops_oldest` asserts on block *content* after overflow (R4 `queue_content_probe.py`; mutation 5 must go red).\n- **FIX-19** commit short `tests/fixtures/en.wav` (LibriSpeech, CC BY 4.0, credit in the fixtures README) and `uk.wav` (Common Voice, CC0) and a slow test that `detect_language` returns `en`/`uk` on them.\n- **FIX-20** an autouse fixture in `tests/conftest.py` clears every `GMST_*` variable.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.6",
+   "title": "Config and reconcile details: sse_port 0, empty tokens, prompt cap",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.6-config-and-reconcile-details.md",
+   "summary": "- **FIX-21** allow `sse_port = 0` (range 0–65535) and test it. - **FIX-22** a token that normalises to empty is skipped in agreement rather than blocking it (R1 `probe_punct_token.py`). - **FIX-23** cap the prompt by Whisper tokens (the engine's tokenizer) or restate the cap honestly in CLAUDE.md/PLAN.md/`stream.py:41` (R1 `probe_prompt_tokens.py`).",
+   "instructions": "- **FIX-21** allow `sse_port = 0` (range 0–65535) and test it.\n- **FIX-22** a token that normalises to empty is skipped in agreement rather than blocking it (R1 `probe_punct_token.py`).\n- **FIX-23** cap the prompt by Whisper tokens (the engine's tokenizer) or restate the cap honestly in CLAUDE.md/PLAN.md/`stream.py:41` (R1 `probe_prompt_tokens.py`).\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.7",
+   "title": "Documents: Linux routing, eval, LID cost, stale claims",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.7-documents.md",
+   "summary": "- **FIX-24** README Linux: `pactl set-default-source <sink>.monitor` or `PULSE_SOURCE`, and the system PortAudio package. - **FIX-25a** amend PLAN.md's loopback row to exit 1 plus a routing hint (and print that hint). - **FIX-25b** document `eval/` (run commands, extra deps) in CLAUDE.md Commands and PLAN.md layout; mark `backends/canary.py` as not created. - **FIX-26** correct the LID-cost claims",
+   "instructions": "- **FIX-24** README Linux: `pactl set-default-source <sink>.monitor` or `PULSE_SOURCE`, and the system PortAudio package.\n- **FIX-25a** amend PLAN.md's loopback row to exit 1 plus a routing hint (and print that hint).\n- **FIX-25b** document `eval/` (run commands, extra deps) in CLAUDE.md Commands and PLAN.md layout; mark `backends/canary.py` as not created.\n- **FIX-26** correct the LID-cost claims (`engine.py:5-6`, PLAN.md:77-79, :98, :128).\n- **FIX-27** after DECIDE-01's fix and EVID-01, replace \"verified end-to-end … clean ordered transcript\" with what EVID-01 measured.\n- DECIDE-07's outcome (CI claim) lands here too.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
+   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
    "leaves_total": 1,
    "leaves_done": 0,
    "severity_total": {
@@ -84,8 +350,7 @@
    "effort": null,
    "status": "todo",
    "depends_on": [
-    "T1",
-    "X"
+    "T1"
    ],
    "finding": null,
    "has_read_section": true,
@@ -96,14 +361,11 @@
    },
    "file": "tasks/H1-decisions.md",
    "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
-   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
+   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "waiting",
-   "waiting_on": [
-    "T1",
-    "X"
-   ],
+   "state": "ready",
+   "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
    "leaves_done": 0,
@@ -360,7 +622,7 @@
    "agent": "orchestrator",
    "model": "opus",
    "effort": "high",
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "R1",
     "R2",
@@ -370,7 +632,7 @@
     "R6",
     "R7"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -380,13 +642,13 @@
    "file": "tasks/T1-triage.md",
    "summary": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
    "instructions": "Read every review node's findings. Deduplicate, re-grade on the one scale (PLAN.md rule 2), and give each an ID: `FIX-nn` (clear fix, no decision needed), `DECIDE-nn` (needs the user), `EVID-nn` (needs a measurement first), `MAC-nn` (needs Apple hardware). Write the table here. Create one `F.n` child of `F` per group of related FIX items, and hand EVID items to V1.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -418,10 +680,8 @@
    "instructions": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "waiting",
-   "waiting_on": [
-    "T1"
-   ],
+   "state": "ready",
+   "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
    "leaves_done": 0,

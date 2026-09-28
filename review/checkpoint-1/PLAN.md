@@ -104,3 +104,7 @@ its brief.
 ## Results ledger
 
 _(the orchestrator appends: date — node — what changed in which file, and the commit)_
+
+- 2026-09-28 — R1–R7 done (57 raw findings). T1 triage: 7 blocking, 22 serious, 11 minor after
+  merging and re-grading; 7 DECIDE, 4 EVID, 6 MAC; fix groups F.1–F.7 created. **Amendment:** H1's
+  `depends-on` narrowed to `T1` (only DECIDE-04 needs evidence first).
