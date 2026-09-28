@@ -359,3 +359,30 @@ def test_prompt_is_bounded():
     run_stream(cfg, ListSource([_loud(0.1)] * 60), engine, RecSink(), language="en")
 
     assert max(len(c["prompt"] or "") for c in engine.calls) <= 600
+
+
+def test_a_second_interrupt_abandons_the_final_decode_but_still_closes_the_sink(tmp_path):
+    """The second Ctrl-C (KeyboardInterrupt out of an in-loop decode) must not start the final
+    decode — that is what it is for — yet SrtSink still has to write what was committed."""
+
+    class InterruptedEngine(FakeEngine):
+        def transcribe(self, audio, *, language=None, prompt=None):
+            if len(self.calls) >= 3:
+                self.calls.append({"samples": len(audio), "language": language, "prompt": prompt})
+                raise KeyboardInterrupt
+            return super().transcribe(audio, language=language, prompt=prompt)
+
+    p = tmp_path / "o.srt"
+    engine = InterruptedEngine(
+        [
+            [Segment(0.0, 0.1, "w0", "en")],
+            [Segment(0.0, 0.2, "w0 w1", "en")],
+            [Segment(0.0, 0.3, "w0 w1", "en")],
+        ]
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        run_stream(_cfg(), ListSource([_loud(0.1)] * 6), engine, SrtSink(p), language="en")
+
+    assert len(engine.calls) == 4, "a decode was started after the second interrupt"
+    assert "w0" in p.read_text(encoding="utf-8")

@@ -120,6 +120,7 @@ def run_stream(
         stats.decodes += 1
         return _words_of(segs), call_lang
 
+    abandoned = False
     try:
         for block in source.blocks():
             ep.add(block)
@@ -188,10 +189,14 @@ def run_stream(
                         [w.text for w in hyp[done:]],
                     )
                     last_pending = []  # its spans are relative to the pre-trim buffer
+    except KeyboardInterrupt:
+        # the second Ctrl-C / SIGTERM: the user asked not to wait for the final decode
+        abandoned = True
+        raise
     finally:
         try:
             tail = ep.buffer
-            if len(tail) >= _MIN_FLUSH_SAMPLES and ep.assess().regions:
+            if not abandoned and len(tail) >= _MIN_FLUSH_SAMPLES and ep.assess().regions:
                 hyp, call_lang = decode(tail)
                 # last decode of the session — commit the whole tail, never drop it, skipping
                 # only a prefix that repeats what is already committed.

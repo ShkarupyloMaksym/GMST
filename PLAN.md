@@ -161,7 +161,7 @@ Every row has a defined policy; none of this is optional.
 | Engine raises mid-meeting | `run_stream`'s shutdown flush is nested so `sink.close()` is unconditional — `SrtSink` only writes its file there, and one engine failure must not cost the whole transcript. The original exception still propagates |
 | SSE viewer stops reading | per-client queue bounded at 512 events, **drop oldest** (`SseSink.dropped` counts); a `retry:` hint and a 15 s heartbeat comment keep proxies from dropping idle connections |
 | Long meeting (2 h+) | memory bound = bounded queues + buffer trim + bounded SSE client queues + the committed word list capped at 4000 + `initial_prompt` capped at 600 characters (~200 Whisper tokens; 200 *words* of Ukrainian is ~400 tokens and would be silently truncated) |
-| Ctrl-C / SIGTERM | stop stream → drain queue → transcribe & **flush the uncommitted tail as final** → close sink |
+| Ctrl-C / SIGTERM | stop stream → drain queue → transcribe & **flush the uncommitted tail as final** → close sink. A second Ctrl-C/SIGTERM skips the final decode, still closes the sink, exit 130 (both signals handled since the 2026-09-28 review, FIX-01/02) |
 
 Clock: all timestamps derive from a monotonic `samples_consumed` counter (`samples / SAMPLE_RATE`),
 never `time.time()` — **including the forced-commit stall timer**, which compares

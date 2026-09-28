@@ -43,8 +43,10 @@ uv run gmst bench clip.wav --ref clip.txt             # pick the model from WER 
 ```
 
 Exit codes: `0` ok, `1` bad input (no such file/device), `2` the model or backend could not be
-loaded (the message names `gmst warmup`), `3` the input device disappeared mid-session. Ctrl-C
-drains, transcribes the tail and closes the sink; a second Ctrl-C gives up on that final decode.
+loaded (the message names `gmst warmup`), `3` the input device disappeared mid-session, `130` a
+second Ctrl-C gave up on `stream`'s final decode. Ctrl-C or SIGTERM (`kill`, `systemctl stop`)
+drains, transcribes the tail and closes the sink; a second one gives up on that final decode, and
+the sink is still closed with what was committed.
 
 ## Status
 

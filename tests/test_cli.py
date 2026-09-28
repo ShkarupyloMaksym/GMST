@@ -99,6 +99,50 @@ def test_stream_sigint_handler_is_restored(monkeypatch, tmp_path):
     assert signal.getsignal(signal.SIGINT) is before
 
 
+def test_sigterm_drains_and_flushes_like_ctrl_c(monkeypatch, tmp_path):
+    """`kill`, `systemctl stop` and `docker stop` send SIGTERM: without a handler the process dies
+    with no drain, no final flush and no sink.close()."""
+    import signal
+
+    from gmst.pipeline.stream import StreamStats
+
+    source = _FakeSource()
+    before = signal.getsignal(signal.SIGTERM)
+    seen = {}
+
+    def run(*a, **kw):
+        handler = signal.getsignal(signal.SIGTERM)
+        seen["installed"] = callable(handler) and handler is not before
+        if seen["installed"]:
+            handler(signal.SIGTERM, None)  # what the kernel would do; never kill the test run
+        seen["closes"] = source.closes
+        return StreamStats()
+
+    _stub_stream(monkeypatch, source, run=run)
+    assert main(["stream", "-o", str(tmp_path / "o.txt")]) == 0
+    assert seen["installed"], "no SIGTERM handler while streaming"
+    assert seen["closes"] >= 1, "SIGTERM did not start the drain"
+    assert signal.getsignal(signal.SIGTERM) is before
+
+
+def test_a_second_interrupt_exits_130_without_a_traceback(monkeypatch, capsys, tmp_path):
+    source = _FakeSource()
+
+    def run(*a, **kw):
+        raise KeyboardInterrupt
+
+    _stub_stream(monkeypatch, source, run=run)
+    assert main(["stream", "-o", str(tmp_path / "o.txt")]) == 130
+    assert "abandoned" in capsys.readouterr().err
+    assert source.closes >= 1
+
+
+def test_missing_config_path_is_a_one_line_error(capsys, tmp_path):
+    assert main(["-c", str(tmp_path / "nope.toml"), "devices"]) == 1
+    err = capsys.readouterr().err
+    assert "nope.toml" in err and "Traceback" not in err
+
+
 def test_missing_model_reports_warmup_hint(monkeypatch, capsys, tmp_path):
     clip = tmp_path / "clip.wav"
     clip.write_bytes(b"not really audio")

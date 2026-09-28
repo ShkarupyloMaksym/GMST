@@ -4,7 +4,8 @@
 ``GMST_*`` precedence chain is live.
 
 Exit codes: ``0`` success, ``1`` bad input (no such file / device), ``2`` the model or backend is
-unavailable (with the "run ``gmst warmup``" hint), ``3`` the input device disappeared mid-session.
+unavailable (with the "run ``gmst warmup``" hint), ``3`` the input device disappeared mid-session,
+``130`` a second Ctrl-C / SIGTERM abandoned ``stream``'s final decode (the sink is still closed).
 """
 
 from __future__ import annotations
@@ -148,6 +149,8 @@ def _cmd_stream(args: argparse.Namespace, cfg: Config) -> int:
     import signal
     import threading
 
+    stop_signals = (signal.SIGINT, signal.SIGTERM)
+
     from gmst.audio.device_source import DeviceLost, DeviceSource
     from gmst.pipeline.stream import run_stream
     from gmst.sink.base import make_sink
@@ -168,24 +171,27 @@ def _cmd_stream(args: argparse.Namespace, cfg: Config) -> int:
 
     fired = False
 
-    def _on_sigint(signum, frame):
+    def _on_stop(signum, frame):
+        # Ctrl-C and SIGTERM (kill / systemctl stop / docker stop) both drain and flush; a second
+        # one of either abandons the final decode, and run_stream still closes the sink.
         nonlocal fired
-        if fired:  # a second Ctrl-C: stop waiting for the final decode
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
+        if fired:
+            for sig in stop_signals:
+                signal.signal(sig, signal.SIG_DFL)  # a third one kills outright
             raise KeyboardInterrupt
         fired = True
         print("\nstopping — flushing the final utterance…", file=sys.stderr)
         source.close()  # drain -> flush -> close
 
     sink = make_sink(cfg, args.out, override=args.sink)
-    prev_handler = None
+    prev_handlers: dict = {}
     started = False
     try:
         if args.sink == "sse" or (args.sink is None and cfg.sink == "sse"):
             print(f"SSE: http://127.0.0.1:{sink.port}/  (events at /events)", file=sys.stderr)
         # signal.signal only works on the main thread; guard rather than assume
         if threading.current_thread() is threading.main_thread():
-            prev_handler = signal.signal(signal.SIGINT, _on_sigint)
+            prev_handlers = {sig: signal.signal(sig, _on_stop) for sig in stop_signals}
 
         lang = args.language or cfg.language or "auto"
         print(
@@ -198,9 +204,13 @@ def _cmd_stream(args: argparse.Namespace, cfg: Config) -> int:
     except DeviceLost as exc:
         print(f"\naudio input lost: {exc}", file=sys.stderr)
         return 3
+    except KeyboardInterrupt:
+        print("\nfinal decode abandoned; the sink was closed with what was committed",
+              file=sys.stderr)
+        return 130
     finally:
-        if prev_handler is not None:
-            signal.signal(signal.SIGINT, prev_handler)
+        for sig, handler in prev_handlers.items():
+            signal.signal(sig, handler)
         source.close()  # never leave the PortAudio stream open behind an error
         if not started:
             sink.close()  # once run_stream starts it owns the sink and closes it itself
@@ -265,7 +275,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    cfg = Config.load(Path(args.config) if args.config else None)
+    try:
+        cfg = Config.load(Path(args.config) if args.config else None)
+    except FileNotFoundError as exc:
+        print(exc, file=sys.stderr)
+        return 1
     return args.func(args, cfg)
 
 

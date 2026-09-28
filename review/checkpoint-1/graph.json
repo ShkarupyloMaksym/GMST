@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 06:55 UTC",
+ "generated": "2026-09-28 07:00 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -67,10 +67,9 @@
     "F.6",
     "F.7"
    ],
-   "state": "waiting",
+   "state": "in-progress",
    "waiting_on": [
     "H1",
-    "F.1",
     "F.2",
     "F.3",
     "F.4",
@@ -80,7 +79,7 @@
    ],
    "depth": 0,
    "leaves_total": 7,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -96,11 +95,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -110,13 +109,13 @@
    "file": "tasks/F.1-shutdown-and-cli.md",
    "summary": "- **FIX-01** install the SIGINT handler for SIGTERM too (`cli.py:169-188`); test: SIGTERM to a child running `run_stream` over a `ListSource` flushes and closes the sink (R3 `sigterm_probe.py`). - **FIX-02** a second Ctrl-C must abandon the final decode (`stream.py:191-195` finally path) and still close the sink; catch `KeyboardInterrupt` in `_cmd_stream` (R1 `probe_second_ctrl_c.py`). - **FIX-03*",
    "instructions": "- **FIX-01** install the SIGINT handler for SIGTERM too (`cli.py:169-188`); test: SIGTERM to a child running `run_stream` over a `ListSource` flushes and closes the sink (R3 `sigterm_probe.py`).\n- **FIX-02** a second Ctrl-C must abandon the final decode (`stream.py:191-195` finally path) and still close the sink; catch `KeyboardInterrupt` in `_cmd_stream` (R1 `probe_second_ctrl_c.py`).\n- **FIX-03** `main()` turns a missing `--config` into a one-line error, exit 1.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
-   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "findings_text": "- **FIX-01** `_cmd_stream` installs one `_on_stop` handler for SIGINT *and* SIGTERM and restores both\n  afterwards (`cli.py`).\n- **FIX-02** `run_stream` records a `KeyboardInterrupt` out of the loop and skips the final decode in\n  `finally`; `sink.close()` still runs (`stream.py`). `_cmd_stream` catches it and exits 130 with a\n  one-line message. A third signal still kills outright (`SIG_DFL`), by design.\n- **FIX-03** `main()` turns the missing-`--config` `FileNotFoundError` into a one-line error, exit 1.\n- Docs: README exit codes (+130, SIGTERM), CLAUDE.md \"Failure modes\", PLAN.md Ctrl-C/SIGTERM row, the\n  `cli.py` module docstring.\n- One commit for the three: FIX-01 and FIX-02 share the same handler hunk in `cli.py`.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -348,7 +347,7 @@
    "agent": "human",
    "model": "human",
    "effort": null,
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [
     "T1"
    ],
@@ -364,7 +363,7 @@
    "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,

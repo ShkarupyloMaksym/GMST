@@ -162,7 +162,8 @@ missing/unloadable model → `ModelUnavailable` carrying "run `gmst warmup`" →
 viewer → bounded per-client queue, drop-oldest; **Ctrl-C → drain → transcribe & flush the
 uncommitted tail as final → close sink** (without it every session loses its last utterance) — and
 `sink.close()` is unconditional even when that final decode raises, because `SrtSink` writes its
-file only there. A second Ctrl-C abandons the final decode instead of being ignored.
+file only there. SIGTERM takes the same path as Ctrl-C. A second Ctrl-C/SIGTERM abandons the final
+decode (`run_stream` skips it, still closes the sink; `gmst stream` exits 130).
 
 ### Threading (Phase 3)
 
