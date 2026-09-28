@@ -1,0 +1,50 @@
+model=small loaded in 0.8s; n_clips=60
+
+== A: detector labels on uk clips ==
+[full] raw top-1: {'uk': 36, 'ru': 21, 'pl': 1, 'de': 1, 'hr': 1}
+[full] resolved prev=None: {'uk': 39, 'ru': 18, 'pl': 1, 'de': 1, 'hr': 1}  -> not en/uk: 21/60
+[full] resolved prev=en: {'uk': 27, 'en': 21, 'ru': 12}  -> not en/uk: 12/60
+[full] resolved prev=uk: {'uk': 48, 'ru': 12}  -> not en/uk: 12/60
+[full]   e.g. uk-1826 top3=[('ru', 0.782), ('en', 0.078), ('la', 0.024)]
+[full]   e.g. uk-3371 top3=[('ru', 0.597), ('uk', 0.138), ('en', 0.091)]
+[full]   e.g. uk-3541 top3=[('ru', 0.851), ('uk', 0.042), ('en', 0.025)]
+[full]   e.g. uk-1206 top3=[('pl', 0.149), ('uk', 0.123), ('hr', 0.094)]
+[full]   e.g. uk-2150 top3=[('ru', 0.863), ('uk', 0.05), ('en', 0.016)]
+[full]   e.g. uk-709 top3=[('ru', 0.359), ('uk', 0.321), ('cs', 0.088)]
+[first1s] raw top-1: {'en': 42, 'ru': 8, 'fr': 3, 'nn': 3, 'pt': 2, 'pl': 1, 'de': 1}
+[first1s] resolved prev=None: {'en': 42, 'ru': 8, 'fr': 3, 'nn': 3, 'pt': 2, 'pl': 1, 'de': 1}  -> not en/uk: 18/60
+[first1s] resolved prev=en: {'en': 58, 'pt': 1, 'ru': 1}  -> not en/uk: 2/60
+[first1s] resolved prev=uk: {'uk': 53, 'en': 5, 'pt': 1, 'ru': 1}  -> not en/uk: 2/60
+[first1s]   e.g. uk-3726 top3=[('en', 0.434), ('nn', 0.263), ('cy', 0.045)]
+[first1s]   e.g. uk-1639 top3=[('ru', 0.31), ('en', 0.291), ('ko', 0.108)]
+[first1s]   e.g. uk-3519 top3=[('fr', 0.333), ('pl', 0.138), ('en', 0.132)]
+[first1s]   e.g. uk-2023 top3=[('ru', 0.588), ('pl', 0.059), ('en', 0.054)]
+[first1s]   e.g. uk-1826 top3=[('en', 0.321), ('zh', 0.092), ('hi', 0.058)]
+[first1s]   e.g. uk-3371 top3=[('en', 0.321), ('nn', 0.255), ('zh', 0.072)]
+
+== B: batch per-segment LID relabels, does not re-decode ==
+text identical to raw autodetect decode: 0/60; clips where GMST label != language the text was decoded in: 0/60
+
+== C: run_stream(language=None) on a meeting of 6 uk clips ==
+  lid 2.0 None ar 0.21 ar
+  lid 3.0 ar ru 0.423 ar
+  lid 1.5 ar ru 0.444 uk
+  lid 1.0 uk en 0.363 uk
+  lid 4.0 uk en 0.497 uk
+  lid 3.0 uk ru 0.351 uk
+  lid 3.0 uk en 0.761 en
+stream wall 75.5s for 41.1s audio
+  LID on  2.00s prev=None raw=ar@0.21 top2=[('ar', 0.21), ('en', 0.19)] -> used ar
+  LID on  3.00s prev=ar   raw=ru@0.423 top2=[('ru', 0.42), ('en', 0.22)] -> used ar
+  LID on  1.50s prev=ar   raw=ru@0.444 top2=[('ru', 0.44), ('uk', 0.38)] -> used uk
+  LID on  1.00s prev=uk   raw=en@0.363 top2=[('en', 0.36), ('nn', 0.1)] -> used uk
+  LID on  4.00s prev=uk   raw=en@0.497 top2=[('en', 0.5), ('nn', 0.07)] -> used uk
+  LID on  3.00s prev=uk   raw=ru@0.351 top2=[('ru', 0.35), ('en', 0.33)] -> used uk
+  LID on  3.00s prev=uk   raw=en@0.761 top2=[('en', 0.76), ('nn', 0.04)] -> used en
+languages handed to transcribe(): {'ar': 2, 'uk': 4, 'en': 1}; not en/uk: 2/7
+final segments by language: {'ar': 3, 'uk': 6, 'en': 2}
+  [ar]   0.00-  0.75 'ماو'
+  [ar]   1.35-  2.15 'يوركو'
+  [ar]   5.00-  7.00 'موزيجي بيبليوتي'
+  [en]  33.00- 33.75 'там'
+  [en]  34.41- 39.55 'да исправимый полант там справдимые старости'

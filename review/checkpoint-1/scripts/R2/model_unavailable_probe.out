@@ -1,0 +1,6 @@
+uncached size (medium), offline: ModelUnavailable  "could not load 'medium': Cannot find an appropriate cached snapshot folder for the specified revision on the l" | hint='if the model is not cached yet, run: gmst warmup'
+typo size (large-v9): ModelUnavailable  "could not load 'large-v9': Invalid model size 'large-v9', expected one of: tiny.en, tiny, base.en, base, small" | hint='if the model is not cached yet, run: gmst warmup'
+typo repo (Systran/nope): ModelUnavailable  "could not load 'Systran/faster-whisper-nope': Cannot find an appropriate cached snapshot folder for the specif" | hint='if the model is not cached yet, run: gmst warmup'
+cuda on a CPU-only box: loaded OK
+float16 on cpu: ModelUnavailable  "could not load 'tiny': Requested float16 compute type, but the target device or backend do not support efficie" | hint='if the model is not cached yet, run: gmst warmup'
+mlx engine on linux: NOT wrapped -> builtins.ModuleNotFoundError: "No module named 'mlx_whisper'"

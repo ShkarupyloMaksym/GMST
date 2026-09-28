@@ -1,0 +1,66 @@
+model=tiny loaded in 0.5s; n_clips=60
+
+== A: detector labels on uk clips ==
+[full] raw top-1: {'ru': 28, 'uk': 20, 'pl': 4, 'bg': 2, 'ja': 2, 'cs': 2, 'ur': 1, 'hr': 1}
+[full] resolved prev=None: {'ru': 27, 'uk': 21, 'pl': 4, 'bg': 2, 'ja': 2, 'cs': 2, 'ur': 1, 'hr': 1}  -> not en/uk: 39/60
+[full] resolved prev=en: {'en': 37, 'ru': 13, 'uk': 10}  -> not en/uk: 13/60
+[full] resolved prev=uk: {'uk': 47, 'ru': 13}  -> not en/uk: 13/60
+[full]   e.g. uk-3726 top3=[('bg', 0.247), ('hr', 0.211), ('uk', 0.191)]
+[full]   e.g. uk-3519 top3=[('ja', 0.569), ('ro', 0.062), ('it', 0.046)]
+[full]   e.g. uk-2023 top3=[('ru', 0.606), ('uk', 0.251), ('bg', 0.053)]
+[full]   e.g. uk-1826 top3=[('ru', 0.701), ('pl', 0.173), ('en', 0.026)]
+[full]   e.g. uk-3371 top3=[('pl', 0.657), ('cs', 0.195), ('ru', 0.044)]
+[full]   e.g. uk-3541 top3=[('ru', 0.972), ('uk', 0.012), ('en', 0.003)]
+[first1s] raw top-1: {'en': 38, 'ru': 13, 'nn': 4, 'zh': 2, 'ro': 1, 'pl': 1, 'tr': 1}
+[first1s] resolved prev=None: {'en': 38, 'ru': 13, 'nn': 4, 'zh': 2, 'ro': 1, 'pl': 1, 'tr': 1}  -> not en/uk: 22/60
+[first1s] resolved prev=en: {'en': 60}  -> not en/uk: 0/60
+[first1s] resolved prev=uk: {'uk': 60}  -> not en/uk: 0/60
+[first1s]   e.g. uk-3726 top3=[('en', 0.352), ('nn', 0.215), ('cy', 0.086)]
+[first1s]   e.g. uk-1639 top3=[('ru', 0.372), ('ko', 0.19), ('en', 0.093)]
+[first1s]   e.g. uk-3519 top3=[('en', 0.179), ('nn', 0.135), ('ko', 0.069)]
+[first1s]   e.g. uk-2023 top3=[('en', 0.104), ('es', 0.097), ('id', 0.089)]
+[first1s]   e.g. uk-1826 top3=[('ru', 0.115), ('en', 0.099), ('el', 0.092)]
+[first1s]   e.g. uk-3371 top3=[('en', 0.227), ('nn', 0.191), ('cy', 0.097)]
+
+== B: batch per-segment LID relabels, does not re-decode ==
+  uk-2150: decoded-as=ru gmst-labels=['es'] text=' Уситок и вон есть.'
+  uk-3037: decoded-as=ru gmst-labels=['cs'] text=' Надала, как он мих виттор бы витбих.'
+  uk-259: decoded-as=cs gmst-labels=['ro'] text=' Štáraz o sím na hadejo.'
+  uk-2022: decoded-as=ru gmst-labels=['uk'] text=' При цему выпуск вурналю и периодичных выдань урокены залежн'
+text identical to raw autodetect decode: 60/60; clips where GMST label != language the text was decoded in: 5/60
+
+== C: run_stream(language=None) on a meeting of 12 uk clips ==
+stream wall 87.3s for 73.7s audio
+  LID on  2.00s prev=None raw=tr@0.435 top2=[('tr', 0.44), ('hi', 0.06)] -> used tr
+  LID on  3.00s prev=tr   raw=ru@0.708 top2=[('ru', 0.71), ('pl', 0.05)] -> used ru
+  LID on  1.00s prev=ru   raw=en@0.339 top2=[('en', 0.34), ('nn', 0.1)] -> used ru
+  LID on  3.00s prev=ru   raw=en@0.288 top2=[('en', 0.29), ('nn', 0.17)] -> used ru
+  LID on  3.00s prev=ru   raw=es@0.317 top2=[('es', 0.32), ('ru', 0.22)] -> used ru
+  LID on  3.00s prev=ru   raw=en@0.782 top2=[('en', 0.78), ('nn', 0.03)] -> used en
+  LID on  3.00s prev=en   raw=ru@0.911 top2=[('ru', 0.91), ('pl', 0.04)] -> used ru
+  LID on  3.00s prev=ru   raw=en@0.193 top2=[('en', 0.19), ('ko', 0.15)] -> used ru
+  LID on  2.00s prev=ru   raw=pl@0.306 top2=[('pl', 0.31), ('ru', 0.22)] -> used ru
+  LID on  2.00s prev=ru   raw=es@0.298 top2=[('es', 0.3), ('ru', 0.17)] -> used ru
+  LID on  3.00s prev=ru   raw=ru@0.373 top2=[('ru', 0.37), ('cs', 0.37)] -> used ru
+  LID on  3.00s prev=ru   raw=en@0.531 top2=[('en', 0.53), ('cy', 0.14)] -> used ru
+languages handed to transcribe(): {'tr': 1, 'ru': 10, 'en': 1}; not en/uk: 11/12
+final segments by language: {'tr': 2, 'ru': 16, 'en': 1}
+  [tr]   0.00-  1.00 'Mal'
+  [tr]   2.80-  4.80 'yorkot,navçidele,dobroho,tah'
+  [ru]   5.00-  7.40 'университет,музыи и'
+  [ru]  15.00- 16.00 '2-2'
+  [ru]  16.55- 17.30 'лекуроша,мным'
+  [ru]  20.00- 23.33 'хто портикся'
+  [ru]  27.00- 28.25 'я'
+  [ru]  28.72- 30.72 'став не укреп'
+  [en]  33.00- 34.33 '當 this'
+  [ru]  40.00- 40.83 'Почал'
+  [ru]  41.35- 45.63 'ли в же сумневатыйся,чпедайте дорогую батьку.'
+  [ru]  47.00- 48.00 'На'
+  [ru]  53.00- 54.43 'взяв я'
+  [ru]  59.00- 60.50 'уйсита'
+  [ru]  60.50- 62.00 'кивонез.'
+  [ru]  63.00- 64.33 'А'
+  [ru]  64.73- 67.13 'лаковаринемся золото в арту.'
+  [ru]  68.00- 69.60 'Ольга застала'
+  [ru]  69.60- 72.00 'сама в зале.'
