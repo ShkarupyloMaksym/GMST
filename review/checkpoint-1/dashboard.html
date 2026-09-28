@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 07:18 UTC",
+ "generated": "2026-09-28 07:20 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -213,12 +213,11 @@ const DATA = {
     "F.4",
     "F.5",
     "F.6",
-    "F.7",
-    "F.10"
+    "F.7"
    ],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 3,
+   "leaves_done": 4,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -558,11 +557,11 @@ const DATA = {
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -572,13 +571,13 @@ const DATA = {
    "file": "tasks/F.10-batch-per-region-lid.md",
    "summary": "Implement PLAN.md \"Review decisions\" DECIDE-03: with `per_segment_lid` on and no pinned language, batch VAD-splits the file (`segment/vad.py`), detects each region's language via `detect_language` (F.9's restriction, sticky across regions) and decodes each region with that `language`; timestamps offset to file time. Same for `mlx_whisper`. `eval/run_eval.py`'s `gmst-batch` then measures GMST, not ",
    "instructions": "Implement PLAN.md \"Review decisions\" DECIDE-03: with `per_segment_lid` on and no pinned language, batch VAD-splits the file (`segment/vad.py`), detects each region's language via `detect_language` (F.9's restriction, sticky across regions) and decodes each region with that `language`; timestamps offset to file time. Same for `mlx_whisper`. `eval/run_eval.py`'s `gmst-batch` then measures GMST, not raw autodetect. Test: a `FakeEngine` batch run with two regions of different scripted languages decodes each with its own `language`.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; commit with an\nexplicit pathspec. Items and evidence: T1's triage table; the decision: root PLAN.md \"Review\ndecisions\".",
-   "findings_text": "_(what changed, with the commit)_",
+   "findings_text": "- `pipeline/batch.py`: `speech_regions` (VAD, merged across gaps < `min_silence_ms`, padded\n  0.2 s) and `transcribe_by_region` (pinned → one whole-file call; otherwise per region\n  `detect_language` with the previous region's language as `prev_lang`, then `transcribe` in that\n  language, times offset to the file). `run_batch` uses it. Backend-agnostic, so `mlx_whisper`\n  gets it too.\n- `eval/run_eval.py`: `gmst-batch` runs `transcribe_by_region`, so it measures GMST and not raw\n  autodetect (R2 F3 / R5); its docstring line was also FIX-10's E501.\n- `faster_whisper.py` docstring: the `per_segment_lid` relabel path is label-only and unused by\n  both pipelines.\n- Docs: CLAUDE.md pipeline line, PLAN.md module layout.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,

@@ -3,7 +3,8 @@
 Systems:
   fw-<size>-auto   raw faster-whisper, language=None (autodetect) — the "just Whisper" baseline
   fw-<size>-forced raw faster-whisper, language pinned to the clip's language (pure sets only)
-  gmst-batch       FasterWhisperEngine(large-v3, per_segment_lid=True) — per-utterance LID + tiebreak
+  gmst-batch       gmst.pipeline.batch.transcribe_by_region(--gmst-model): each VAD region decoded
+                   in its own restricted LID language (DECIDE-03)
   gmst-stream      pipeline.run_stream over the clip fed in 0.25 s blocks — the streaming path
 
 Metrics: WER / CER (jiwer, shared normalization), and for the mixed set: per-language WER,
@@ -27,6 +28,7 @@ import soundfile as sf
 
 from gmst.config import Config
 from gmst.metrics import normalize_words
+from gmst.pipeline.batch import transcribe_by_region
 
 DATA = Path(__file__).parent / "results" / "data"
 HYP = Path(__file__).parent / "results" / "hyp"
@@ -95,7 +97,7 @@ def _gmst_engine():
 def run_gmst_batch(wav: np.ndarray, clip_lang: str | None) -> dict:
     eng = _gmst_engine()
     t0 = time.monotonic()
-    segs = eng.transcribe(wav, language=None)  # force GMST's own per-segment LID
+    segs = transcribe_by_region(wav, Config(model_size=GMST_MODEL), eng)  # GMST's batch path
     dt = time.monotonic() - t0
     parts = [{"text": s.text.strip(), "lang": s.language} for s in segs]
     return {

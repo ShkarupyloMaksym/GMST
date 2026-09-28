@@ -5,7 +5,7 @@ stage: fix
 kind: task
 agent: orchestrator
 model: sonnet
-status: todo
+status: done
 depends-on: T1
 
 # F.10 — DECIDE-03 fix: batch decodes each VAD region in its own language
@@ -21,14 +21,36 @@ decisions".
 
 ## What was read / measured
 
-_(write as you go: files and line ranges read, commands run, where you stopped)_
+Read `pipeline/batch.py`, `segment/vad.py`, both backends' `transcribe`, `tests/fakes.py`,
+`eval/run_eval.py:80-100`. Test first, watched fail:
+`test_batch_pipeline.py::test_batch_decodes_each_speech_region_in_its_own_language` (a fake whose
+LID reads amplitude: en region, 1 s silence, uk region). Added
+`::test_batch_with_a_pinned_language_decodes_the_file_once`. The existing
+`test_run_batch_marks_final_and_reports_rtf` fed zeros with no pinned language; it now pins `en`
+(it tests final-marking and RTF, and silence correctly yields no regions). `uv run pytest -q`: 162
+passed; `ruff check .` clean.
+
+Real model, `tiny`, auto LID, two `eval/results/data/mixed` inter clips (`uv run gmst batch`):
+`mix-inter-000` → `(en) He refused at first to listen to the careful advice…` then
+`(uk) Це буде абсолютно гармальний прав, я.`; `mix-inter-002` → `(uk) Навіщий, коли ти назавтра…`
+then `(en) But in the rest of the work…`. Both switches found and decoded in the right script (R5
+recorded `switch_detected 0/4` for every system before).
 
 ## Findings
 
-_(what changed, with the commit)_
+- `pipeline/batch.py`: `speech_regions` (VAD, merged across gaps < `min_silence_ms`, padded
+  0.2 s) and `transcribe_by_region` (pinned → one whole-file call; otherwise per region
+  `detect_language` with the previous region's language as `prev_lang`, then `transcribe` in that
+  language, times offset to the file). `run_batch` uses it. Backend-agnostic, so `mlx_whisper`
+  gets it too.
+- `eval/run_eval.py`: `gmst-batch` runs `transcribe_by_region`, so it measures GMST and not raw
+  autodetect (R2 F3 / R5); its docstring line was also FIX-10's E501.
+- `faster_whisper.py` docstring: the `per_segment_lid` relabel path is label-only and unused by
+  both pipelines.
+- Docs: CLAUDE.md pipeline line, PLAN.md module layout.
 
 ## Could not check
 
-_(and why)_
+A switch inside one unbroken region (no pause ≥ `min_silence_ms`) is still decoded in the region's first language — LID reads the region's first 30 s. That is the intra-sentence case CLAUDE.md already calls unsolved. The scores in `eval/results/scores.json` predate this and are stale for `gmst-batch`.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded

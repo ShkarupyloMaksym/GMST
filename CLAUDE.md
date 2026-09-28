@@ -60,7 +60,9 @@ amplitude `[-1, 1]`. Sources open at the device's native rate and resample/downm
 (`samples / SAMPLE_RATE`), never `time.time()`.**
 
 Pipeline: `device_source -> endpointer -> engine.detect_language -> engine -> reconcile -> sink`
-(streaming); `file_source -> engine -> sink` (batch). Both pipelines are implemented; every module
+(streaming); `file_source -> VAD regions -> engine.detect_language -> engine -> sink` (batch, when
+the language is not pinned: each region decoded in its own detected language — DECIDE-03; pinned,
+one whole-file decode). Both pipelines are implemented; every module
 in the layout table in `PLAN.md` exists.
 
 ### ASR engine is a Protocol

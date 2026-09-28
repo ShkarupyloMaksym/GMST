@@ -1,11 +1,11 @@
 """faster-whisper backend (CTranslate2). Portable default; CPU int8 on Apple Silicon.
 
-LID: ``detect_language`` uses the model's own detector (one encoder pass). When ``transcribe`` is
-called with ``language=None`` and ``per_segment_lid`` is on, each returned segment is tagged by
-running the detector on a window around that segment's audio, then passed through
-``resolve_language`` (uk/ru tie-break + sticky threshold, threaded across segments). Acceptable for
-batch, off for ``bench``. Streaming callers pass an explicit ``language`` (from the pipeline's LID
-step), so this does not fire there.
+LID: ``detect_language`` uses the model's own detector (one encoder pass), restricted to
+``cfg.lid_languages`` by ``resolve_language``. When ``transcribe`` is called with ``language=None``
+and ``per_segment_lid`` is on, each returned segment is only *labelled* by running the detector on a
+window around it — the text is still faster-whisper's single autodetected language (R2 F3). Neither
+pipeline relies on that any more: batch decodes each VAD region in its detected language
+(``pipeline.batch.transcribe_by_region``) and the stream passes an explicit ``language``.
 
 ``multilingual=True`` would make faster-whisper run its *own* per-segment LID inside the decode
 pass, but it has no uk/ru tie-break and 1.2.1 exposes no per-segment ``language`` to read back — so

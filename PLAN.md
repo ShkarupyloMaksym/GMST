@@ -212,7 +212,7 @@ src/gmst/
     sse.py            # Server-Sent Events over stdlib http.server; /events + viewer page
 
   pipeline/
-    batch.py          # file_source -> engine(whole file) -> sink
+    batch.py          # file_source -> [VAD regions -> detect_language] -> engine -> sink (DECIDE-03)
     stream.py         # device_source -> endpointer -> engine.detect_language -> engine -> reconcile -> sink
 ```
 
