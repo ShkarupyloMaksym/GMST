@@ -105,3 +105,16 @@ def test_mlx_lid_model_is_the_cached_transcribe_model():
     cfg = Config(engine="mlx_whisper", model_repo="mlx-community/whisper-tiny")
     eng = MlxWhisperEngine(cfg, per_segment_lid=False)
     assert eng._load() is ModelHolder.get_model(cfg.model_repo, mx.float16)
+
+
+def test_detect_language_is_restricted_to_lid_languages(monkeypatch):
+    """The backend passes cfg.lid_languages through: a Ukrainian clip the model calls "bg" comes
+    back as "uk" (R2)."""
+    eng = _engine(monkeypatch)
+
+    class _BgModel:
+        def detect_language(self, audio):
+            return "bg", 0.4, [("bg", 0.4), ("uk", 0.3), ("ru", 0.2), ("en", 0.05)]
+
+    eng._model = _BgModel()
+    assert eng.detect_language(np.zeros(SAMPLE_RATE, dtype=np.float32))[0] == "uk"

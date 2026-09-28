@@ -92,6 +92,7 @@ class FasterWhisperEngine:
             prev_lang=prev_lang,
             threshold=self._cfg.lid_threshold,
             tiebreak_margin=self._cfg.lid_tiebreak_margin,
+            allowed=self._cfg.lid_languages,
         )
 
     def _detect_full(self, audio: AudioArray) -> tuple[str, float, list[tuple[str, float]]]:

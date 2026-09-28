@@ -80,9 +80,14 @@ Mac) or have no MLX implementation (mlx-whisper exposes LID only as
   LID inside the single decode pass. Cheaper than a separate encoder pass.
 - `mlx_whisper` backend: `decoding.detect_language` on the loaded model + mel; counts as one extra
   encoder pass — include it in the latency budget.
-- **Below `lid_threshold`**: keep the previous utterance's language (sticky), do not flip.
-- **`uk` vs `ru` tie-break**: when the top-2 are `{uk, ru}` and within `lid_tiebreak_margin`,
-  prefer `uk` (a `ru` mislabel on Ukrainian speech is the failure the user will actually see).
+- **Restricted to `lid_languages`** (default `["en", "uk"]`, DECIDE-02, 2026-09-28): probabilities
+  are summed per allowed language, `ru` folded into `uk` unless `ru` is itself listed; the best
+  allowed language wins, the first utterance included. (Before: any label passed through — R2.)
+- **Below `lid_threshold`** (on that folded mass): keep the previous utterance's language (sticky),
+  do not flip.
+- **`uk` vs `ru` tie-break**: when both are allowed, the top-2 are `{uk, ru}` and within
+  `lid_tiebreak_margin`, prefer `uk` (a `ru` mislabel on Ukrainian speech is the failure the user
+  will actually see). With the default `lid_languages` the fold replaces it.
 - `stream --language en|uk` bypasses LID entirely for known-monolingual meetings.
 
 ## ASR engine
@@ -258,6 +263,7 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | `language` | `None` | `None` / `"auto"` ⇒ per-utterance LID; `"en"` / `"uk"` pins it |
 | `lid_threshold` | `0.7` | below this, keep previous language |
 | `lid_tiebreak_margin` | `0.15` | `uk`/`ru` tie-break window |
+| `lid_languages` | `["en", "uk"]` | LID picks only among these; `ru` folds into `uk` unless listed (DECIDE-02) |
 | `input_device` | `None` | sounddevice id or name substring |
 | `block_ms` | `100` | capture block |
 | `min_silence_ms` | `600` | endpointer trailing-silence cut |
@@ -273,7 +279,7 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | `turn_gap_seconds` | `1.5` | pause longer than this bumps `Segment.turn` (`0` = off) |
 
 Env: `GMST_ENGINE`, `GMST_MODEL`, `GMST_MODEL_REPO`, `GMST_COMPUTE_DEVICE`, `GMST_COMPUTE_TYPE`,
-`GMST_LANGUAGE` (`auto` ⇒ `None`).
+`GMST_LANGUAGE` (`auto` ⇒ `None`), `GMST_LID_LANGUAGES` (comma-separated).
 
 ## Review decisions (checkpoint-1 review, 2026-09-28)
 

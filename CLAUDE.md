@@ -105,9 +105,13 @@ word-level EN↔UK within a sentence is not solved.
 
 - `detect_language` is a **Protocol method**, never a free function (a standalone one would load a
   second model or have no MLX path).
-- Below `cfg.lid_threshold` (0.7): keep the previous utterance's language, don't flip.
-- `uk`/`ru` within `cfg.lid_tiebreak_margin`: prefer `uk` (a `ru` mislabel on Ukrainian is the
-  visible failure).
+- **Restricted to `cfg.lid_languages`** (default `["en", "uk"]`): the detector's distribution is
+  summed per allowed language with `ru` folded into `uk`, so the answer is never `bg`/`tr`/`ar`
+  (R2: 11 of 12 Ukrainian utterances decoded as `tr`/`ru` before) — the first utterance included.
+- Below `cfg.lid_threshold` (0.7) — checked on that folded mass: keep the previous utterance's
+  language, don't flip.
+- `uk`/`ru` within `cfg.lid_tiebreak_margin`: prefer `uk` — only reachable now when `ru` is itself
+  listed in `lid_languages` (a `ru` mislabel on Ukrainian is the visible failure).
 - `gmst stream --language en|uk` bypasses LID for known-monolingual meetings.
 - Never rely on global `language=None` autodetect — it biases to English.
 
@@ -181,7 +185,7 @@ transcription runs on its own thread. Only the reconcile thread writes to the si
 `Config` dataclass in `src/gmst/config.py`, **loaded in `main()`** and passed to every subcommand.
 Precedence: defaults < `gmst.toml` (flat table) < `GMST_*` env vars (`GMST_ENGINE`, `GMST_MODEL`,
 `GMST_MODEL_REPO`, `GMST_COMPUTE_DEVICE`, `GMST_COMPUTE_TYPE`, `GMST_LANGUAGE` where `auto` ⇒
-`None`). `_merge` validates key names, enum values, and scalar types for **every** field — enums,
+`None`, `GMST_LID_LANGUAGES` comma-separated). `_merge` validates key names, enum values, and scalar types for **every** field — enums,
 ranged numbers, booleans, strings, `language` (`en`/`uk`/`auto`) and `input_device` — so a bad enum,
 a string where a float is expected, `word_timestamps = "yes"` or `language = "ukranian"` all fail at
 load, not mid-meeting. A `--config` path that does not exist raises; only the default `gmst.toml`

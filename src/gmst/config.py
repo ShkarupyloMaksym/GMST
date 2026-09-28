@@ -31,6 +31,7 @@ class Config:
     language: str | None = None        # None / "auto" => per-utterance LID; "en" / "uk" pins it
     lid_threshold: float = 0.7         # below this, keep the previous utterance's language
     lid_tiebreak_margin: float = 0.15  # uk/ru tie-break window; prefer uk inside it
+    lid_languages: tuple[str, ...] = ("en", "uk")  # LID picks only among these; ru counts as uk
 
     # --- audio capture (stream / listen) ---
     input_device: int | str | None = None   # sounddevice id, or name substring
@@ -89,6 +90,7 @@ _NUMERIC: dict[str, tuple[type, float, float | None]] = {
 _BOOLS = frozenset({"word_timestamps"})
 _STRINGS = frozenset({"model_size", "model_repo"})
 _LANGUAGES = frozenset({"en", "uk"})  # `stream --language` already restricts to these
+_LANG_CODE_LEN = (2, 3)  # Whisper language codes: "en", "uk", "haw", "yue"
 
 
 def _from_env() -> dict[str, str]:
@@ -99,6 +101,7 @@ def _from_env() -> dict[str, str]:
         "GMST_COMPUTE_DEVICE": "compute_device",
         "GMST_COMPUTE_TYPE": "compute_type",
         "GMST_LANGUAGE": "language",
+        "GMST_LID_LANGUAGES": "lid_languages",
     }
     return {field: os.environ[env] for env, field in mapping.items() if os.environ.get(env)}
 
@@ -137,6 +140,16 @@ def _coerce(key: str, value: object) -> object:
                 f'language: {value!r} is not one of {sorted(_LANGUAGES)} (or "auto")'
             )
         return value
+    if key == "lid_languages":
+        if isinstance(value, str):  # GMST_LID_LANGUAGES="en,uk"
+            value = [v.strip() for v in value.split(",") if v.strip()]
+        if not isinstance(value, (list, tuple)) or not value:
+            raise ValueError('lid_languages: expected a non-empty list such as ["en", "uk"]')
+        for code in value:
+            if not (isinstance(code, str) and code.isalpha() and code.islower()
+                    and len(code) in _LANG_CODE_LEN):
+                raise ValueError(f"lid_languages: {code!r} is not a Whisper language code")
+        return tuple(value)
     if key == "input_device":
         if value is not None and not isinstance(value, (int, str)):
             raise ValueError("input_device: expected an int id or a name substring")

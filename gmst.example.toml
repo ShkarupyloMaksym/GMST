@@ -17,6 +17,8 @@
 # language            = "en"          # "en" | "uk" | "auto"; omit (or "auto") for per-utterance LID
 # lid_threshold       = 0.7           # below this, keep the previous utterance's language
 # lid_tiebreak_margin = 0.15          # uk/ru tie-break window; prefer uk inside it
+# lid_languages       = ["en", "uk"]  # LID only picks among these; ru counts as uk unless listed
+#                                     # (env: GMST_LID_LANGUAGES="en,uk")
 
 # --- audio capture ---
 # input_device = "BlackHole"          # sounddevice id (int) or name substring; see `gmst devices`

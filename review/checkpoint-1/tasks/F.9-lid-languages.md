@@ -5,7 +5,7 @@ stage: fix
 kind: task
 agent: orchestrator
 model: sonnet
-status: todo
+status: done
 depends-on: T1
 
 # F.9 — DECIDE-02 fix: `lid_languages`, restricted and renormalised LID
@@ -21,14 +21,30 @@ decisions".
 
 ## What was read / measured
 
-_(write as you go: files and line ranges read, commands run, where you stopped)_
+Read `lid.py`, `config.py`, both backends' `detect_language`, `test_lid.py`,
+`test_backend_lid_windows.py`. Tests first, 9 watched fail: seven in `test_lid.py` built from R2's
+recorded distributions (`bg` 0.40 top-1 on Ukrainian, first utterance `ar` 0.21, `ru` 0.972 vs `uk`
+0.012, the uk/ru 0.11/0.10 noise case, confident English, `ru` explicitly allowed, no
+distribution), `test_config.py::test_lid_languages_default_and_sources` (default, TOML list, env
+`"uk, en"`), `test_backend_lid_windows.py::test_detect_language_is_restricted_to_lid_languages`.
+The four invalid-value cases first passed for the wrong reason (unknown key); their match was
+tightened to `"lid_languages: "`. `uv run pytest -q`: 160 passed; ruff clean.
 
 ## Findings
 
-_(what changed, with the commit)_
+- `Config.lid_languages: tuple[str, ...] = ("en", "uk")`, validated in `_coerce` (non-empty list
+  of 2–3-letter lowercase codes; a bare string is split on commas, which is how
+  `GMST_LID_LANGUAGES` arrives), env `GMST_LID_LANGUAGES`.
+- `resolve_language(..., allowed=...)`: sums the distribution per allowed language (`ru` → `uk`
+  unless `ru` is listed), best wins, sticky threshold on that mass, `fallback` = previous language
+  or the first allowed one when nothing allowed is present. `allowed=None` keeps the old path, so
+  the eight earlier tests are untouched.
+- Both backends pass `allowed=self._cfg.lid_languages`.
+- Docs: `gmst.example.toml`, PLAN.md "Language ID" and config table + env list, CLAUDE.md
+  "Language mixture" and "Config".
 
 ## Could not check
 
-_(and why)_
+No real-model run here: X.2 measures the same rule (argmax over {en, uk+ru}) on 60+60 clips with `small` and `large-v2`. The `lid_prob` reported for restricted LID is now the folded mass, not the raw top-1 probability.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded

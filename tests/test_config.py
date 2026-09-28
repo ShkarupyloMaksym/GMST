@@ -112,3 +112,21 @@ def test_utf8_round_trip(tmp_path):
     path = tmp_path / "gmst.toml"
     path.write_text('model_repo = "Yehor/віспер-українська"\n', encoding="utf-8")
     assert Config.load(path).model_repo == "Yehor/віспер-українська"
+
+
+def test_lid_languages_default_and_sources(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("GMST_LID_LANGUAGES", raising=False)
+    assert Config.load().lid_languages == ("en", "uk")
+    (tmp_path / "gmst.toml").write_text('lid_languages = ["en", "uk", "ru"]\n')
+    assert Config.load().lid_languages == ("en", "uk", "ru")
+    monkeypatch.setenv("GMST_LID_LANGUAGES", "uk, en")
+    assert Config.load().lid_languages == ("uk", "en")
+
+
+@pytest.mark.parametrize("bad", ['[]', '""', '["en", 3]', '["english"]'])
+def test_lid_languages_is_validated_at_load(tmp_path, bad):
+    path = tmp_path / "g.toml"
+    path.write_text(f"lid_languages = {bad}\n")
+    with pytest.raises(ValueError, match="lid_languages: "):
+        Config.load(path)

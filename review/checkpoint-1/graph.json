@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 07:15 UTC",
+ "generated": "2026-09-28 07:18 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -79,12 +79,11 @@
     "F.5",
     "F.6",
     "F.7",
-    "F.9",
     "F.10"
    ],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 2,
+   "leaves_done": 3,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -388,11 +387,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -402,13 +401,13 @@
    "file": "tasks/F.9-lid-languages.md",
    "summary": "Implement PLAN.md \"Review decisions\" DECIDE-02: config field `lid_languages` (default `[\"en\", \"uk\"]`, validated in `_merge`, env `GMST_LID_LANGUAGES` comma-separated, documented in `gmst.example.toml` and PLAN.md's config table). `resolve_language` renormalises `all_probs` over the allowed set with `ru` folded into `uk`, so the first utterance is covered; the sticky threshold applies to the renorm",
    "instructions": "Implement PLAN.md \"Review decisions\" DECIDE-02: config field `lid_languages` (default `[\"en\", \"uk\"]`, validated in `_merge`, env `GMST_LID_LANGUAGES` comma-separated, documented in `gmst.example.toml` and PLAN.md's config table). `resolve_language` renormalises `all_probs` over the allowed set with `ru` folded into `uk`, so the first utterance is covered; the sticky threshold applies to the renormalised probability. Tests: R2's cases (`bg`, `ja`, `tr`, `ar` top-1 on Ukrainian; first utterance at 0.21) in `test_lid.py`.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; commit with an\nexplicit pathspec. Items and evidence: T1's triage table; the decision: root PLAN.md \"Review\ndecisions\".",
-   "findings_text": "_(what changed, with the commit)_",
+   "findings_text": "- `Config.lid_languages: tuple[str, ...] = (\"en\", \"uk\")`, validated in `_coerce` (non-empty list\n  of 2–3-letter lowercase codes; a bare string is split on commas, which is how\n  `GMST_LID_LANGUAGES` arrives), env `GMST_LID_LANGUAGES`.\n- `resolve_language(..., allowed=...)`: sums the distribution per allowed language (`ru` → `uk`\n  unless `ru` is listed), best wins, sticky threshold on that mass, `fallback` = previous language\n  or the first allowed one when nothing allowed is present. `allowed=None` keeps the old path, so\n  the eight earlier tests are untouched.\n- Both backends pass `allowed=self._cfg.lid_languages`.\n- Docs: `gmst.example.toml`, PLAN.md \"Language ID\" and config table + env list, CLAUDE.md\n  \"Language mixture\" and \"Config\".",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
