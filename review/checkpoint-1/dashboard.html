@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 18:15 UTC",
+ "generated": "2026-09-28 18:57 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -209,15 +209,16 @@ const DATA = {
     "F.13",
     "F.14",
     "F.15",
-    "F.16"
+    "F.16",
+    "F.17"
    ],
    "state": "in-progress",
    "waiting_on": [
     "F.7"
    ],
    "depth": 0,
-   "leaves_total": 16,
-   "leaves_done": 15,
+   "leaves_total": 17,
+   "leaves_done": 16,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -801,6 +802,42 @@ const DATA = {
    }
   },
   {
+   "id": "F.17",
+   "title": "Two-pass streaming — provisional live text, the utterance decoded whole as final",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.1c.1"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.17-two-pass-stream.md",
+   "summary": "Implement DECIDE-09 (user, 2026-09-28): live LocalAgreement-2 output provisional; at each utterance end, decode the utterance's audio whole and emit that as final.",
+   "instructions": "Implement DECIDE-09 (user, 2026-09-28): live LocalAgreement-2 output provisional; at each\nutterance end, decode the utterance's audio whole and emit that as final.",
+   "findings_text": "- `stream.py`: `utt_audio` since the last final (silence bounded to 1 s when nothing was heard);\n  `final_pass(upto)` crops to VAD speech ± 0.2 s, detects LID on it unless pinned, prompts with\n  glossary terms only, emits final segments (turns, glossary, stats); `monologue_cut` at\n  `max_buffer_seconds` ends a final at the latest pause in the second half; `salvage`;\n  `emit_provisional` shows the utterance so far as one partial.\n- Docs: `stream.py` docstring, CLAUDE.md \"Streaming reconciliation\", PLAN.md schema semantics and\n  \"Review decisions\".",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -1183,20 +1220,21 @@ const DATA = {
     "X.4",
     "X.5",
     "X.1b",
-    "X.1c"
+    "X.1c",
+    "X.1d"
    ],
    "state": "in-progress",
    "waiting_on": [
     "X.3",
     "X.4",
     "X.5",
-    "X.1c"
+    "X.1d"
    ],
    "depth": 0,
-   "leaves_total": 7,
+   "leaves_total": 8,
    "leaves_done": 4,
    "severity_total": {
-    "blocking": 3,
+    "blocking": 5,
     "serious": 5,
     "minor": 1
    }
@@ -1494,32 +1532,32 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [
     "F.15"
    ],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
+    "blocking": 2,
     "serious": 0,
     "minor": 0
    },
    "file": "tasks/X.1c-stream-vs-batch-heldout.md",
    "summary": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here (2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk with `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19) and **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s. Run each stream ",
    "instructions": "X.1b.1 iterated on X.1's 20+20 clips, so they are no longer a clean test. Pre-registered here\n(2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk\nwith `small`, contradicted pushes ≤ 10 % — evaluated on **(a)** X.1's clips (manifest rows 0–19)\nand **(b)** unseen clips (manifest rows 20–39 of `en.jsonl` / `uk.jsonl`); the verdict is (b)'s.\nRun each stream **twice** and report both (Ukrainian decoding was non-deterministic under F.14).\nThen `large-v2` on (b) en and uk, once, within ~60 min. Copy `scripts/X.1/run_wer.py` to\n`scripts/X.1c/` adding only a row-offset option and output paths; save full outputs. Read first:\nroot `CLAUDE.md`, `review/checkpoint-1/PLAN.md`, `tasks/V1-*.md`, `tasks/X.1*.md`, this file.\nOffline, one large model at a time (`pgrep -af python` first), main tree `.venv`, no clone; write\nonly this node file and `scripts/X.1c/`.",
-   "findings_text": "_(numbers against the rule)_",
+   "findings_text": "Pre-registered rule (V1, EVID-01, unchanged): **holds** if corpus stream WER ≤ batch WER + 3.0 pts\non en and uk with `small`, and contradicted-push share ≤ 10%; evaluated on (a) X.1's original\nclips (manifest rows 0-19) and (b) unseen clips (rows 20-39); **the verdict is (b)'s.**\n\n**`small`, set (a) — X.1's original clips (`scripts/X.1c/small_a_results.json`):**\n\n| set | mode | WER | edits/ref | gap vs batch |\n|---|---|---|---|---|\n| en | batch | 2.64% | 11/417 | — |\n| en | stream rep0 | 6.47% | 27/417 | **+3.83 pts (fails)** |\n| en | stream rep1 | 4.80% | 20/417 | +2.16 pts (passes) |\n| uk | batch | 23.78% | 34/143 | — |\n| uk | stream (both reps, identical) | 25.17% | 36/143 | +1.39 pts (passes) |\n\nen is now **non-deterministic across the two runs on this node's own machine and code**, one run\nfailing the 3.0-pt margin and one passing it — this reproduces X.1b.1's uk finding for F.14\n(\"Ukrainian decoding was non-deterministic\") but shows it now also affects **English** post-F.15 on\nthis set, which X.1b.1's diagnosis (uk-only A/B table) did not check. uk matches X.1b.1's E+H\nnumber for this exact clip set almost exactly (25.17% here and there, deterministic both times) —\nconsistent, but that consistency turns out to be an artifact of testing on the clips F.15 was tuned\nagainst (see set (b) below).\n\n**`small`, set (b) — unseen clips, manifest rows 20-39 (`scripts/X.1c/small_b_results.json`), the\ndeciding set:**\n\n| set | mode | WER | edits/ref | gap vs batch |\n|---|---|---|---|---|\n| en | batch | 3.51% | 11/313 | — |\n| en | stream rep0 | 5.11% | 16/313 | +1.60 pts (passes) |\n| en | stream rep1 | 5.43% | 17/313 | +1.92 pts (passes) |\n| uk | batch | 14.29% | 18/126 | — |\n| uk | stream (both reps, identical) | **79.37%** | 100/126 | **+65.08 pts (fails, ~22× the 3.0-pt bar)** |\n\n**[blocking] On unseen Ukrainian audio, F.15's streaming path is catastrophically worse than batch —\ndeterministically — and the failure mode is not the \"contradicted push\" F.8/F.15's machinery\ntracks.** `small_b_results.json`, uk, `contradicted=0/93` both reps, yet the committed output\nrepeats whole clauses verbatim, non-adjacently, several times. Example (`full_out`, both reps\nbyte-identical): batch's correct hyp for clip `uk-988` is `\" Розпочали рити котлован\"` (3 words);\nthe concatenated stream output contains the extended clause **\"Розпочали рити котлован Цей сервіс\nдозволить(и) тепер Плотити через смартфон...\" at least five times** across the transcript, e.g.:\n`...Розпочали рити котлован Цей сервіс дозволить тепер Плотити через смартфон, а не через цей касом\nІнших пояснень немає Розпочали рити котлован Цей сервіс дозволить тепер Плотити через смартфон, а\nне через цей касом Будь ласка!...` (immediate back-to-back repeat), then again later: `...Отребуно!\nСкільки дурнів Сходило з тебе переможцями Розпочали рити котлован Цей сервіс дозволити тепер\nПлотити через смартфон Розпочали рити котлован Цей сервіс дозволити тепер Плотити через смартфон\nрити котлован Цей сервіс Плотити через смартфон Розпочали рити котлован Цей сервіс дозволити тепер\nчерез смартфон...` — the same ~8-word clause committed at least 5 times over a ~188-word output for\na 126-word reference. This is exactly the class of defect CLAUDE.md's reconciliation invariants\nname (\"a revised prefix is never re-committed\"): F.15's de-duplication is a text/n-gram check\nagainst only the last `_MAX_NGRAM = 5` committed words (`reconcile.py:46`, confirmed via\n`grep _MAX_NGRAM src/gmst/reconcile.py`) — it catches an *immediately adjacent* repeat of ≤5 words\nbut not a ~8-word clause re-committed after other material has been committed in between, which is\nwhat happens here. `_history` is capped at 5 words and does not detect longer-range repetition.\n\n**`large-v2`, set (b) only, stream x1, per budget (`scripts/X.1c/large-v2_b_results.json`):**\n\n| set | mode | WER | edits/ref | gap vs batch |\n|---|---|---|---|---|\n| en | batch | 2.24% | 7/313 | — |\n| en | stream | **32.27%** | 101/313 | **+30.03 pts (fails,",
    "children": [
     "X.1c.1"
    ],
    "promoted": true,
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
    "leaves_done": 1,
    "severity_total": {
-    "blocking": 1,
+    "blocking": 3,
     "serious": 1,
     "minor": 0
    }
@@ -1555,6 +1593,42 @@ const DATA = {
    "severity_total": {
     "blocking": 1,
     "serious": 1,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1d",
+   "title": "EVID-01 after F.17 (two-pass), on fresh unseen clips",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F.17"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.1d-two-pass-fresh-heldout.md",
+   "summary": "Rows 0–39 of `en.jsonl` / `uk.jsonl` have all been used for diagnosis. Pre-registered here (2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk with `small` — on **fresh rows 40–59**, which decide the verdict. Stream = the **final** segments only (two-pass semantics). Run each stream twice with `small`; then `large-v2` once on rows 40–59 en and uk (X.1c s",
+   "instructions": "Rows 0–39 of `en.jsonl` / `uk.jsonl` have all been used for diagnosis. Pre-registered here\n(2026-09-28, before running): EVID-01's rule, unchanged — stream ≤ batch + 3.0 pts on en and uk\nwith `small` — on **fresh rows 40–59**, which decide the verdict. Stream = the **final** segments\nonly (two-pass semantics). Run each stream twice with `small`; then `large-v2` once on rows 40–59\nen and uk (X.1c saw large-v2 hallucinate on English: report whether the finals still contain\n\"www\", \"End 1\"-style boilerplate); then `small` on the first 20 mixed `inter` and 20 `nopause`\nclips (auto LID), reported, not part of the rule. Copy `scripts/X.1c/run_wer.py` to\n`scripts/X.1d/` (output paths only). Read first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md`,\n`tasks/V1-*.md`, `tasks/X.1*.md`, `tasks/F.17-*.md`, this file. Offline, one large model at a time\n(`pgrep -af python` first), main tree `.venv`, no clone; write only this node file and\n`scripts/X.1d/`. If Bash starts failing with a classifier error, record what completed first.",
+   "findings_text": "_(numbers against the rule)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
     "minor": 0
    }
   },

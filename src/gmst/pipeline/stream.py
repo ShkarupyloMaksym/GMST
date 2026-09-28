@@ -1,39 +1,41 @@
-"""Streaming pipeline: device blocks -> endpointer -> per-utterance LID -> engine ->
-LocalAgreement-2 -> sink.
+"""Streaming pipeline, two passes (PLAN.md "Review decisions", DECIDE-09):
+device blocks -> endpointer -> per-utterance LID -> engine -> LocalAgreement-2 -> **provisional**
+text, and at each utterance end -> the utterance decoded whole -> **final** text.
 
-Loop per decode (buffer has >= ``min_chunk_seconds`` new audio and contains speech):
-1. detect the utterance's language (unless pinned), sticky vs the previous utterance — on every
-   decode until the buffer holds ``lid_settle_seconds`` (3 s) of audio, then fixed for the rest of
-   the utterance. Until it settles nothing is committed, only shown as a partial (DECIDE-04: an
-   utterance that opens with an English term must not be committed as English; X.2 measured
-   restricted LID >= 95 % at 3 s, 88-90 % on Ukrainian at 2 s). An utterance that ends first
-   commits with its last detection.
-2. transcribe the whole buffer, prompted with the glossary terms and the words committed so far
-   *in this utterance* (<= 560 characters)
-3. push the hypothesis' words through LocalAgreement-2 → emit newly-agreed words as **final**,
-   the unconfirmed tail as a **partial**; spans use per-word timestamps when the engine provides
-   them, else an even split of the segment span
-4. after a commit, ``ep.trim_to`` drops the audio before the last committed word (with a small
-   back-off, so that word survives whole) and ``agree.rebase`` re-anchors on what survived, with
-   word times, so the re-decoded buffer stays short
-5. on an endpoint / forced cut / stalled tail: ``flush()`` the reconciler (commit the rest),
-   reset the endpointer, re-detect language next utterance
+Live pass, per decode (buffer has >= ``min_chunk_seconds`` new audio and contains speech):
+1. detect the utterance's language (unless pinned) on every decode until the buffer holds
+   ``lid_settle_seconds`` (3 s) of audio (DECIDE-04), then keep it for the live pass
+2. transcribe the buffer, prompted with glossary terms and this utterance's live-agreed words
+   (F.15/F.16), <= 560 characters
+3. push the hypothesis through LocalAgreement-2; the agreed words plus the unconfirmed tail are
+   emitted as one **provisional** segment (``is_final=False``) — they are never final
+4. after an agreement, ``ep.trim_to`` keeps the live buffer short (back-off before the last agreed
+   word) and ``agree.rebase`` re-anchors with word times
 
-Clock: every decision here is on the **audio** clock (``ep.t0_seconds + ep.buffer_seconds``), never
-``time.monotonic()``, so a source that does not run at 1x real time behaves identically.
+Final pass: at an endpoint, the utterance's own audio (kept since its start, up to
+``max_buffer_seconds``) is cropped to its speech by the VAD and decoded in one call — like batch:
+the language re-detected on the whole utterance (X.2: >= 98 % on full clips), the prompt holding
+only glossary terms. Its segments are the **final** text and supersede the provisional ones. A
+monologue that reaches ``max_buffer_seconds`` with no endpoint is finalised up to its latest pause.
+Why: four rounds of fixes to committing live words each exposed a new failure on unseen clips —
+dropped words, non-deterministic Ukrainian, replayed utterances, hallucinated boilerplate (review
+X.1 ... X.1c).
 
-Turn tracking: every committed span's absolute times feed ``TurnTracker``; a pause longer than
-``turn_gap_seconds`` bumps ``Segment.turn``.
+Clock: every decision is on the **audio** clock (``ep.t0_seconds + ep.buffer_seconds``), never
+``time.monotonic()``. Turn tracking uses the final spans.
 
-Graceful shutdown: when the source stops (Ctrl-C calls ``source.close()``, which drains its queue),
-the ``finally`` block decodes whatever is left in the buffer and commits it. ``sink.close()`` is
-unconditional — a failing engine must never cost us the transcript written on close.
+Shutdown: when the source stops (Ctrl-C calls ``source.close()``, which drains its queue), the
+``finally`` block runs the final pass on whatever the utterance holds. If that decode is abandoned
+(a second Ctrl-C) or fails, the live-agreed words are emitted as final instead — ``salvage`` — so
+the transcript survives; ``sink.close()`` is unconditional.
 """
 
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+
+import numpy as np
 
 from gmst.audio.types import SAMPLE_RATE
 from gmst.config import Config
@@ -54,6 +56,7 @@ _PROMPT_WORDS = 100  # words scanned before the character cap does the real trim
 _MAX_COMMITTED = 4000  # the session's committed word list is bounded (2 h+ meetings)
 _MIN_FLUSH_SAMPLES = SAMPLE_RATE // 5  # 0.2 s — below this, nothing worth a final decode
 _MAX_STALLED_PUSHES = 3  # PLAN.md: forced commit after "N updates without progress"
+_FINAL_PAD_S = 0.2  # context kept around the utterance's speech for the final pass
 
 
 @dataclass(slots=True)
@@ -164,45 +167,111 @@ def run_stream(
     monitor = _StatusMonitor(source, sink)
     stats = StreamStats()
 
-    committed: list[str] = []
-    utt_words: list[str] = []  # committed words of the current utterance: the prompt source
+    utt_words: list[str] = []  # live-committed words of this utterance: the live prompt source
     prev_lang = language
     utt_lang: str | None = language
     settled = language is not None  # pinned: nothing to settle
-    last_commit_seconds = 0.0  # audio-time of the last commit, on the sample clock
+    last_commit_seconds = 0.0  # audio-time of the last live commit, on the sample clock
     last_pending: list[Word] = []
 
-    def emit(words: list[Word], *, final: bool, lang: str) -> None:
-        if not words:
-            return
-        t0 = ep.t0_seconds + words[0].start
-        t1 = ep.t0_seconds + words[-1].end
-        turn = turns.update(t0, t1) if final else turns.turn
-        if final:
-            glossary.observe(" ".join(w.text for w in words), lang=lang)
-        abs_words = [Word(w.text, ep.t0_seconds + w.start, ep.t0_seconds + w.end) for w in words]
-        sink.emit(
-            Segment(t0, t1, " ".join(w.text for w in words), lang or "",
-                    is_final=final, turn=turn, words=abs_words)
-        )
+    # --- the final pass (DECIDE-09): the utterance's own audio, decoded whole once it ends ---
+    utt_audio: list[np.ndarray] = []  # every block since the last final
+    utt_t0 = 0.0  # session time of utt_audio[0]
+    utt_prov: list[Word] = []  # live-committed words of this utterance, session times
+    utt_heard = False  # the VAD saw speech in this utterance
 
-    def commit(words: list[str]) -> None:
-        committed.extend(words)
-        utt_words.extend(words)
-        stats.committed_words += len(words)
-        if len(committed) > _MAX_COMMITTED:
-            del committed[:-_MAX_COMMITTED]
+    def now() -> float:
+        return ep.t0_seconds + ep.buffer_seconds
 
-    def decode(audio) -> tuple[list[Word], str]:
-        """Transcribe ``audio`` and report the language it was actually decoded as."""
+    def emit_provisional(pending: list[Word], lang: str) -> None:
+        """The utterance so far — live-agreed words plus the unconfirmed tail — as one partial."""
+        words = utt_prov + [Word(w.text, ep.t0_seconds + w.start, ep.t0_seconds + w.end)
+                            for w in pending]
+        if words:
+            sink.emit(Segment(words[0].start, words[-1].end, " ".join(w.text for w in words),
+                              lang or "", is_final=False, turn=turns.turn, words=words))
+
+    def live_commit(new_words: list[Word], texts: list[str]) -> None:
+        utt_words.extend(texts)
+        utt_prov.extend(Word(w.text, ep.t0_seconds + w.start, ep.t0_seconds + w.end)
+                        for w in new_words)
+
+    def final_pass(upto: float | None = None) -> None:
+        """Decode the utterance audio up to session time ``upto`` (all of it by default) in one
+        call, cropped to its speech, and emit it as final. Like batch: the language is detected
+        on the whole utterance unless pinned, and the prompt holds only glossary terms — no
+        committed text, which Whisper regurgitates (X.1c)."""
+        nonlocal utt_audio, utt_t0, utt_prov, utt_heard, prev_lang
+        audio = np.concatenate(utt_audio) if utt_audio else np.zeros(0, dtype=np.float32)
+        n = len(audio) if upto is None else max(0, min(len(audio),
+                                                       int(round((upto - utt_t0) * SAMPLE_RATE))))
+        part, rest = audio[:n], audio[n:]
+        regions = vad.speech_regions(part) if len(part) >= _MIN_FLUSH_SAMPLES else []
+        if regions:
+            a0 = max(0, int((regions[0][0] - _FINAL_PAD_S) * SAMPLE_RATE))
+            a1 = min(len(part), int((regions[-1][1] + _FINAL_PAD_S) * SAMPLE_RATE))
+            clip, off = part[a0:a1], utt_t0 + a0 / SAMPLE_RATE
+            lang = language
+            if lang is None:
+                lang, _ = engine.detect_language(clip, prev_lang=prev_lang)
+            if glossary:
+                segs = engine.transcribe(clip, language=lang,
+                                         prompt=glossary.prompt(None, max_chars=_PROMPT_CHARS),
+                                         hotwords=glossary.hotwords())
+            else:
+                segs = engine.transcribe(clip, language=lang)
+            stats.decodes += 1
+            emitted = False
+            for s in segs:
+                words = [Word(w.text, off + w.start, off + w.end) for w in _words_of([s])]
+                if not words:
+                    continue
+                text = " ".join(w.text for w in words)
+                t0, t1 = words[0].start, words[-1].end
+                glossary.observe(text, lang=lang)
+                stats.committed_words += len(words)
+                sink.emit(Segment(t0, t1, text, lang, is_final=True,
+                                  turn=turns.update(t0, t1), words=words))
+                emitted = True
+            if emitted:
+                stats.utterances += 1
+            prev_lang = lang
+        cut = utt_t0 + n / SAMPLE_RATE
+        utt_audio = [rest] if len(rest) else []
+        utt_t0 = cut
+        utt_prov = [w for w in utt_prov if w.start >= cut]
+        utt_heard = bool(utt_prov)
+
+    def salvage() -> None:
+        """No final pass is coming (engine failure, or a second Ctrl-C abandoned it): keep what
+        the live pass agreed on rather than losing the utterance — the transcript must survive."""
+        nonlocal utt_prov
+        if utt_prov:
+            text = " ".join(w.text for w in utt_prov)
+            t0, t1 = utt_prov[0].start, utt_prov[-1].end
+            stats.committed_words += len(utt_prov)
+            sink.emit(Segment(t0, t1, text, utt_lang or prev_lang or "", is_final=True,
+                              turn=turns.update(t0, t1), words=list(utt_prov)))
+            utt_prov = []
+
+    def monologue_cut() -> float:
+        """Where to end a final when an utterance outgrows ``max_buffer_seconds`` with no
+        endpoint: the middle of the latest pause in its second half, else right now."""
+        audio = np.concatenate(utt_audio)
+        regions = vad.speech_regions(audio)
+        half = len(audio) / SAMPLE_RATE / 2
+        gaps = [(b0 + a1) / 2 for (_, a1), (b0, _) in zip(regions, regions[1:], strict=False)
+                if (b0 + a1) / 2 >= half]
+        return utt_t0 + gaps[-1] if gaps else now()
+
+    def live_decode(audio) -> tuple[list[Word], str]:
+        """The live pass: transcribe the buffer, reporting the language it was decoded as."""
         nonlocal utt_lang, settled
         if not settled:
             utt_lang, _ = engine.detect_language(audio, prev_lang=prev_lang)
             settled = len(audio) >= cfg.lid_settle_seconds * SAMPLE_RATE
         call_lang = language or utt_lang or "en"
-        # this utterance's committed words only: Whisper regurgitates its prompt on short
-        # buffers, and a session-long prompt replayed earlier utterances (X.1c: 79 % WER on
-        # unseen Ukrainian vs 14 % batch). The anchor words stay in (F.15).
+        # this utterance's live-committed words only (F.16), anchor words included (F.15)
         tail = " ".join(utt_words[-_PROMPT_WORDS:])
         if glossary:  # terms first, inside the same cap (DECIDE-08)
             prompt = glossary.prompt(tail, max_chars=_PROMPT_CHARS)
@@ -214,73 +283,75 @@ def run_stream(
         stats.decodes += 1
         return _words_of(segs), call_lang
 
+    def end_utterance() -> None:
+        """Live-pass state back to a clean utterance, after the final pass took the audio."""
+        nonlocal utt_lang, settled, last_pending, last_commit_seconds
+        agree.reset()
+        utt_lang, settled = language, language is not None
+        ep.reset(keep_overlap=False)
+        last_pending = []
+        utt_words.clear()
+        last_commit_seconds = now()
+
     abandoned = False
     try:
         for block in source.blocks():
+            if not utt_audio:
+                utt_t0 = now()
+            utt_audio.append(np.asarray(block, dtype=np.float32))
             ep.add(block)
-            monitor.tick(ep.t0_seconds + ep.buffer_seconds)
+            monitor.tick(now())
+            silent_samples = sum(len(b) for b in utt_audio)
+            if not utt_heard and silent_samples > cfg.max_buffer_seconds * SAMPLE_RATE:
+                keep = np.concatenate(utt_audio)[-SAMPLE_RATE:]  # silence: keep the last second
+                utt_t0 = now() - len(keep) / SAMPLE_RATE
+                utt_audio = [keep]
             if not ep.ready_to_decode():
                 continue
             ep.mark_decoded()
 
             a = ep.assess()
-            monitor.speech(ep.t0_seconds + ep.buffer_seconds, bool(a.regions))
+            monitor.speech(now(), bool(a.regions))
             if not a.regions:
                 if a.forced:  # silence-only buffer that grew too big — drop it
                     ep.reset(keep_overlap=False)
                 continue
+            utt_heard = True
 
             was_settled = settled
-            hyp, call_lang = decode(ep.buffer)
+            hyp, call_lang = live_decode(ep.buffer)
+            if a.is_endpoint:
+                final_pass()
+                end_utterance()
+                continue
             if not was_settled:
-                # language not fixed yet: show, never commit (DECIDE-04); at an endpoint or a
-                # forced cut there is no later decode, so the hypothesis commits whole
-                if a.is_endpoint or a.forced:
-                    start = agree.absorb([w.text for w in hyp], _spans(hyp))
-                    if hyp[start:]:
-                        commit([w.text for w in hyp[start:]])
-                        emit(hyp[start:], final=True, lang=call_lang)
-                    agree.reset()
-                    prev_lang = utt_lang or prev_lang
-                    utt_lang, settled = language, language is not None
-                    ep.reset(keep_overlap=False)
-                    last_pending = []
-                    if a.is_endpoint:
-                        stats.utterances += 1
-                        utt_words.clear()
-                    last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
-                else:
-                    last_pending = hyp
-                    emit(hyp, final=False, lang=call_lang)
+                # language not fixed yet: show, never commit (DECIDE-04)
+                last_pending = hyp
+                emit_provisional(hyp, call_lang)
                 continue
             newly, _pending = agree.push([w.text for w in hyp], _spans(hyp))
             o = agree.last_offset
             new_words = hyp[o : o + len(newly)]
             last_pending = hyp[o + len(newly) :]
 
-            audio_now = ep.t0_seconds + ep.buffer_seconds
+            audio_now = now()
             if newly:
-                commit(newly)
+                live_commit(new_words, newly)
                 last_commit_seconds = audio_now
-                emit(new_words, final=True, lang=call_lang)
-            emit(last_pending, final=False, lang=call_lang)
+            emit_provisional(last_pending, call_lang)
 
             # "stalled" means an unconfirmed tail that will not agree — with nothing pending
-            # there is nothing to force-commit, and cutting would only churn the utterance.
+            # there is nothing to force-commit, and cutting would only churn the live pass.
             stalled = bool(last_pending) and (
                 audio_now - last_commit_seconds >= cfg.max_unconfirmed_seconds
                 or agree.stalled_pushes >= _MAX_STALLED_PUSHES
             )
-            if a.is_endpoint or a.forced or stalled:
+            if a.forced or stalled:
                 rest = agree.flush()
                 if rest:
-                    commit(rest)
-                    emit(last_pending, final=True, lang=call_lang)
-                # Keep the seam audio only when we can keep an anchor for it too: it gets
-                # transcribed again, and without the anchor those words are committed twice
-                # with times that run backwards. A contradicting hypothesis has no usable
-                # anchor at all, so that path restarts clean.
-                keep_overlap = not a.is_endpoint and not agree.contradicted
+                    done = o + len(newly)
+                    live_commit(hyp[done : done + len(rest)], rest)
+                keep_overlap = not agree.contradicted
                 if keep_overlap:
                     cut = max(0.0, ep.buffer_seconds - cfg.overlap_seconds)
                     done = o + len(newly) + len(rest)
@@ -292,17 +363,11 @@ def run_stream(
                     )
                 else:
                     agree.reset()
-                prev_lang = utt_lang or prev_lang
-                if a.is_endpoint:  # a forced cut / stall splits the utterance, same language
-                    utt_lang, settled = language, language is not None
                 ep.reset(keep_overlap=keep_overlap)
                 last_pending = []
-                if a.is_endpoint:  # a forced cut / stall is not a new utterance
-                    utt_words.clear()
-                    stats.utterances += 1
-                last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
+                last_commit_seconds = now()
             elif new_words:
-                # committed audio has served its purpose; drop it so the next decode is short.
+                # committed audio has served the live pass; drop it so the next decode is short.
                 # Cut *before* the last committed word so it survives whole as the anchor.
                 cut = ep.trim_to(new_words[-1].start)
                 if cut > 0:
@@ -313,25 +378,22 @@ def run_stream(
                         _spans(kept_c + hyp[done:], shift=cut),
                     )
                     last_pending = []  # its spans are relative to the pre-trim buffer
+            # a monologue with no endpoint: finalise up to its latest pause
+            if now() - utt_t0 >= cfg.max_buffer_seconds:
+                final_pass(upto=monologue_cut())
     except KeyboardInterrupt:
         # the second Ctrl-C / SIGTERM: the user asked not to wait for the final decode
         abandoned = True
         raise
     finally:
         try:
-            tail = ep.buffer
-            if not abandoned and len(tail) >= _MIN_FLUSH_SAMPLES and ep.assess().regions:
-                hyp, call_lang = decode(tail)
-                # last decode of the session — commit the whole tail, never drop it, skipping
-                # only a prefix that repeats what is already committed.
-                start = agree.absorb([w.text for w in hyp], _spans(hyp))
-                final_words = hyp[start:]
-                if final_words:
-                    stats.committed_words += len(final_words)
-                    stats.utterances += 1
-                    emit(final_words, final=True, lang=call_lang)
+            if abandoned:
+                salvage()
+            elif utt_audio:  # final_pass runs its own VAD: a tail shorter than one decode
+                final_pass()  # chunk was never assessed, and must not be lost
         except Exception:  # noqa: BLE001 - never lose the sink because the final flush failed
             logging.getLogger(__name__).exception("final flush failed; closing sink anyway")
+            salvage()
         finally:
             try:
                 glossary.save()

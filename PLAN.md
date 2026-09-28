@@ -262,6 +262,11 @@ One object per line (JSONL) or per `data:` event (SSE): `{"t0": float, "t1": flo
 …]` when the engine produced per-word timings. Partials carry `"final": false`; a later line/event
 for an overlapping span supersedes them.
 
+**Two-pass semantics (DECIDE-09, 2026-09-28):** during an utterance `gmst stream` emits
+provisional objects (`"final": false`) covering the utterance so far; when it ends, one or more
+`"final": true` objects — the utterance decoded whole — supersede them. Consumers that only keep
+finals get batch-quality text about one decode after each utterance ends.
+
 Runtime status objects share the stream (DECIDE-05, 2026-09-28) and are told apart by their
 `"status"` key: `{"status": "lagging" | "overflow" | "slow" | "idle", "t": float, "message": str}`
 plus `"dropped"` / `"overflows"` counts where relevant. `t` is audio seconds on the sample clock.
@@ -337,6 +342,13 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   model) and `idle` (10 s without speech) go to stderr as log warnings, to the console as a status
   line, and into the JSONL/SSE stream as `{"status": ...}` objects (schema addition approved).
 - **DECIDE-07 — CI.** There is none and no remote; the claims are struck.
+- **DECIDE-09 — two-pass streaming (2026-09-28).** Four rounds of fixes to committing words from
+  partial audio each exposed a new failure on fresh clips (dropped words, non-deterministic
+  Ukrainian, replayed utterances, hallucinated boilerplate — X.1 … X.1c). The live
+  LocalAgreement-2 text is now **provisional** (`final: false`); when an utterance ends (endpoint,
+  or a long monologue reaching `max_buffer_seconds`) its whole audio is decoded once — like batch —
+  and that is the **final** text, superseding the provisional words. Final text lands ~one decode
+  after the utterance ends.
 - **DECIDE-08 — auto-growing glossary.** A config-enabled term list passed to Whisper (prompt and
   faster-whisper `hotwords`) on every decode, growing with English terms seen in the session; off
   for speed. Targets term fidelity inside Ukrainian decoding, which per-utterance LID cannot fix.

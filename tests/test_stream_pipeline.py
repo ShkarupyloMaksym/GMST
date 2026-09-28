@@ -138,7 +138,7 @@ def test_shutdown_flush_labels_the_last_utterance_with_the_detected_language():
     run_stream(_cfg(min_chunk_seconds=1.0, min_silence_ms=500), src, engine, sink, language=None)
 
     finals = [s for s in sink.segs if s.is_final]
-    assert len(finals) >= 2
+    assert len(finals) == 2  # one final per utterance (DECIDE-09), the 0.5 s tail included
     assert finals[-1].language == "uk"  # not the pre-detection "en"
     assert engine.calls[-1]["language"] == "uk"
 
@@ -176,24 +176,29 @@ def test_emitted_spans_use_word_timestamps(monkeypatch):
     assert [x.text for x in finals[0].words] == ["hello", "world"]
 
 
-def test_turn_bumps_after_a_long_gap_between_committed_spans(monkeypatch):
-    monkeypatch.setattr(stream_mod, "make_vad", lambda cfg: _EndpointEveryTime())
+def test_turn_bumps_after_a_long_gap_between_committed_spans():
+    """Two utterances 2 s apart (turn_gap 1 s) land in different turns. Real audio and the real
+    energy VAD, so the final pass (DECIDE-09) crops and times each utterance honestly."""
 
     def script(audio, i):
-        if i == 0:
-            return [Segment(0.0, 0.3, "first", "en", words=[Word("first", 0.0, 0.3)])]
-        dur = len(audio) / SAMPLE_RATE  # utterance 2 sits at the end of a long buffer
-        return [Segment(dur - 0.3, dur, "second", "en", words=[Word("second", dur - 0.3, dur)])]
+        vals = np.asarray(audio)
+        loud = np.flatnonzero(np.abs(vals) > 0.05)
+        if not len(loud):
+            return []
+        s0, s1 = loud[0] / SAMPLE_RATE, (loud[-1] + 1) / SAMPLE_RATE
+        word = "first" if np.isclose(vals[loud[0]], 0.3) else "second"
+        return [Segment(s0, s1, word, "en", words=[Word(word, s0, s1)])]
 
-    src = ListSource([_loud(0.3), _loud(2.0)])
+    utt2 = np.full(int(0.6 * SAMPLE_RATE), 0.6, dtype=np.float32)
+    audio = np.concatenate([_loud(0.6), _silent(2.0), utt2, _silent(1.0)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
     sink = RecSink()
-    cfg = _cfg(
-        min_chunk_seconds=0.2, min_silence_ms=300, turn_gap_seconds=1.0, max_buffer_seconds=100.0
-    )
-    run_stream(cfg, src, FakeEngine(script), sink, language="en")
+    cfg = _cfg(min_chunk_seconds=0.3, min_silence_ms=300, turn_gap_seconds=1.0)
+    run_stream(cfg, ListSource(blocks), FakeEngine(script), sink, language="en")
     finals = [s for s in sink.segs if s.is_final]
     assert [s.text for s in finals] == ["first", "second"]
     assert [s.turn for s in finals] == [1, 2]
+    assert finals[1].start > 2.4  # session time of utterance 2, not buffer-relative
 
 
 def test_shutdown_flush_commits_unconfirmed_tail():
@@ -214,9 +219,9 @@ def test_shutdown_flush_commits_unconfirmed_tail():
 
 
 def test_shutdown_flush_keeps_a_revised_tail_instead_of_dropping_it():
-    # The in-loop decodes commit "the quick brown"; the final tail decode revises "brown" ->
-    # "brownish" and adds "fox jumps" from new audio. At end-of-session there is no later decode,
-    # so the revised word must not re-commit and the new words must not be lost. Word times are
+    # The live decodes agree on "the quick brown"; the last decode revises "brown" -> "brownish"
+    # and adds "fox jumps" from new audio. At end-of-session the final pass decodes the utterance
+    # whole: the new words must not be lost and nothing may appear twice. Word times are
     # honest: the revised words sit over the committed audio (amplitude 0.3), "fox jumps" over
     # the audio that arrived after it (0.5).
     def script(audio, i):
@@ -235,8 +240,9 @@ def test_shutdown_flush_keeps_a_revised_tail_instead_of_dropping_it():
     run_stream(_cfg(min_chunk_seconds=0.15), src, FakeEngine(script), sink, language="en")
 
     words = sink.final_words()
-    assert "fox" in words and "jumps" in words  # the tail was not dropped
-    assert words.count("brown") == 1 and "brownish" not in words  # nor re-committed
+    # DECIDE-09: the final is the whole-utterance decode, so its revision wins over the live
+    # "brown"; nothing is lost and nothing is committed twice
+    assert words == ["the", "quick", "brownish", "fox", "jumps"]
     assert sink.closed
 
 
@@ -304,8 +310,12 @@ def test_committed_audio_is_trimmed_so_the_decoded_buffer_stays_bounded():
 
     run_stream(cfg, ListSource(blocks), engine, sink, language="en")
 
-    biggest = max(c["samples"] for c in engine.calls)
-    assert biggest < 4 * SAMPLE_RATE, f"buffer grew to {biggest / SAMPLE_RATE:.1f}s without a trim"
+    # the live pass stays short; only the final passes (DECIDE-09) decode a whole utterance, and
+    # a 20 s monologue with no endpoint gets at most two of them (at the 15 s cap, at shutdown)
+    sizes = sorted(c["samples"] for c in engine.calls)
+    live, finals_ = sizes[:-2], sizes[-2:]
+    assert max(live) < 4 * SAMPLE_RATE, f"live buffer grew to {max(live) / SAMPLE_RATE:.1f}s"
+    assert max(finals_) <= (cfg.max_buffer_seconds + 1.0) * SAMPLE_RATE
     words = sink.final_words()
     assert len(words) >= 30
     assert len(words) == len(set(words)), "a trimmed word was committed twice"
@@ -471,8 +481,10 @@ def test_stream_settles_the_language_at_3s_and_commits_nothing_before():
     assert finals and {s.language for s in finals} == {"uk"}
     words = [w for w in sink.final_words() if w != "w0"]  # the fake reads silence as "w0"
     assert sorted(words) == sorted(f"w{10 + 5 * i}" for i in range(10))
-    assert max(engine.lid_calls) < 3.0 + 0.5  # stopped detecting once settled
-    assert len(engine.lid_calls) >= 2          # re-detected while unsettled
+    live_lid = sorted(engine.lid_calls)[:-1]  # the last is the final pass, on the whole utterance
+    assert max(live_lid) < 3.0 + 0.5  # the live pass stopped detecting once settled
+    assert len(live_lid) >= 2         # and re-detected while unsettled
+    assert max(engine.lid_calls) > 4.5  # the final pass detected on the whole utterance
 
 
 def test_a_short_utterance_still_commits_with_its_last_detection():
@@ -524,3 +536,21 @@ def test_a_new_utterance_is_not_prompted_with_the_previous_one():
 
     assert any(s for s, _ in seen), "the second utterance was never decoded"
     assert not [p for s, p in seen if s and "перше" in p], seen
+
+
+def test_two_pass_live_text_is_provisional_and_each_utterance_gets_one_final():
+    """DECIDE-09: the live LocalAgreement-2 text is never final; when an utterance ends its whole
+    audio is decoded once and that is the final — one per utterance, every word, once."""
+    audio = np.concatenate([_marked(6), _silent(1.0), _marked(6)[::-1].copy(), _silent(1.0)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+    sink = RecSink()
+    run_stream(_cfg(min_chunk_seconds=0.5, min_silence_ms=500), ListSource(blocks),
+               _marked_engine(), sink, language="en")
+
+    finals = [s for s in sink.segs if s.is_final]
+    assert len(finals) == 2
+    expected = sorted(f"w{int(round((0.1 + 0.05 * i) * 100))}" for i in range(6))
+    for f in finals:
+        assert sorted(w for w in f.text.split() if w != "w0") == expected
+    first_final = next(i for i, s in enumerate(sink.segs) if s.is_final)
+    assert first_final > 0 and not any(s.is_final for s in sink.segs[:first_final])

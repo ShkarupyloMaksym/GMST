@@ -143,7 +143,16 @@ and temperature fallback on.
 
 ### Streaming reconciliation
 
-`reconcile.py` uses **LocalAgreement-2** (`whisper_streaming`, UFAL): commit the longest common
+**Two passes (DECIDE-09, 2026-09-28).** The live LocalAgreement-2 text below is **provisional**
+(`final: false`, one segment per utterance so far); when an utterance ends (endpoint, a monologue
+reaching `max_buffer_seconds` — cut at its latest pause — or shutdown) its own audio, cropped to
+speech, is decoded **once, like batch** (LID on the whole utterance, prompt = glossary terms only)
+and that is the **final** text, superseding the provisional words. If that decode fails or a
+second Ctrl-C abandons it, the live-agreed words are emitted as final (`salvage`). Four rounds of
+fixes to committing live words each broke on unseen clips (X.1 … X.1c) — don't go back to
+committing live words as final without re-running X.1d's held-out measurement.
+
+`reconcile.py` uses **LocalAgreement-2** (`whisper_streaming`, UFAL) for the live pass: commit the longest common
 prefix of two consecutive hypotheses, comparing **normalized** word tokens (casefold, strip
 trailing punctuation) but emitting original text. Plus: forced commit after
 `max_unconfirmed_seconds` **of audio** (or 3 updates without progress) when the tail never agrees;
