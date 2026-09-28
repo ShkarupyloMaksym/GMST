@@ -19,7 +19,7 @@ See [PLAN.md](PLAN.md) for the pipeline design, phases, latency budget, and fail
 ```sh
 uv sync
 uv run gmst devices     # list audio input devices
-uv run gmst warmup      # pre-download the configured model
+uv run gmst warmup      # pre-download the configured model (--bench: all of bench's candidates)
 ```
 
 ## Audio routing
@@ -39,7 +39,8 @@ loopback device and point `gmst` at that (`input_device` in `gmst.toml`, or `--d
 uv run gmst batch meeting.m4a -o meeting.srt          # transcribe a recording
 uv run gmst stream --language uk                      # live transcript from the input device
 uv run gmst stream --sink sse                         # + browse http://127.0.0.1:8765/
-uv run gmst bench clip.wav --ref clip.txt             # pick the model from WER + throughput
+uv run gmst bench clip.wav --ref clip.txt             # throughput + streaming cost per model
+                                                      # (needs `gmst warmup --bench` first)
 ```
 
 Exit codes: `0` ok, `1` bad input (no such file/device), `2` the model or backend could not be

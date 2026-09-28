@@ -59,12 +59,24 @@ def _cmd_devices(args: argparse.Namespace, cfg: Config) -> int:
 def _cmd_warmup(args: argparse.Namespace, cfg: Config) -> int:
     import numpy as np
 
-    target = cfg.model_repo or cfg.model_size
-    print(f"loading {cfg.engine} / {target} …", file=sys.stderr)
-    engine = _load_engine_or_report(cfg, per_segment_lid=False)
-    if engine is None:
+    targets = [cfg]
+    if getattr(args, "bench", False):  # every model `gmst bench` will try, not just this one
+        from gmst.bench import _candidates
+
+        targets = [replace(cfg, model_size=size or cfg.model_size, model_repo=repo)
+                   for _label, size, repo in _candidates(cfg.engine)]
+    failed = 0
+    for target in targets:
+        print(f"loading {target.engine} / {target.model_repo or target.model_size} …",
+              file=sys.stderr)
+        engine = _load_engine_or_report(target, per_segment_lid=False)
+        if engine is None:
+            failed += 1
+            continue
+        engine.transcribe(np.zeros(16_000, dtype=np.float32))  # force weights to download/init
+        engine = None  # release before the next one loads
+    if failed:
         return 2
-    engine.transcribe(np.zeros(16_000, dtype=np.float32))  # force weights to download/init
     print("ready", file=sys.stderr)
     return 0
 
@@ -142,6 +154,9 @@ def _cmd_bench(args: argparse.Namespace, cfg: Config) -> int:
         return 2
     print(f"engine={cfg.engine}  clip={args.clip}  max_buffer_seconds={cfg.max_buffer_seconds}\n")
     print(format_table(rows))
+    if not any(r.ok for r in rows):  # nothing measured is not "ok" (R7)
+        print("no candidate could be loaded — run: gmst warmup --bench", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -240,6 +255,8 @@ def build_parser() -> argparse.ArgumentParser:
     devices.set_defaults(func=_cmd_devices)
 
     warmup = sub.add_parser("warmup", help="pre-download / initialise the configured model")
+    warmup.add_argument("--bench", action="store_true",
+                        help="also every candidate `gmst bench` measures (four large models)")
     warmup.set_defaults(func=_cmd_warmup)
 
     bench = sub.add_parser("bench", help="measure RTF / streaming amplification / WER per model")

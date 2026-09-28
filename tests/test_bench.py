@@ -14,20 +14,57 @@ def test_run_bench_computes_amplification_and_wer(monkeypatch):
         "_candidates",
         lambda engine: [("m-a", "large-v2", None), ("m-b", None, "some/repo")],
     )
+    monkeypatch.setattr(bench_mod, "_per_update_seconds", lambda engine, audio, cfg: 0.5)
 
     def fake_load_engine(cfg, **kw):
         return FakeEngine([[Segment(0.0, 1.0, "the quick brown fox", cfg.language or "en")]])
 
     monkeypatch.setattr("gmst.transcribe.backends.load_engine", fake_load_engine)
 
-    cfg = Config(max_buffer_seconds=10.0)
+    cfg = Config(language="en")
     rows = run_bench("clip.wav", cfg, reference="the quick brown dog")
 
     assert [r.label for r in rows] == ["m-a", "m-b"]
     assert all(r.ok for r in rows)
-    # amplification = rtf * (max_buffer_seconds / UPDATE_INTERVAL_S)
-    assert rows[0].amplification == rows[0].rtf * (10.0 / UPDATE_INTERVAL_S)
+    # amplification = measured seconds per update / UPDATE_INTERVAL_S (R5: not RTF x buffer cap)
+    assert rows[0].amplification == 0.5 / UPDATE_INTERVAL_S
     assert rows[0].wer == 0.25  # one substitution in four
+
+
+def test_per_update_cost_times_a_typical_buffer_plus_the_lid_pass():
+    """R5: Whisper pads every call to 30 s, so a short buffer costs far more than RTF x length;
+    bench times a real decode of a typical buffer, and the per-utterance LID pass the stream
+    runs when the language is not pinned."""
+
+    class _Rec(FakeEngine):
+        lid = 0
+
+        def detect_language(self, audio, *, prev_lang=None):
+            self.lid += 1
+            return "uk", 0.9
+
+    eng = _Rec([[Segment(0.0, 1.0, "x", "uk")]])
+    audio = np.full(20 * 16_000, 0.3, dtype=np.float32)
+    secs = bench_mod._per_update_seconds(eng, audio, Config())
+    assert secs >= 0.0
+    assert {c["samples"] for c in eng.calls} == {int(bench_mod.TYPICAL_BUFFER_S * 16_000)}
+    assert eng.lid >= 1
+    eng2 = _Rec([[Segment(0.0, 1.0, "x", "uk")]])
+    bench_mod._per_update_seconds(eng2, audio, Config(language="uk"))
+    assert eng2.lid == 0  # a pinned language skips LID, as the stream does
+
+
+def test_bench_decodes_through_the_shipped_batch_path(monkeypatch):
+    """R5: bench used faster-whisper's in-pass LID, so its ranking was not the shipped one."""
+    seen = []
+    monkeypatch.setattr(bench_mod, "decode_file", lambda _p: np.zeros(16_000, dtype=np.float32))
+    monkeypatch.setattr(bench_mod, "_candidates", lambda e: [("m", "large-v2", None)])
+    monkeypatch.setattr(bench_mod, "_per_update_seconds", lambda engine, audio, cfg: 0.1)
+    monkeypatch.setattr(bench_mod, "transcribe_by_region",
+                        lambda audio, cfg, engine: seen.append(cfg.model_size) or [])
+    monkeypatch.setattr("gmst.transcribe.backends.load_engine", lambda cfg, **kw: FakeEngine([]))
+    run_bench("clip.wav", Config())
+    assert seen == ["large-v2"]
 
 
 def test_each_candidate_is_released(monkeypatch):

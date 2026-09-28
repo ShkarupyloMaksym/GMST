@@ -165,3 +165,35 @@ def test_unimplemented_backend_reports_exit_2(monkeypatch, capsys, tmp_path):
         engine="canary")))
     assert main(["batch", str(clip)]) == 2
     assert "canary" in capsys.readouterr().err
+
+
+def test_bench_exits_2_when_no_candidate_loads(monkeypatch, capsys, tmp_path):
+    """R7: every candidate failed to load and `gmst bench` still exited 0."""
+    import gmst.bench as bench_mod
+
+    clip = tmp_path / "clip.wav"
+    clip.write_bytes(b"x")
+    monkeypatch.setattr(bench_mod, "run_bench",
+                        lambda *a, **kw: [bench_mod.BenchRow("m", error="ModelUnavailable: x")])
+    assert main(["bench", str(clip)]) == 2
+
+
+def test_warmup_bench_loads_every_bench_candidate(monkeypatch):
+    """R7: `gmst warmup` cached only the configured model; Setup -> `gmst bench` failed offline."""
+    import gmst.bench as bench_mod
+
+    cands = [("a", "m1", None), ("b", None, "r/2")]
+    monkeypatch.setattr(bench_mod, "_candidates", lambda e: cands)
+    loaded = []
+
+    class _E:
+        def transcribe(self, audio, **kw):
+            return []
+
+    def fake_load(cfg, **kw):
+        loaded.append(cfg.model_repo or cfg.model_size)
+        return _E()
+
+    monkeypatch.setattr(cli_mod, "_load_engine_or_report", fake_load)
+    assert main(["warmup", "--bench"]) == 0
+    assert loaded == ["m1", "r/2"]

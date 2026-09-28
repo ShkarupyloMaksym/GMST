@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 07:24 UTC",
+ "generated": "2026-09-28 07:26 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -74,7 +74,6 @@
    "waiting_on": [
     "H1",
     "F.2",
-    "F.3",
     "F.4",
     "F.5",
     "F.6",
@@ -82,7 +81,7 @@
    ],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 4,
+   "leaves_done": 5,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -170,11 +169,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -184,13 +183,13 @@
    "file": "tasks/F.3-bench.md",
    "summary": "- **FIX-11** bench decodes through the shipped path (per-utterance LID via `detect_language`, or `run_stream` over the clip) and reports UK and EN WER separately when given per-language references. - **FIX-12** exit 2 when no candidate produced a row. - **FIX-13** amplification from measured wall time per decode of a typical-length buffer plus the LID pass, divided by `update_interval` (R5 `p4_amp",
    "instructions": "- **FIX-11** bench decodes through the shipped path (per-utterance LID via `detect_language`, or `run_stream` over the clip) and reports UK and EN WER separately when given per-language references.\n- **FIX-12** exit 2 when no candidate produced a row.\n- **FIX-13** amplification from measured wall time per decode of a typical-length buffer plus the LID pass, divided by `update_interval` (R5 `p4_amplification.py`); PLAN.md latency budget amended after EVID-04.\n- **FIX-14** `gmst warmup --bench` downloads bench's candidates; README says so.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
-   "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "findings_text": "- **FIX-11** bench decodes via `transcribe_by_region` (the shipped batch path). Per-language\n  UK/EN WER is **not** added to bench: one clip cannot separate the candidates (R5), so PLAN.md's\n  Phase-1 exit criterion is amended (dated) to take UK/EN corpus WER with CIs from\n  `eval/run_eval.py` (X.3); bench keeps an overall sanity WER.\n- **FIX-12** `gmst bench` exits 2, with a `gmst warmup --bench` hint, when no row is ok.\n- **FIX-13** `_per_update_seconds`: median of 3 timed updates (a 4 s `TYPICAL_BUFFER_S` decode +\n  `detect_language` on 3 s when not pinned) after one warm-up call; `amplification` =\n  that / `UPDATE_INTERVAL_S`; new `s/upd` column. PLAN.md / CLAUDE.md latency text flagged with a\n  dated note; the rewrite waits for X.4.\n- **FIX-14** `gmst warmup --bench` loads every bench candidate (releasing each), exit 2 if any\n  failed; README Setup/Usage say so.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,

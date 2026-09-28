@@ -161,8 +161,11 @@ End-to-end target is ≲ 3 s (Phase 3). LocalAgreement-2 re-decodes the whole un
 every update, so required throughput is `RTF × (buffer_seconds / update_interval)`, **not** RTF —
 for a 15 s buffer at 1 update/s the real target is **RTF ≤ ~0.15**. `max_buffer_seconds` caps the
 buffer, and the per-commit trim is what keeps the real `buffer_seconds` near one utterance rather
-than at that cap — without it the budget cannot close. `PLAN.md` has the full budget decomposition; `gmst bench` reports streaming amplification,
-not just batch RTF.
+than at that cap — without it the budget cannot close. `PLAN.md` has the full budget decomposition.
+**But the formula undercounts** (R5, 2026-09-28): Whisper pads every call to a 30 s window, so a
+2–4 s buffer costs 4–6× `RTF × buffer_seconds`, plus the per-utterance LID pass. `gmst bench`
+therefore reports the *measured* seconds per update (a `TYPICAL_BUFFER_S` = 4 s decode + LID) as
+"streaming amplification"; X.4 measures it for the large models.
 
 ### Failure modes
 
