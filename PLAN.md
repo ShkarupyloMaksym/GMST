@@ -136,7 +136,7 @@ Decomposition, worst-case per committed word:
 | capture block | `block_ms` = 100 ms |
 | endpoint trailing silence | `min_silence_ms` = 600 ms |
 | VAD over the buffer, once per decode (`endpointer.assess`) | Silero: ~10 ms/s of buffer |
-| LID pass, on every decode until the utterance has `lid_settle_seconds` = 3 s (≈ 1–3 passes; both backends; R2 F8, DECIDE-04) | mlx ~150 ms (unmeasured); faster-whisper CPU: R5 measured 0.42 s median for `tiny` on 3 s — large models are X.4 |
+| LID pass, on every decode until the utterance has `lid_settle_seconds` = 3 s (≈ 1–3 passes; both backends; R2 F8, DECIDE-04) | mlx ~150 ms (unmeasured, MAC-03); faster-whisper CPU int8: `tiny` 0.42 s (R5), `large-v2` 3.5 s, `large-v3` 4.0 s, flat in length (X.4) |
 | decode of the unconfirmed buffer | RTF × `buffer_seconds` |
 | agreement lag (≥ 1 extra update by construction) | `update_interval` |
 | **sum** | **≤ 3000 ms** |
@@ -145,8 +145,24 @@ LocalAgreement-2 re-decodes the whole unconfirmed buffer every update, so requir
 `RTF × (buffer_seconds / update_interval)`, **not** RTF. *(2026-09-28, review R5: measured, that
 formula undercounts short buffers 4–6× — Whisper pads every call to a 30 s window, so each update
 has a large fixed cost — and omits the per-utterance LID pass. `gmst bench` now reports the
-measured seconds per update instead (F.3); this section is rewritten with X.4's large-model
-numbers.)* For a 15 s buffer at 1 update/s that is
+measured seconds per update instead (F.3).)*
+
+**Measured (review X.4, 2026-09-28, 16-core CPU, faster-whisper int8):**
+
+| | `large-v2` | `large-v3` |
+|---|---|---|
+| decode, 2 s / 4 s / 8 s / 15 s buffer | 4.0 / 4.5 / – / – s (fixed cost dominates) | 4.4 / 4.8 / – / – s |
+| `detect_language`, 3 s | 3.5 s | 4.0 s |
+| one live update (4 s buffer + LID) vs the 1.0 s budget | **8.1 s — fails ~8×** | **8.8 s** |
+| two-pass final text after an utterance ends (whole-utterance decode + LID, 2–15 s utterances) | 7.8–10.3 s | 8.6–10.6 s |
+
+So on a CPU the large models cannot stream at 1 update/s by any tuning of buffer or interval, and
+the final text lags an utterance by ~8–10 s; the ≲ 3 s target depends on the Mac/MLX path
+(MAC-03) or a smaller model (X.3 ranks accuracy). Two-pass also runs LID twice per utterance (live
+until settled, then on the whole utterance for the final): reusing the live language in the final
+pass would save one LID pass (~3.5 s here) at X.2's 3 s accuracy (≥ 95 %) instead of full-clip
+(≥ 98 %) — a trade-off left open, not decided. The figures below this paragraph are the original
+plan's, kept for the derivation. For a 15 s buffer at 1 update/s that is
 15 × RTF, so the real target is **RTF ≤ ~0.15**, not 0.5. `max_buffer_seconds` (default 15) caps
 the buffer; it is trimmed on every commit to just before the last committed **word**
 (`Endpointer.trim_to` gets its start, minus a 0.2 s back-off, so that word survives whole as the
