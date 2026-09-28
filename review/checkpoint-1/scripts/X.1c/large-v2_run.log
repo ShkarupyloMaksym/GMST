@@ -1,0 +1,11 @@
+=== model=large-v2 stream_runs=1 offset_tags=[(20, 'b')] ===
+engine loaded in 3.6s
+--- tag=b offset=20 en: 20 clips, 126.3s audio ---
+[large-v2/b/en] batch  WER=0.0224 (edits=7 ref_words=313) 126.9s
+[large-v2/b/en] stream rep=0 WER=0.3227 (edits=101 ref_words=313) 1586.5s decodes=148 contradicted=0/148
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/large-v2_b_results.json)
+--- tag=b offset=20 uk: 20 clips, 96.7s audio ---
+[large-v2/b/uk] batch  WER=0.0873 (edits=11 ref_words=126) 109.9s
+[large-v2/b/uk] stream rep=0 WER=0.0714 (edits=9 ref_words=126) 565.6s decodes=93 contradicted=0/93
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/large-v2_b_results.json)
+DONE

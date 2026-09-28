@@ -1,0 +1,23 @@
+=== model=small stream_runs=2 offset_tags=[(0, 'a'), (20, 'b')] ===
+engine loaded in 0.7s
+--- tag=a offset=0 en: 20 clips, 162.6s audio ---
+[small/a/en] batch  WER=0.0264 (edits=11 ref_words=417) 23.6s
+[small/a/en] stream rep=0 WER=0.0647 (edits=27 ref_words=417) 404.0s decodes=179 contradicted=0/179
+[small/a/en] stream rep=1 WER=0.0480 (edits=20 ref_words=417) 406.0s decodes=179 contradicted=0/179
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/small_a_results.json)
+--- tag=a offset=0 uk: 20 clips, 103.0s audio ---
+[small/a/uk] batch  WER=0.2378 (edits=34 ref_words=143) 21.4s
+[small/a/uk] stream rep=0 WER=0.2517 (edits=36 ref_words=143) 149.1s decodes=98 contradicted=0/98
+[small/a/uk] stream rep=1 WER=0.2517 (edits=36 ref_words=143) 137.3s decodes=98 contradicted=0/98
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/small_a_results.json)
+--- tag=b offset=20 en: 20 clips, 126.3s audio ---
+[small/b/en] batch  WER=0.0351 (edits=11 ref_words=313) 20.5s
+[small/b/en] stream rep=0 WER=0.0511 (edits=16 ref_words=313) 298.6s decodes=147 contradicted=0/147
+[small/b/en] stream rep=1 WER=0.0543 (edits=17 ref_words=313) 260.4s decodes=147 contradicted=0/147
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/small_b_results.json)
+--- tag=b offset=20 uk: 20 clips, 96.7s audio ---
+[small/b/uk] batch  WER=0.1429 (edits=18 ref_words=126) 21.1s
+[small/b/uk] stream rep=0 WER=0.7937 (edits=100 ref_words=126) 347.4s decodes=93 contradicted=0/93
+[small/b/uk] stream rep=1 WER=0.7937 (edits=100 ref_words=126) 322.5s decodes=93 contradicted=0/93
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1c/small_b_results.json)
+DONE
