@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 07:26 UTC",
+ "generated": "2026-09-28 07:56 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -73,7 +73,6 @@
    "state": "in-progress",
    "waiting_on": [
     "H1",
-    "F.2",
     "F.4",
     "F.5",
     "F.6",
@@ -81,7 +80,7 @@
    ],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 5,
+   "leaves_done": 6,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -133,11 +132,11 @@
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -149,11 +148,11 @@
    "instructions": "- **FIX-04** key the hypothesis cache by system *and* model (`hyp/<system>__<model>.jsonl`), write the model into every record, refuse to mix (R5 `p3_cache_mixes_models.py`).\n- **FIX-05** corpus WER (total errors / total ref words) plus a bootstrap 95 % CI per set.\n- **FIX-06** report `switch_detected`/`lid_recall` as n/a for systems that cannot label segments; rename per-language WER to what it measures (LID × ASR).\n- **FIX-07** *intra*: cut at word timestamps; *inter*: gaps ≥ `min_silence_ms` + margin.\n- **FIX-08** `--systems X` merges into `scores.json` instead of overwriting.\n- **FIX-09** split hyphens in `normalize_words`; record the numerals bias in the docstring.\n- **FIX-10** the E501 at `eval/run_eval.py:6` (the line is also wrong: it says large-v3).\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
    "findings_text": "- **FIX-04** `hyp_path`: `hyp/fw-<size>-<mode>.jsonl` / `hyp/gmst-<mode>@<model>.jsonl`; every\n  record carries `model`; `cached_ids` raises on another model's records. The legacy\n  `hyp/gmst-batch.jsonl` (tiny, pre-F.10, no model field) is never resumed; it is still scored as\n  `gmst-batch` by `--score-only` and should be read as stale.\n- **FIX-05** corpus WER/CER (`metrics.word_errors`/`char_errors`, no jiwer), seeded bootstrap 95 %\n  CI (`wer_ci95`), `wer_macro` kept for comparison; `--compare A,B` gives the paired-bootstrap CI\n  of the WER difference (X.3's decision number).\n- **FIX-06** mixed set: `wer_en_lid`/`wer_uk_lid` (named for LID × ASR); `lid_recall` None and\n  `switch_detected` \"n/a\" for `fw-*`.\n- **FIX-07** `build_sets.py`: inter gaps 800/1000/1200 ms; `intra` replaced by `nopause` ([A][B],\n  exact reference); `real_cs` removed (DECIDE-06 covers real code-switched audio). Kinds are read\n  from the manifest when scoring.\n- **FIX-08** `write_scores` merges by system.\n- **FIX-09** `normalize_words` splits hyphens (WER only; `normalize_token` unchanged); numerals\n  bias documented in `metrics.py`.\n- **FIX-10** done in F.10's commit.",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -830,16 +829,15 @@
     "X.3",
     "X.4"
    ],
-   "state": "waiting",
+   "state": "in-progress",
    "waiting_on": [
     "X.1",
-    "X.2",
     "X.3",
     "X.4"
    ],
    "depth": 0,
    "leaves_total": 4,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -891,9 +889,9 @@
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -903,13 +901,13 @@
    "file": "tasks/X.2-lid-vs-prefix.md",
    "summary": "For all 60 `uk` and 60 `en` clips, call the model's `detect_language` on prefixes of 1, 2, 3, 4 s and the full clip, `small` then `large-v2`. From each raw distribution compute (a) unrestricted top-1 and (b) restricted = argmax over {en, uk + ru}. Report accuracy per language × prefix × model for both, and the first-utterance case (no prior).",
    "instructions": "For all 60 `uk` and 60 `en` clips, call the model's `detect_language` on prefixes of 1, 2, 3, 4 s and the full clip, `small` then `large-v2`. From each raw distribution compute (a) unrestricted top-1 and (b) restricted = argmax over {en, uk + ru}. Report accuracy per language × prefix × model for both, and the first-utterance case (no prior).\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.2/`. Write the clip list to `scripts/X.2/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
-   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "findings_text": "**Restricted accuracy** = argmax(P(en), P(uk)+P(ru)) vs truth (the en/uk-ish bucket a mixed\nEN/UK meeting actually needs, matching `resolve_language`'s combined-mass uk/ru tie-break).\n**Unrestricted** = raw top-1 label over all ~99 Whisper language codes, exact match only. All\nrows are first-utterance/no-prior (no `prev_lang` threaded across calls — every call is\nindependent, so this *is* the no-prior case the brief asks for, by construction of calling\n`detect_language` directly rather than `resolve_language`'s sticky path).\n\n| model | lang | 1 s | 2 s | 3 s | 4 s | full |\n|---|---|---|---|---|---|---|\n| small | en restricted | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |\n| small | uk restricted | 0.183 | 0.883 | 0.950 | 0.983 | 0.983 |\n| small | en unrestricted | 1.000 | 0.983 | 0.983 | 0.983 | 0.983 |\n| small | uk unrestricted | 0.000 | 0.133 | 0.400 | 0.533 | 0.600 |\n| large-v2 | en restricted | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |\n| large-v2 | uk restricted | 0.233 | 0.900 | 0.983 | 1.000 | 1.000 |\n| large-v2 | en unrestricted | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |\n| large-v2 | uk unrestricted | 0.017 | 0.217 | 0.550 | 0.700 | 0.733 |\n\nn = 60 per (lang, prefix, model) cell. Full numbers incl. capped-row detail:\n`scripts/X.2/score_output.txt`, raw rows: `scripts/X.2/{small,large-v2}_raw.jsonl`.\n\n**Against the pre-registered rule** (`tasks/V1-evidence-plan.md`, X.2 row): \"≥ 95 % on both at 2 s\n→ DECIDE-04 = detect once at ≥ 2 s of buffer; ≥ 95 % only at full → re-detect on every decode until\nthe endpoint; < 95 % even at full → record, DECIDE-04 needs a design.\"\n\n- At 2 s, restricted uk accuracy is 0.883 (small) and 0.900 (large-v2) — **below the 95 % bar**;\n  en is 1.000 at 2 s for both. **The \"≥ 95 % on both at 2 s\" branch fails for both models.**\n- At full clip, restricted accuracy is ≥ 95 % on both languages for both models (small: en 0.983 /\n  uk 0.983; large-v2: en 1.000 / uk 1.000). **The \"≥ 95 % only at full\" branch holds** →\n  per the pre-registered rule, DECIDE-04 = re-detect on every decode until the endpoint (not\n  detect-once-at-2s).\n- Refinement within that branch (not a fourth rule branch, additional evidence for DECIDE-04's\n  design): restricted uk accuracy already reaches the 95 % bar at **3 s**, not only at full, for\n  both models (small 0.950, large-v2 0.983; en is 1.000 at every prefix ≥ 1 s for both models). If\n  DECIDE-04 is designed against this data rather than just the three coarse buckets, \"re-detect\n  until ≥ 3 s of buffer, then stop\" is a cheaper policy than \"re-detect on every decode until the\n  endpoint\" and the data supports it about as well as \"until full clip\" does — worth flagging to\n  whoever writes DECIDE-04's design.\n- **Caveat on the 3 s/4 s cells' cleanliness**: prefixes longer than a clip's own duration are\n  capped to the full clip (`capped` field in the raw rows), so the 3 s and 4 s buckets are partly\n  populated by short clips whose \"3 s\"/\"4 s\" row is actually their full-clip audio. Measured:\n  3 s bucket — en 12/60 (20 %) capped, uk 3/60 (5 %) capped; 4 s bucket — en 24/60 (40 %) capped,\n  uk 19/60 (32 %) capped; 1 s and 2 s buckets have 0 capped rows (no clip is shorter than 2 s: en\n  min 2.05 s, uk min 2.856 s). The 3 s cell is largely clean (95 % uk / 100 % en of it real);\n  the 4 s cell is not — a third to two-fifths of it is really \"full clip\" relabeled \"4 s\". This\n  does not change the deciding comparison above (2 s fails, full holds — both clean cells) but it\n  means the 4 s row should not be read as \"true 4 s prefix accuracy\" without that caveat, and the\n  3 s vs 4 s numbers in the table are not independent confirmation of a smooth accuracy-vs-duration\n  curve (the corpus itself has few 3-4 s clips to give one, given LibriSpeech/CV10-derived clip\n  lengths).\n- **`ru` is the dominant unrestricted failure mode on uk, confirming the tie-break's premise**: at\n  the full clip, small's unrestricted uk errors are 24/60, of which 21 are labeled `ru` (the rest\n  `pl`×1, `de`×1, `hr`",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -941,10 +939,8 @@
    "instructions": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnight, one model at a time, resumable.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.3/`. Write the clip list to `scripts/X.3/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
    "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
    "children": [],
-   "state": "waiting",
-   "waiting_on": [
-    "F.2"
-   ],
+   "state": "ready",
+   "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
    "leaves_done": 0,

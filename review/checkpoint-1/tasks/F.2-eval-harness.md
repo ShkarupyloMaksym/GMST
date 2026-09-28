@@ -5,7 +5,7 @@ stage: fix
 kind: task
 agent: orchestrator
 model: sonnet
-status: in-progress
+status: done
 depends-on: T1
 
 # F.2 — Eval harness: cache key, corpus WER, CIs, mixed clips, metrics
@@ -35,9 +35,10 @@ cache, corpus WER + CI, n/a switch metrics for `fw-*`, merged `scores.json`). Af
 reproduces R5's corpus figures (tiny-auto uk corpus 62.07 vs macro 68.21; CI [48.89, 90.0] on 4
 clips) — and no longer needs `--with jiwer`.
 
-**Stopped before the rebuild:** `eval/build_sets.py` rewrites `eval/results/data/{en,uk}` too, and
-X.2 is reading them. Rebuild the mixed set (`uv run python eval/build_sets.py`) once X.2 reports;
-same seed, so `en`/`uk` come out byte-identical and only `mixed` changes.
+Rebuilt after X.2 reported (2026-09-28): `uv run python eval/build_sets.py` → `uk: 60`, `en: 60`,
+`mixed: 40 clips (20 inter, 20 nopause)`. `en.jsonl`, `uk.jsonl` and every `en/*.wav`, `uk/*.wav`
+verified byte-identical by sha256 before/after. The old `mixed/mix-intra-*.wav` files remain on
+disk (git-ignored) but are no longer in the manifest.
 
 ## Findings
 
@@ -62,4 +63,4 @@ same seed, so `en`/`uk` come out byte-identical and only `mixed` changes.
 
 _(and why)_
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded
