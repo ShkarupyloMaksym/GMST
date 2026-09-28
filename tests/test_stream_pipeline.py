@@ -498,3 +498,28 @@ def test_a_pinned_language_never_runs_lid():
 def test_the_prompt_fits_whispers_prompt_window_in_ukrainian():
     """R1: 600 Ukrainian characters are ~235 Whisper tokens, over faster-whisper's 223."""
     assert stream_mod._PROMPT_CHARS * 235 / 600 <= 223
+
+
+def test_the_prompt_never_contains_words_still_in_the_buffer():
+    """X.1.1: prompting with the anchor words the buffer still holds made Whisper skip them in
+    the audio and time the next new word from the buffer head, where the time cut dropped it —
+    20 of 21 stream deletions (small, en). Like UFAL, prompt only with text whose audio is gone."""
+    base = _marked_engine()
+    seen = []
+
+    class Rec(FakeEngine):
+        def transcribe(self, audio, *, language=None, prompt=None, hotwords=None):
+            segs = base.transcribe(audio, language=language, prompt=prompt)
+            head = segs[0].words[0].text if segs and segs[0].words else None
+            seen.append((prompt or "", head))
+            return segs
+
+    audio = np.concatenate([_marked(12), _silent(1.0)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+    run_stream(_cfg(min_chunk_seconds=0.5), ListSource(blocks), Rec([]), RecSink(),
+               language="en")
+
+    trimmed = [(p, h) for p, h in seen if p]
+    assert trimmed, "no decode ran after a commit"
+    for prompt, head in trimmed:
+        assert head not in prompt.split(), (prompt, head)

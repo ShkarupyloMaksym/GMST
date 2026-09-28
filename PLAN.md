@@ -246,6 +246,7 @@ eval/                 # not part of the package; data + results in git-ignored e
 |---|---|
 | Longest common prefix | compare **normalized** word tokens (casefold, strip trailing punctuation); emit original text |
 | Tail never agrees | forced commit after `max_unconfirmed_seconds` or N stalled updates |
+| `initial_prompt` overlap with the buffer | prompt only with committed words whose audio was trimmed out — never the anchor words the buffer still holds (X.1.1: overlapping them caused 20/21 stream deletions) |
 | `initial_prompt` growth | cap to the last 560 characters (glossary terms first, then committed text) — inside faster-whisper's 223-token prompt window for Ukrainian |
 | Buffer trim mid-word | trim just before the last committed word (its start minus `_TRIM_BACKOFF_S` = 0.2 s), so it survives whole; `rebase` keeps the words whose audio survived, with their times, so they are not committed twice |
 | Re-heard anchor spelled differently / dropped | align by text, then by time: drop hypothesis words ending within the committed audio (`_TIME_TOLERANCE_S` = 0.02 s), then de-duplicate a ≤ 5-word repeat of the committed tail (DECIDE-01; R1 showed text-only alignment losing ~85 % of a real stream) |

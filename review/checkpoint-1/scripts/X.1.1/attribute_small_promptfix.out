@@ -1,0 +1,40 @@
+model=small ref_words=417 out_words=416 edits=12 (del 1, sub 11, ins 0)
+time/ngram-path skips: 21 pushes, 48 words
+deletions whose word was skipped by the time/ngram path: 0
+
+# errors with context (ref index, op, ref, hyp)
+  39 sub     beggar's -> beggars      | pride beaten and in [beggar's] weeds that they
+ 109 sub        asked -> ask          | bringing back our king [asked] the voice in
+ 128 sub       tonnay -> tene         | difficult replied mademoiselle de [tonnay] charente laughing loudly
+ 129 sub     charente -> shallant     | replied mademoiselle de tonnay [charente] laughing loudly socrates
+ 170 sub            a -> the          | it then was with [a] population that remembered
+ 175 sub       wholly -> holy         | population that remembered a [wholly] unreal past the
+ 182 sub      leaving -> leaping      | the crowd drifts off [leaving] the hero and
+ 352 sub          her -> a            | violence and moved by [her] tears he had
+ 359 del         half -> None         | had only carried her [half] way towards his
+ 360 sub          way -> halfway      | only carried her half [way] towards his house
+ 384 sub behaviourist -> behaviorist  | different times if the [behaviourist] feels confident that
+ 416 sub   eighteenth -> 18th         | other times tuesday august [eighteenth] 
+
+# time/ngram-path skips
+  skipped=['their', 'weeds,'] spans=[[0.0, 0.0], [0.0, 0.56]] end=0.45999999999999996 tail=["beggars'", 'weeds,'] next=['that', 'they', 'would']
+  skipped=['advise', 'us'] spans=[[0.04, 0.24], [0.24, 0.5]] end=0.5199999999999999 tail=['despise', 'us,'] next=['that', 'our', 'advice']
+  skipped=['ous,', 'that'] spans=[[0.0, 1.06], [1.06, 1.2]] end=1.2 tail=['us', 'that'] next=['our', 'advice', 'should']
+  skipped=['Israel,'] spans=[[0.0, 0.2]] end=0.3400000000000001 tail=['Mademoiselle', 'de'] next=['that', 'Tony', 'shall']
+  skipped=['Israel,', 'de'] spans=[[0.0, 0.22], [0.28, 0.36]] end=0.3400000000000001 tail=['Mademoiselle', 'de'] next=['tene', 'shallant,', 'laughing']
+  skipped=["We're", 'not', 'electioneering'] spans=[[0.0, 0.06], [0.06, 0.18], [0.18, 1.12]] end=1.1400000000000001 tail=["I'm", 'not', 'electioneering'] next=['just', 'now.']
+  skipped=['actly', 'as'] spans=[[0.0, 0.38], [0.38, 0.66]] end=0.6600000000000001 tail=['exactly', 'as'] next=['it', 'then', 'was,']
+  skipped=['a', 'wholly'] spans=[[0.0, 0.2], [0.2, 0.56]] end=0.56 tail=['a', 'holy,'] next=['unreal', 'past.']
+  skipped=['the', 'shoulders', 'with'] spans=[[0.0, 0.28], [0.28, 0.28], [0.28, 0.52]] end=0.52 tail=['shoulders', 'with'] next=['scientists', 'in', 'our']
+  skipped=['ownical', 'gardens,'] spans=[[0.0, 0.2], [0.2, 0.6]] end=0.62 tail=['botanical', 'gardens,'] next=['the', 'boy', 'had']
+  skipped=['way', 'it', 'come'] spans=[[0.0, 0.12], [0.12, 0.22], [0.22, 0.42]] end=0.3999999999999999 tail=['boy', 'had', 'come'] next=['to', 'know', 'a']
+  skipped=['Well,', 'there', 'must'] spans=[[0.0, 0.08], [0.12, 0.2], [0.2, 0.42]] end=0.3999999999999999 tail=['Cyril,', 'there', 'must'] next=['be', 'some', 'better']
+  skipped=['exploiting', 'it.'] spans=[[0.0, 0.26], [0.26, 0.54]] end=0.5800000000000001 tail=['attenuating', 'it.'] next=['We', 'may', 'be']
+  skipped=['legends', 'have'] spans=[[0.0, 0.36], [0.36, 0.68]] end=0.7 tail=['intelligence', 'have'] next=['their', 'own', 'slang.']
+  skipped=['ine', 'this'] spans=[[0.0, 0.42], [0.42, 0.66]] end=0.6599999999999999 tail=['shine', 'this'] next=['evening.']
+  skipped=['the', 'intenting', 'of'] spans=[[0.0, 0.0], [0.0, 0.2], [0.2, 0.32]] end=0.32000000000000006 tail=['repenting', 'of'] next=['his', 'violence', 'and']
+  skipped=['by', 'her'] spans=[[0.0, 0.2], [0.2, 0.32]] end=0.30000000000000004 tail=['by', 'a'] next=['tears.', 'He', 'had']
+  skipped=['tered', 'her', 'halfway'] spans=[[0.0, 0.1], [0.1, 0.22], [0.22, 0.62]] end=0.6199999999999999 tail=['carried', 'her', 'halfway'] next=['towards', 'his', 'house,']
+  skipped=['currents', 'of'] spans=[[0.0, 0.3], [0.3, 0.48]] end=0.5 tail=['occurrence', 'of'] next=['similar', 'events', 'at']
+  skipped=['case', 'feels', 'confident'] spans=[[0.0, 0.06], [0.06, 0.2], [0.2, 0.7]] end=0.7200000000000001 tail=['behaviorist', 'feels', 'confident'] next=['that', 'there', 'is']
+  skipped=['hominon', 'as'] spans=[[0.0, 0.46], [0.46, 0.72]] end=0.7 tail=['phenomenon', 'as'] next=['habit,', 'that', 'can']

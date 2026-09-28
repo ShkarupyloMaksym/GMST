@@ -1,0 +1,82 @@
+model=small ref_words=417 out_words=396 edits=32 (del 21, sub 11, ins 0)
+time/ngram-path skips: 43 pushes, 60 words
+deletions whose word was skipped by the time/ngram path: 20
+
+# errors with context (ref index, op, ref, hyp)
+  21 del           to -> None         | be generous towards them [to] tell himself that
+  39 sub     beggar's -> beggars      | pride beaten and in [beggar's] weeds that they
+  47 del          him -> None         | would be generous towards [him] loving him as
+  48 del       loving -> None         | be generous towards him [loving] him as themselves
+  58 del         that -> None         | declare it's too bad [that] it is and
+  74 del         have -> None         | judah and said we [have] ten parts in
+  82 del         have -> None         | the king and we [have] also more right
+ 104 del           in -> None         | not be first had [in] bringing back our
+ 109 sub        asked -> ask          | bringing back our king [asked] the voice in
+ 119 sub          him -> them         | but his mother hugged [him] close it is
+ 127 del           de -> None         | too difficult replied mademoiselle [de] tonnay charente laughing
+ 128 del       tonnay -> None         | difficult replied mademoiselle de [tonnay] charente laughing loudly
+ 129 sub     charente -> tenechon     | replied mademoiselle de tonnay [charente] laughing loudly socrates
+ 135 sub      timaeus -> temeas       | loudly socrates begins the [timaeus] with a summary
+ 145 del         just -> None         | republic i'm not electioneering [just] now there is
+ 152 del           in -> None         | is no logical impossibility [in] the hypothesis that
+ 166 del           it -> None         | minutes ago exactly as [it] then was with
+ 175 sub       wholly -> holy         | population that remembered a [wholly] unreal past the
+ 182 sub      leaving -> leaping      | the crowd drifts off [leaving] the hero and
+ 186 del      heroine -> None         | leaving the hero and [heroine] alone in the
+ 216 del           to -> None         | the boy had come [to] know a thing
+ 229 del           of -> None         | be some better way [of] doing i just
+ 309 del           as -> None         | to pour out gratitude [as] thou dost good
+ 323 del           to -> None         | he refused at first [to] listen to the
+ 329 del           it -> None         | to the careful advice [it] was repugnant to
+ 344 del         that -> None         | resolved to tell them [that] repenting of his
+ 352 sub          her -> a            | violence and moved by [her] tears he had
+ 353 sub        tears -> tear         | and moved by her [tears] he had only
+ 384 sub behaviourist -> behaviorist  | different times if the [behaviourist] feels confident that
+ 400 del           he -> None         | can only be because [he] trusts his memory
+ 415 del       august -> None         | been other times tuesday [august] eighteenth
+ 416 sub   eighteenth -> 18th         | other times tuesday august [eighteenth] 
+
+# time/ngram-path skips
+  skipped=['to'] spans=[[0.0, 0.4]] end=0.5399999999999999 tail=['towards', 'them,'] next=['tell', 'himself', 'that']
+  skipped=['to'] spans=[[0.0, 0.4]] end=0.5399999999999999 tail=['towards', 'them,'] next=['tell', 'himself', 'that']
+  skipped=['loving', 'him'] spans=[[0.0, 0.6], [0.6, 1.48]] end=0.6000625 tail=['towards', 'him,'] next=['as', 'themselves.']
+  skipped=['loving', 'him'] spans=[[0.0, 0.56], [0.56, 1.48]] end=0.6000625 tail=['towards', 'him,'] next=['as', 'themselves.']
+  skipped=['that'] spans=[[0.0, 0.62]] end=0.6200000000000001 tail=['too', 'bad'] next=['it', 'is.']
+  skipped=['have'] spans=[[0.0, 0.62]] end=0.92 tail=['and', 'said,', 'We'] next=['ten', 'parts', 'in']
+  skipped=['have'] spans=[[0.0, 0.6]] end=0.92 tail=['and', 'said,', 'We'] next=['ten', 'parts', 'in']
+  skipped=['have'] spans=[[0.0, 1.18]] end=1.28 tail=['and', 'we'] next=['also', 'more', 'right']
+  skipped=['have'] spans=[[0.0, 1.18]] end=1.28 tail=['and', 'we'] next=['also', 'more', 'right']
+  skipped=['Why', 'then', 'did', 'ye', 'than', 'the'] spans=[[0.0, 0.22], [0.22, 0.22], [0.22, 0.22], [0.22, 0.22], [0.22, 0.22], [0.22, 0.46]] end=0.54 tail=['than', 'ye.'] next=['men', 'of', 'Judah']
+  skipped=['Then', 'ye,'] spans=[[0.0, 0.22], [0.22, 0.5]] end=0.54 tail=['than', 'ye.'] next=['why', 'then', 'did']
+  skipped=['in'] spans=[[0.0, 0.78]] end=0.7799999999999999 tail=['first', 'had'] next=['bringing', 'back', 'our']
+  skipped=['in'] spans=[[0.0, 0.76]] end=0.7799999999999999 tail=['first', 'had'] next=['bringing', 'back', 'our']
+  skipped=['It', 'is', 'too', 'difficult,'] spans=[[0.0, 0.06], [0.06, 0.06], [0.06, 0.22], [0.22, 0.66]] end=0.6400000000000001 tail=['too', 'difficult,'] next=['replied', 'Mademoiselle', 'de']
+  skipped=['de'] spans=[[0.0, 0.54]] end=0.9000000000000001 tail=['replied', 'Mademoiselle'] next=['Tenechon,', 'laughing.']
+  skipped=['de'] spans=[[0.0, 0.56]] end=0.9000000000000001 tail=['replied', 'Mademoiselle'] next=['Tenechon,', 'laughing', 'loudly.']
+  skipped=['just'] spans=[[0.0, 0.76]] end=0.7800625000000001 tail=['electioneering'] next=['now.']
+  skipped=['in'] spans=[[0.0, 0.56]] end=1.3200625000000001 tail=['logical', 'impossibility'] next=['the', 'hypothesis', 'that']
+  skipped=['in'] spans=[[0.0, 0.56]] end=1.3200625000000001 tail=['logical', 'impossibility'] next=['the', 'hypothesis', 'that']
+  skipped=['it'] spans=[[0.0, 0.8]] end=0.8599999999999999 tail=['Exactly', 'as'] next=['then', 'was,', 'with']
+  skipped=['it'] spans=[[0.0, 0.8]] end=0.8599999999999999 tail=['Exactly', 'as'] next=['then', 'was,', 'with']
+  skipped=['heroine'] spans=[[0.0, 0.44]] end=0.44006250000000013 tail=['hero', 'and'] next=['alone', 'in', 'the']
+  skipped=['heroine'] spans=[[0.0, 0.46]] end=0.44006250000000013 tail=['hero', 'and'] next=['alone', 'in', 'the']
+  skipped=['to'] spans=[[0.0, 0.28]] end=0.3999999999999999 tail=['boy', 'had', 'come'] next=['know', 'a', 'thing']
+  skipped=['of'] spans=[[0.0, 0.4]] end=0.46006250000000026 tail=['better', 'way'] next=['doing.', 'I', 'just']
+  skipped=['of'] spans=[[0.0, 0.44]] end=0.46006250000000026 tail=['better', 'way'] next=['doing.', 'I', 'just']
+  skipped=['which'] spans=[[0.0, 0.76]] end=0.7400000000000001 tail=['general', 'terms,'] next=['is', 'one', 'way']
+  skipped=['professions,', 'it', 'may', 'be'] spans=[[0.0, 0.38], [0.38, 0.38], [0.38, 0.38], [0.38, 0.38]] end=0.6399999999999999 tail=['all', 'trades,'] next=['__________________________________________________________.']
+  skipped=['of', 'the', 'social', 'hierarchy'] spans=[[0.0, 0.12], [0.12, 0.22], [0.22, 0.52], [0.52, 1.3]] end=0.98 tail=['the', 'social', 'hierarchy'] next=['and', 'all', 'forms']
+  skipped=['as'] spans=[[0.0, 0.66]] end=0.8200625 tail=['pour', 'out', 'gratitude'] next=['thou', 'dost', 'good.']
+  skipped=['as'] spans=[[0.0, 0.8]] end=0.8200625 tail=['pour', 'out', 'gratitude'] next=['thou', 'dost', 'good.']
+  skipped=['to'] spans=[[0.0, 0.24]] end=0.41999999999999993 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['to'] spans=[[0.0, 0.3]] end=0.41999999999999993 tail=['at', 'first'] next=['listen', 'to', 'the']
+  skipped=['It'] spans=[[0.0, 0.6]] end=0.6600000000000001 tail=['careful', 'advice.'] next=['was', 'repugnant', 'to']
+  skipped=['It'] spans=[[0.0, 0.62]] end=0.6600000000000001 tail=['careful', 'advice.'] next=['was', 'repugnant', 'to']
+  skipped=['that'] spans=[[0.0, 0.4]] end=0.4600000000000001 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['that'] spans=[[0.0, 0.38]] end=0.4600000000000001 tail=['tell', 'them'] next=['repenting', 'of', 'his']
+  skipped=['.'] spans=[[0.0, 0.28]] end=0.45999999999999996 tail=['by', 'a', 'tear'] next=['He', 'had', 'only']
+  skipped=['he'] spans=[[0.0, 0.48]] end=0.48 tail=['be', 'because'] next=['trusts', 'his', 'memory.']
+  skipped=['he'] spans=[[0.0, 0.48]] end=0.48 tail=['be', 'because'] next=['trusts', 'his', 'memory']
+  skipped=['.'] spans=[[0.0, 0.28]] end=0.33999999999999986 tail=['times.'] next=[]
+  skipped=['August'] spans=[[0.0, 1.04]] end=1.06 tail=['Tuesday,'] next=['18th.']
+  skipped=['August'] spans=[[0.0, 1.04]] end=1.06 tail=['Tuesday,'] next=['18th.']
