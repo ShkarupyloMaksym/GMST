@@ -1,0 +1,11 @@
+=== enuk model=large-v2 stream_runs=1 offset_tags=[(40, 'c')] ===
+engine loaded in 4.3s
+--- tag=c offset=40 en: 20 clips, 135.5s audio ---
+[large-v2/c/en] batch  WER=0.0292 (edits=10 ref_words=342) 119.1s
+[large-v2/c/en] stream rep=0 WER=0.0380 (edits=13 ref_words=342) 991.8s decodes=172 contradicted=0/130
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1d/large-v2_c_results.json)
+--- tag=c offset=40 uk: 20 clips, 107.7s audio ---
+[large-v2/c/uk] batch  WER=0.0833 (edits=12 ref_words=144) 103.2s
+[large-v2/c/uk] stream rep=0 WER=0.1181 (edits=17 ref_words=144) 623.9s decodes=120 contradicted=0/80
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1d/large-v2_c_results.json)
+DONE

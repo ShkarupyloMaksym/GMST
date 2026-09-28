@@ -1,0 +1,397 @@
+{
+  "model": "large-v2",
+  "stream_runs": 1,
+  "tags": {
+    "c": {
+      "model": "large-v2",
+      "offset": 40,
+      "tag": "c",
+      "sets": {
+        "en": {
+          "batch": {
+            "mode": "batch",
+            "edits": 10,
+            "ref_words": 342,
+            "wer": 0.029239766081871343,
+            "elapsed_s": 119.05641318799462,
+            "per_clip": [
+              {
+                "id": "en-2830-3980-0048",
+                "edits": 0,
+                "ref_words": 29,
+                "hyp": " He came down to earth, lived among men, suffered, was crucified, and then He died,  standing clearly before us, so that our hearts and eyes may fasten upon Him."
+              },
+              {
+                "id": "en-1995-1837-0010",
+                "edits": 0,
+                "ref_words": 8,
+                "hyp": " Perhaps she too might be there, waiting, weeping."
+              },
+              {
+                "id": "en-2961-960-0011",
+                "edits": 1,
+                "ref_words": 42,
+                "hyp": " With Heraclitus, he acknowledges the perpetual flux.  Like Anaxagoras, he asserts the predominance of mind,  although admitting an element of necessity  which reason is incapable of subduing. Like the Pythagoreans,  he supposes the mystery of the world to be contained  in number."
+              },
+              {
+                "id": "en-8230-279154-0027",
+                "edits": 0,
+                "ref_words": 30,
+                "hyp": " A gramophone, by the help of suitable records, might relate to us the incidents of its past,  and people are not so different from gramophones as they like to believe."
+              },
+              {
+                "id": "en-3575-170457-0014",
+                "edits": 0,
+                "ref_words": 20,
+                "hyp": " To those duties you have not yet been called, and when you are, you will be less eager for celebrity."
+              },
+              {
+                "id": "en-8455-210777-0005",
+                "edits": 2,
+                "ref_words": 17,
+                "hyp": " We have our little struggles here as elsewhere, and all things cannot be done by rosewater."
+              },
+              {
+                "id": "en-2830-3980-0022",
+                "edits": 1,
+                "ref_words": 7,
+                "hyp": " The claw seems superfluous on first sight."
+              },
+              {
+                "id": "en-4507-16021-0001",
+                "edits": 4,
+                "ref_words": 20,
+                "hyp": " It engenders a whole world, La paigre, for which red theft,  And a hell, la paigraine, for which red hunger."
+              },
+              {
+                "id": "en-260-123440-0017",
+                "edits": 0,
+                "ref_words": 9,
+                "hyp": " That will be a queer thing to be sure."
+              },
+              {
+                "id": "en-5105-28240-0013",
+                "edits": 0,
+                "ref_words": 6,
+                "hyp": " Nothing more than you know yourself."
+              },
+              {
+                "id": "en-121-127105-0019",
+                "edits": 1,
+                "ref_words": 11,
+                "hyp": " Mrs. Griffin, however, expressed the need for a little more light."
+              },
+              {
+                "id": "en-6829-68769-0042",
+                "edits": 0,
+                "ref_words": 6,
+                "hyp": " Oh, well, sir, what about him?"
+              },
+              {
+                "id": "en-7729-102255-0044",
+                "edits": 1,
+                "ref_words": 43,
+                "hyp": " Here he was placed in the custody of Captain Martin of the Kickapoo Rangers, who proved  a kind jailer, and materially assisted in protecting him from the dangerous intentions  of the mob which at that time held Leavenworth under the reign of terror."
+              },
+              {
+                "id": "en-908-31957-0009",
+                "edits": 0,
+                "ref_words": 20,
+                "hyp": " And though I have grown serene and strong since then, I think that God has willed a still-renewable fear."
+              },
+              {
+                "id": "en-2961-960-0018",
+                "edits": 0,
+                "ref_words": 23,
+                "hyp": " But in the rest of the work, the power of language seems to fail him, and the dramatic  form is wholly given up."
+              },
+              {
+                "id": "en-672-122797-0050",
+                "edits": 0,
+                "ref_words": 11,
+                "hyp": " They snuffed about the fir tree and rustled among the branches."
+              },
+              {
+                "id": "en-2830-3980-0017",
+                "edits": 0,
+                "ref_words": 16,
+                "hyp": " When I was a young man, I thought Paul was making too much of his call."
+              },
+              {
+                "id": "en-61-70968-0002",
+                "edits": 0,
+                "ref_words": 7,
+                "hyp": " A golden fortune and a happy life?"
+              },
+              {
+                "id": "en-6829-68769-0007",
+                "edits": 0,
+                "ref_words": 13,
+                "hyp": " but under the circumstances, I doubt if such an arrangement could be made."
+              },
+              {
+                "id": "en-2300-131720-0039",
+                "edits": 0,
+                "ref_words": 4,
+                "hyp": " The problem was solved."
+              }
+            ]
+          },
+          "stream_reps": [
+            {
+              "mode": "stream",
+              "edits": 13,
+              "ref_words": 342,
+              "wer": 0.038011695906432746,
+              "elapsed_s": 991.7799319659971,
+              "audio_s": 165.545,
+              "decodes": 172,
+              "committed_words": 344,
+              "out_words": 344,
+              "counts": {
+                "pushes": 130,
+                "contradicted": 0,
+                "flush_dropped_words": 0,
+                "flushes_dropping": 0
+              },
+              "examples": {},
+              "sample_segments": [
+                {
+                  "text": "He came down",
+                  "start": 0.0,
+                  "end": 0.98,
+                  "lang": "en",
+                  "is_final": false
+                },
+                {
+                  "text": "He came down to earth lived among us",
+                  "start": 0.0,
+                  "end": 1.98,
+                  "lang": "en",
+                  "is_final": false
+                },
+                {
+                  "text": "He came down to earth, lived among men, slain all men.",
+                  "start": 0.0,
+                  "end": 2.98,
+                  "lang": "en",
+                  "is_final": false
+                },
+                {
+                  "text": "He came down to earth, lived among men, suffered, was crucified,",
+                  "start": 0.0,
+                  "end": 3.9799999999999995,
+                  "lang": "en",
+                  "is_final": false
+                },
+                {
+                  "text": "He came down to earth, lived among men, suffered, was crucified, and then came to life.",
+                  "start": 0.0,
+                  "end": 4.9799999999999995,
+                  "lang": "en",
+                  "is_final": false
+                }
+              ],
+              "ref_preview": "HE CAME DOWN TO EARTH LIVED AMONG MEN SUFFERED WAS CRUCIFIED AND THEN HE DIED STANDING CLEARLY BEFORE US SO THAT OUR HEARTS AND EYES MAY FASTEN UPON HIM PERHAPS SHE TOO MIGHT BE THERE WAITING WEEPING WITH HERACLEITUS HE ACKNOWLEDGES THE PERPETUAL FLUX LIKE ANAXAGORAS HE ASSERTS THE PREDOMINANCE OF M",
+              "out_preview": "He came down to earth, lived among men, suffered, was crucified, and then He died, standing clearly before us, so that our hearts and eyes may fasten upon Him. Perhaps she too might be there, waiting, weeping. With Heraclitus, he acknowledges the perpetual flux. Like Anaxagoras, he asserts the predo",
+              "full_out": "He came down to earth, lived among men, suffered, was crucified, and then He died, standing clearly before us, so that our hearts and eyes may fasten upon Him. Perhaps she too might be there, waiting, weeping. With Heraclitus, he acknowledges the perpetual flux. Like Anaxagoras, he asserts the predominance of mind, although admitting an element of necessity in the mind. which reason is incapable of subduing. Like the Pythagoreans, he supposes the mystery of the world to be contained in number. A gramophone, by the help of suitable records, might relate to us the incidents of its past, and people are not so different from gramophones as they like to believe. To those duties you have not yet been called, and when you are, you will be less eager for celebrity. We have our little struggles here as elsewhere, and all things cannot be done by rosewater. The claw seems superfluous on first sight. It engenders a whole world, La paigre, for which red theft, And a hell, la paigraine, for which red hunger. That will be a queer thing to be sure. Nothing more than you know yourself. Mrs. Griffin, however, expressed the need for a little more light. Oh, well, sir, what about him? Here he was placed in the custody of Captain Martin of the Kickapoo Rangers, who proved a kind jailer, and materially assisted in protecting him from the dangerous intentions of the mob. which at that time held Leavenworth under the reign of terror. And though I have grown serene and strong since then, I think that God has willed a still -renewable fear. But in the rest of the work, the power of language seems to fail him, and the dramatic form is wholly given up. They snuffed about the fir tree and rustled among the branches. When I was a young man, I thought Paul was making too much of his call. A golden fortune and a happy life? but under the circumstances, I doubt if such an arrangement could be made. The problem was solved.",
+              "full_ref": "HE CAME DOWN TO EARTH LIVED AMONG MEN SUFFERED WAS CRUCIFIED AND THEN HE DIED STANDING CLEARLY BEFORE US SO THAT OUR HEARTS AND EYES MAY FASTEN UPON HIM PERHAPS SHE TOO MIGHT BE THERE WAITING WEEPING WITH HERACLEITUS HE ACKNOWLEDGES THE PERPETUAL FLUX LIKE ANAXAGORAS HE ASSERTS THE PREDOMINANCE OF MIND ALTHOUGH ADMITTING AN ELEMENT OF NECESSITY WHICH REASON IS INCAPABLE OF SUBDUING LIKE THE PYTHAGOREANS HE SUPPOSES THE MYSTERY OF THE WORLD TO BE CONTAINED IN NUMBER A GRAMOPHONE BY THE HELP OF SUITABLE RECORDS MIGHT RELATE TO US THE INCIDENTS OF ITS PAST AND PEOPLE ARE NOT SO DIFFERENT FROM GRAMOPHONES AS THEY LIKE TO BELIEVE TO THOSE DUTIES YOU HAVE NOT YET BEEN CALLED AND WHEN YOU ARE YOU WILL BE LESS EAGER FOR CELEBRITY WE HAVE OUR LITTLE STRUGGLES HERE AS ELSEWHERE AND ALL THINGS CANNOT BE DONE BY ROSE WATER THE CLAUSE SEEMS SUPERFLUOUS ON FIRST SIGHT IT ENGENDERS A WHOLE WORLD LA PEGRE FOR WHICH READ THEFT AND A HELL LA PEGRENNE FOR WHICH READ HUNGER THAT WILL BE A QUEER THING TO BE SURE NOTHING MORE THAN YOU KNOW YOURSELF MISSUS GRIFFIN HOWEVER EXPRESSED THE NEED FOR A LITTLE MORE LIGHT OH WELL SIR WHAT ABOUT HIM HERE HE WAS PLACED IN THE CUSTODY OF CAPTAIN MARTIN OF THE KICKAPOO RANGERS WHO PROVED A KIND JAILER AND MATERIALLY ASSISTED IN PROTECTING HIM FROM THE DANGEROUS INTENTIONS OF THE MOB WHICH AT THAT TIME HELD LEAVENWORTH UNDER A REIGN OF TERROR AND THOUGH I HAVE GROWN SERENE AND STRONG SINCE THEN I THINK THAT GOD HAS WILLED A STILL RENEWABLE FEAR BUT IN THE REST OF THE WORK THE POWER OF LANGUAGE SEEMS TO FAIL HIM AND THE DRAMATIC FORM IS WHOLLY GIVEN UP THEY SNUFFED ABOUT THE FIR TREE AND RUSTLED AMONG THE BRANCHES WHEN I WAS A YOUNG MAN I THOUGHT PAUL WAS MAKING TOO MUCH OF HIS CALL A GOLDEN FORTUNE AND A HAPPY LIFE BUT UNDER THE CIRCUMSTANCES I DOUBT IF SUCH AN ARRANGEMENT COULD BE MADE THE PROBLEM WAS SOLVED"
+            }
+          ]
+        },
+        "uk": {
+          "batch": {
+            "mode": "batch",
+            "edits": 12,
+            "ref_words": 144,
+            "wer": 0.08333333333333333,
+            "elapsed_s": 103.16295323400118,
+            "per_clip": [
+              {
+                "id": "uk-1825",
+                "edits": 0,
+                "ref_words": 7,
+                "hyp": " \u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434."
+              },
+              {
+                "id": "uk-3604",
+                "edits": 1,
+                "ref_words": 7,
+                "hyp": " \u0412\u0435\u0440\u0445\u043d\u0456\u0439 \u043f\u043b\u0430\u0432\u043d\u0438\u043a \u0445\u0432\u043e\u0441\u0442\u0430 \u0432\u0438\u0441\u043e\u043a\u0438\u0439, \u043a\u0456\u043d\u0435\u0446\u044c \u0445\u0432\u043e\u0441\u0442\u0430 \u0437\u0430\u043e\u0441\u0442\u0440\u0435\u043d\u0438\u0439."
+              },
+              {
+                "id": "uk-1993",
+                "edits": 4,
+                "ref_words": 8,
+                "hyp": " \u0421\u043a\u0443\u043c\u043e\u0440\u043e\u0445 \u043d\u0430\u0440\u0435\u0448\u0442\u0456 \u043f\u0456\u0434\u0430\u0432\u0441\u044f \u043c\u043e\u0432\u043b\u044f\u043d\u043d\u044f\u043c \u0456 \u0432\u0438\u043b\u0456\u0437 \u0443 \u043f\u0456\u0434\u043a\u043b\u0456\u0434\u044c."
+              },
+              {
+                "id": "uk-3438",
+                "edits": 0,
+                "ref_words": 4,
+                "hyp": " \u0427\u043e\u0440\u043d\u043e\u0442\u0430 \u0447\u0432\u0430\u043b\u043e\u043c \u043f\u043e\u0433\u043d\u0430\u0432 \u0443\u043f\u0435\u0440\u0435\u0434."
+              },
+              {
+                "id": "uk-259",
+                "edits": 0,
+                "ref_words": 4,
+                "hyp": " \u0429\u0435 \u0440\u0430\u0437 \u0443\u0441\u0456\u043c \u043d\u0430\u0433\u0430\u0434\u0443\u044e."
+              },
+              {
+                "id": "uk-1704",
+                "edits": 0,
+                "ref_words": 8,
+                "hyp": " \u041c\u043e\u043b\u043e\u0434\u0448\u0438\u0439 \u0431\u0440\u0430\u0442 \u0412\u0430\u0441\u0438\u043b\u044c, \u043e\u0441\u0442\u0430\u043d\u043d\u0456\u0439 \u0456\u0437 \u042f\u0440\u043e\u0441\u043b\u0430\u0432\u0438\u0447\u0456\u0432, \u043f\u0456\u0434\u0441\u0438\u0434\u0456\u0432 \u0441\u0442\u0430\u0440\u0448\u043e\u0433\u043e."
+              },
+              {
+                "id": "uk-3452",
+                "edits": 0,
+                "ref_words": 9,
+                "hyp": " \u0417\u0440\u043e\u0431\u0438\u043b\u0438 \u0432\u0436\u0435 \u0434\u043e\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u043d\u0430\u0447\u0430\u043b\u044c\u0441\u0442\u0432\u0443, \u0449\u043e\u0431 \u043f\u0440\u043e\u0432\u0435\u0441\u0442\u0438 \u0432 \u043f\u043e\u043b\u043a\u0443 \u0447\u0438\u0441\u0442\u043a\u0443."
+              },
+              {
+                "id": "uk-2250",
+                "edits": 0,
+                "ref_words": 3,
+                "hyp": " \u041d\u0435 \u0442\u0430 \u043b\u044e\u0434\u0438\u043d\u0430."
+              },
+              {
+                "id": "uk-633",
+                "edits": 0,
+                "ref_words": 12,
+                "hyp": " \u0421\u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u043c\u0438 \u0431\u0443\u043b\u0438 \u0432\u0438\u0441\u043b\u0430\u043d\u0456 \u044f\u043a \u043a\u0443\u0440\u043a\u0443\u043b\u0456, \u0430 \u043f\u043e\u0442\u0456\u043c \u0443\u0436\u0435 \u0437\u0430 \u0432\u0456\u0440\u0443 \u0437\u0430\u0430\u0440\u0435\u0448\u0442\u043e\u0432\u0430\u043d\u0456."
+              },
+              {
+                "id": "uk-1388",
+                "edits": 1,
+                "ref_words": 5,
+                "hyp": " \u041c\u043e\u0432\u0447\u0438 \u044f\u0437\u0438\u0447\u043a\u0443! \u0411\u0443\u0434\u0435\u0448 \u043a\u0430\u0448\u043a\u0443 \u0457\u0441\u0442\u0438?"
+              },
+              {
+                "id": "uk-3600",
+                "edits": 0,
+                "ref_words": 6,
+                "hyp": " \u041f\u0430\u0440\u0443\u0431\u043e\u043a \u0437\u043d\u043e\u0432\u0443 \u0441\u0438\u0434\u0438\u0442\u044c \u0442\u0430 \u0439 \u043f\u043b\u0430\u0447\u0435."
+              },
+              {
+                "id": "uk-2182",
+                "edits": 3,
+                "ref_words": 9,
+                "hyp": " \u041d\u0430\u0432\u0456\u0449\u043e \u0432\u0456\u0434\u043a\u043e\u043b\u043e\u0442\u0430\u0442\u0438 \u043d\u0430 \u0437\u0430\u0432\u0442\u0440\u0430 \u0442\u0435, \u0449\u043e \u043c\u043e\u0436\u043d\u0430 \u0437\u0440\u043e\u0431\u0438\u0442\u0438 \u043f\u0456\u0441\u043b\u044f \u0437\u0430\u0432\u0442\u0440\u0430?"
+              },
+              {
+                "id": "uk-2827",
+                "edits": 0,
+                "ref_words": 8,
+                "hyp": " \u041a\u043e\u043b\u0438 \u0437\u0456\u0439\u0434\u0435\u0442\u044c\u0441\u044f \u0442\u0440\u0438 \u0443\u043a\u0440\u0430\u0457\u043d\u0446\u0456, \u0442\u043e \u0446\u0435 \u0432\u0436\u0435 \u0445\u043e\u0440."
+              },
+              {
+                "id": "uk-2581",
+                "edits": 0,
+                "ref_words": 7,
+                "hyp": " \u0412 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0434\u0456\u0454 \u0412\u0438\u0449\u0430 \u0420\u0430\u0434\u0430 \u041f\u0440\u0430\u0432\u043e\u0441\u0443\u0434\u0434\u044f. \u042f\u043a\u0430?"
+              },
+              {
+                "id": "uk-895",
+                "edits": 1,
+                "ref_words": 3,
+                "hyp": " \u0421\u0432\u043e\u0431\u043e\u0434\u0443 \u043d\u0435 \u0441\u043f\u0438\u043c\u0438\u0442\u0438!"
+              },
+              {
+                "id": "uk-2022",
+                "edits": 1,
+                "ref_words": 13,
+                "hyp": " \u041f\u0440\u0438 \u0446\u044c\u043e\u043c\u0443 \u0432\u0438\u043f\u0443\u0441\u043a \u0432\u0443\u0440\u043d\u0430\u043b\u0456\u0432 \u0456 \u043f\u0435\u0440\u0456\u043e\u0434\u0438\u0447\u043d\u0438\u0445 \u0432\u0438\u0434\u0430\u043d\u044c \u0443 \u0440\u043e\u043a\u0438 \u043d\u0435\u0437\u0430\u043b\u0435\u0436\u043d\u043e\u0441\u0442\u0456 \u043f\u0435\u0440\u0435\u0436\u0438\u0432 \u0441\u043f\u0440\u0430\u0432\u0436\u043d\u0456\u0439 \u0437\u043b\u0435\u0442."
+              },
+              {
+                "id": "uk-2881",
+                "edits": 1,
+                "ref_words": 13,
+                "hyp": " \u00ab\u0425\u0430\u0439 \u043f\u043e\u043a\u0430\u0440\u0430\u0454 \u043c\u0435\u043d\u0435 \u041c\u043e\u0440\u0430\u043d\u0430, \u0445\u0430\u0439 \u0432\u043f\u0430\u0434\u0435 \u043c\u0435\u043d\u0456 \u043f\u0435\u043a \u043d\u0430 \u0433\u043e\u043b\u043e\u0432\u0443!\u00bb \u2013 \u0441\u043a\u043e\u0440\u043e\u043c\u043e\u0432\u043a\u043e\u044e \u0437\u0430\u043f\u0440\u0438\u0441\u044f\u0433\u043d\u0443\u0432\u0441\u044f \u0411\u043e\u0440\u0438\u0441\u043b\u0430\u0432."
+              },
+              {
+                "id": "uk-2576",
+                "edits": 0,
+                "ref_words": 6,
+                "hyp": " \u0423\u0441\u0456 \u043e\u0431'\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0433\u0440\u043e\u043c\u0430\u0434\u044f\u043d \u0440\u0456\u0432\u043d\u0456 \u043f\u0435\u0440\u0435\u0434 \u0437\u0430\u043a\u043e\u043d\u043e\u043c."
+              },
+              {
+                "id": "uk-2924",
+                "edits": 0,
+                "ref_words": 4,
+                "hyp": " \u041f\u0440\u043e\u0448\u0443 \u0431\u043b\u0438\u0436\u0447\u0435 \u0434\u043e \u043c\u0456\u043a\u0440\u043e\u0444\u043e\u043d\u0443."
+              },
+              {
+                "id": "uk-2398",
+                "edits": 0,
+                "ref_words": 8,
+                "hyp": " \u042f \u0441\u043a\u0430\u0437\u0430\u0432, \u0449\u043e \u044f \u0431\u0456\u043b\u044c\u0448\u0435 \u043d\u0435 \u0431\u0443\u0434\u0443 \u0434\u0430\u0432\u0430\u0442\u0438."
+              }
+            ]
+          },
+          "stream_reps": [
+            {
+              "mode": "stream",
+              "edits": 17,
+              "ref_words": 144,
+              "wer": 0.11805555555555555,
+              "elapsed_s": 623.865543838001,
+              "audio_s": 137.687625,
+              "decodes": 120,
+              "committed_words": 147,
+              "out_words": 147,
+              "counts": {
+                "pushes": 80,
+                "contradicted": 0,
+                "flush_dropped_words": 0,
+                "flushes_dropping": 0
+              },
+              "examples": {},
+              "sample_segments": [
+                {
+                  "text": "\u0422\u0430\u043c \u0436\u0435...",
+                  "start": 0.0,
+                  "end": 0.98,
+                  "lang": "uk",
+                  "is_final": false
+                },
+                {
+                  "text": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c!",
+                  "start": 0.0,
+                  "end": 1.98,
+                  "lang": "uk",
+                  "is_final": false
+                },
+                {
+                  "text": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u0440\u0435\u0447\u0456.",
+                  "start": 0.0,
+                  "end": 2.9799999999999995,
+                  "lang": "uk",
+                  "is_final": false
+                },
+                {
+                  "text": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434.",
+                  "start": 0.0,
+                  "end": 3.9799375,
+                  "lang": "uk",
+                  "is_final": false
+                },
+                {
+                  "text": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434.",
+                  "start": 0.536,
+                  "end": 3.956,
+                  "lang": "uk",
+                  "is_final": true
+                }
+              ],
+              "ref_preview": "\u0442\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434 \u0432\u0435\u0440\u0445\u043d\u0456\u0439 \u043f\u043b\u0430\u0432\u043d\u0438\u043a \u0445\u0432\u043e\u0441\u0442\u0430 \u0432\u0438\u0441\u043e\u043a\u0438\u0439 \u043a\u0456\u043d\u0435\u0446\u044c \u0445\u0432\u043e\u0441\u0442\u0430 \u0437\u0430\u0433\u043e\u0441\u0442\u0440\u0435\u043d\u0438\u0439 \u0441\u043a\u043e\u043c\u043e\u0440\u043e\u0445 \u043d\u0430\u0440\u0435\u0448\u0442\u0456 \u043f\u0456\u0434\u0434\u0430\u0432\u0441\u044f \u0432\u043c\u043e\u0432\u043b\u044f\u043d\u043d\u044f\u043c \u0456 \u0432\u0438\u043b\u0456\u0437 \u0443 \u043f\u0456\u0434\u043a\u043b\u0456\u0442\u044c \u0447\u043e\u0440\u043d\u043e\u0442\u0430 \u0447\u0432\u0430\u043b\u043e\u043c \u043f\u043e\u0433\u043d\u0430\u0432 \u0443\u043f\u0435\u0440\u0435\u0434 \u0449\u0435 \u0440\u0430\u0437 \u0443\u0441\u0456\u043c \u043d\u0430\u0433\u0430\u0434\u0443\u044e \u043c\u043e\u043b\u043e\u0434\u0448\u0438\u0439 \u0431\u0440\u0430\u0442 \u0432\u0430\u0441\u0438\u043b\u044c \u043e\u0441\u0442\u0430\u043d\u043d\u0456\u0439 \u0456\u0437 \u044f\u0440\u043e\u0441\u043b\u0430\u0432\u0438\u0447\u0456\u0432 \u043f\u0456\u0434\u0441\u0438\u0434\u0456\u0432 \u0441\u0442\u0430\u0440\u0448\u043e\u0433\u043e \u0437\u0440\u043e\u0431\u0438\u043b\u0438 \u0432\u0436\u0435 \u0434\u043e\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u043d\u0430\u0447\u0430\u043b\u044c\u0441\u0442\u0432\u0443 \u0449\u043e\u0431 \u043f",
+              "out_preview": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434. \u0412\u0435\u0440\u0445\u043d\u0456\u0439 \u043f\u043b\u0430\u0432\u043d\u0438\u043a \u0445\u0432\u043e\u0441\u0442\u0430 \u0432\u0438\u0441\u043e\u043a\u0438\u0439, \u043a\u0456\u043d\u0435\u0446\u044c \u0445\u0432\u043e\u0441\u0442\u0430 \u0437\u0430\u043e\u0441\u0442\u0440\u0435\u043d\u0438\u0439. \u0421\u043a\u0443\u043c\u043e\u0440\u043e\u0445 \u043d\u0430\u0440\u0435\u0448\u0442\u0456 \u043f\u0456\u0434\u0430\u0432\u0441\u044f \u043c\u043e\u0432\u043b\u044f\u043d\u043d\u044f\u043c \u0456 \u0432\u0438\u043b\u0456\u0437 \u0443 \u043f\u0456\u0434\u043a\u043b\u0456\u0434\u044c. \u0427\u043e\u0440\u043d\u043e\u0442\u0430 \u0447\u0432\u0430\u043b\u043e\u043c \u043f\u043e\u0433\u043d\u0430\u0432 \u0443\u043f\u0435\u0440\u0435\u0434. \u0429\u0435 \u0440\u0430\u0437 \u0443\u0441\u0456\u043c \u043d\u0430\u0433\u0430\u0434\u0443\u044e. \u041c\u043e\u043b\u043e\u0434\u0448\u0438\u0439 \u0431\u0440\u0430\u0442 \u0412\u0430\u0441\u0438\u043b\u044c, \u043e\u0441\u0442\u0430\u043d\u043d\u0456\u0439 \u0456\u0437 \u042f\u0440\u043e\u0441\u043b\u0430\u0432\u0438\u0447\u0456\u0432, \u043f\u0456\u0434\u0441\u0438\u0434\u0456\u0432 \u0441\u0442\u0430\u0440\u0448\u043e\u0433\u043e. \u0417\u0440\u043e\u0431\u0438\u043b\u0438 \u0432\u0436\u0435 \u0434\u043e\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u043d\u0430\u0447\u0430\u043b\u044c\u0441\u0442\u0432\u0443",
+              "full_out": "\u0422\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434. \u0412\u0435\u0440\u0445\u043d\u0456\u0439 \u043f\u043b\u0430\u0432\u043d\u0438\u043a \u0445\u0432\u043e\u0441\u0442\u0430 \u0432\u0438\u0441\u043e\u043a\u0438\u0439, \u043a\u0456\u043d\u0435\u0446\u044c \u0445\u0432\u043e\u0441\u0442\u0430 \u0437\u0430\u043e\u0441\u0442\u0440\u0435\u043d\u0438\u0439. \u0421\u043a\u0443\u043c\u043e\u0440\u043e\u0445 \u043d\u0430\u0440\u0435\u0448\u0442\u0456 \u043f\u0456\u0434\u0430\u0432\u0441\u044f \u043c\u043e\u0432\u043b\u044f\u043d\u043d\u044f\u043c \u0456 \u0432\u0438\u043b\u0456\u0437 \u0443 \u043f\u0456\u0434\u043a\u043b\u0456\u0434\u044c. \u0427\u043e\u0440\u043d\u043e\u0442\u0430 \u0447\u0432\u0430\u043b\u043e\u043c \u043f\u043e\u0433\u043d\u0430\u0432 \u0443\u043f\u0435\u0440\u0435\u0434. \u0429\u0435 \u0440\u0430\u0437 \u0443\u0441\u0456\u043c \u043d\u0430\u0433\u0430\u0434\u0443\u044e. \u041c\u043e\u043b\u043e\u0434\u0448\u0438\u0439 \u0431\u0440\u0430\u0442 \u0412\u0430\u0441\u0438\u043b\u044c, \u043e\u0441\u0442\u0430\u043d\u043d\u0456\u0439 \u0456\u0437 \u042f\u0440\u043e\u0441\u043b\u0430\u0432\u0438\u0447\u0456\u0432, \u043f\u0456\u0434\u0441\u0438\u0434\u0456\u0432 \u0441\u0442\u0430\u0440\u0448\u043e\u0433\u043e. \u0417\u0440\u043e\u0431\u0438\u043b\u0438 \u0432\u0436\u0435 \u0434\u043e\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u043d\u0430\u0447\u0430\u043b\u044c\u0441\u0442\u0432\u0443, \u0449\u043e\u0431 \u043f\u0440\u043e\u0432\u0435\u0441\u0442\u0438 \u0432 \u043f\u043e\u043b\u043a\u0443 \u0447\u0438\u0441\u0442\u043a\u0443. \u043d\u0435 \u0442\u0430 \u043b\u044e\u0434\u0438\u043d\u0430. \u0421\u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u043c\u0438 \u0431\u0443\u043b\u0438 \u0432\u0438\u0441\u043b\u0430\u043d\u0456 \u044f\u043a \u043a\u0443\u0440\u043a\u0443\u043b\u0456, \u0430 \u043f\u043e\u0442\u0456\u043c \u0443\u0436\u0435 \u0437\u0430 \u0432\u0456\u0440\u0443 \u0437\u0430\u0430\u0440\u0435\u0448\u0442\u043e\u0432\u0430\u043d\u0456. \u041c\u043e\u0432\u0447\u0438 \u044f\u0437\u0438\u0447\u043a\u0443! \u0411\u0443\u0434\u0435\u0448 \u043a\u0430\u0448\u043a\u0443 \u0457\u0441\u0442\u0438? \u041f\u0430\u0440\u043e\u0431\u043e\u043a \u0437\u043d\u043e\u0432\u0443 \u0441\u0438\u0434\u0438\u0442\u044c \u0442\u0430 \u0439 \u043f\u043b\u0430\u0447\u0435. \u041d\u0430\u0432\u0456\u0449\u043e \u0432\u0456\u0434\u043a\u043e\u043b\u043e\u0442\u0430\u0442\u0438 \u043d\u0430 \u0437\u0430\u0432\u0442\u0440\u0430 \u0442\u0435, \u0449\u043e \u043c\u043e\u0436\u043d\u0430 \u0437\u0440\u043e\u0431\u0438\u0442\u0438 \u043f\u0456\u0441\u043b\u044f \u0437\u0430\u0432\u0442\u0440\u0430? \u041a\u043e\u043b\u0438 \u0437\u0456\u0439\u0434\u0435\u0442\u044c\u0441\u044f \u0442\u0440\u0438 \u0443\u043a\u0440\u0430\u0457\u043d\u0446\u0456, \u0442\u043e \u0446\u0435 \u0432\u0436\u0435 \u0445\u043e\u0440. \u0412 \u0423\u043a\u0440\u0430\u0457\u043d\u0456 \u0434\u0456\u0454 \u0412\u0438\u0449\u0430 \u0420\u0430\u0434\u0430 \u041f\u0440\u0430\u0432\u043e\u0441\u0443\u0434\u0434\u044f, \u044f\u043a\u0430... \u0421\u0432\u043e\u0431\u043e\u0434\u0443 \u043d\u0435 \u0441\u043f\u0438\u043c\u0438\u0442\u0438! \u041f\u0440\u0438 \u0446\u044c\u043e\u043c\u0443 \u0432\u0438\u043f\u0443\u0441\u043a \u0432\u0443\u0440\u043d\u0430\u043b\u0456\u0432 \u0456 \u043f\u0435\u0440\u0456\u043e\u0434\u0438\u0447\u043d\u0438\u0445 \u0432\u0438\u0434\u0430\u043d\u044c \u0443\u0440\u043e\u043a\u0438 \u043d\u0435\u0437\u0430\u043b\u0435\u0436\u043d\u043e\u0441\u0442\u0456 \u043f\u0435\u0440\u0435\u0436\u0438\u0432 \u0441\u043f\u0440\u0430\u0432\u0436\u043d\u0456\u0439 \u0437\u043b\u0435\u0442. \u00ab\u0425\u0430\u0439 \u043f\u043e\u043a\u0430\u0440\u0430\u0454 \u043c\u0435\u043d\u0435 \u041c\u043e\u0440\u0430\u043d\u0430, \u0445\u0430\u0439 \u0432\u043f\u0430\u0434\u0435 \u043c\u0435\u043d\u0456 \u043f\u0435\u043a \u043d\u0430 \u0433\u043e\u043b\u043e\u0432\u0443 !\u00bb, \u2013 \u0441\u043a\u043e\u0440\u043e\u043c\u043e\u0432\u043a\u043e\u044e \u0437\u0430\u043f\u0440\u0438\u0441\u044f\u0433\u043d\u0443\u0432\u0441\u044f \u0411\u043e\u0440\u0438\u0441\u043b\u0430\u0432. \u0423\u0441\u0456 \u043e\u0431 '\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0433\u0440\u043e\u043c\u0430\u0434\u044f\u043d \u0440\u0456\u0432\u043d\u0456 \u043f\u0435\u0440\u0435\u0434 \u0437\u0430\u043a\u043e\u043d\u043e\u043c. \u041f\u0440\u043e\u0448\u0443 \u0431\u043b\u0438\u0436\u0447\u0435 \u0434\u043e \u043c\u0456\u043a\u0440\u043e\u0444\u043e\u043d\u0443. \u042f \u0441\u043a\u0430\u0437\u0430\u0432, \u0449\u043e \u044f \u0431\u0456\u043b\u044c\u0448\u0435 \u043d\u0435 \u0431\u0443\u0434\u0443 \u0434\u0430\u0432\u0430\u0442\u0438.",
+              "full_ref": "\u0442\u0430\u043c \u0436\u0435 \u0434\u043e\u0433\u043b\u044f\u0434\u0430\u044e\u0442\u044c \u0456 \u0434\u0430\u044e\u0442\u044c \u044f\u043a\u0438\u0439\u0441\u044c \u043b\u0430\u0434 \u0432\u0435\u0440\u0445\u043d\u0456\u0439 \u043f\u043b\u0430\u0432\u043d\u0438\u043a \u0445\u0432\u043e\u0441\u0442\u0430 \u0432\u0438\u0441\u043e\u043a\u0438\u0439 \u043a\u0456\u043d\u0435\u0446\u044c \u0445\u0432\u043e\u0441\u0442\u0430 \u0437\u0430\u0433\u043e\u0441\u0442\u0440\u0435\u043d\u0438\u0439 \u0441\u043a\u043e\u043c\u043e\u0440\u043e\u0445 \u043d\u0430\u0440\u0435\u0448\u0442\u0456 \u043f\u0456\u0434\u0434\u0430\u0432\u0441\u044f \u0432\u043c\u043e\u0432\u043b\u044f\u043d\u043d\u044f\u043c \u0456 \u0432\u0438\u043b\u0456\u0437 \u0443 \u043f\u0456\u0434\u043a\u043b\u0456\u0442\u044c \u0447\u043e\u0440\u043d\u043e\u0442\u0430 \u0447\u0432\u0430\u043b\u043e\u043c \u043f\u043e\u0433\u043d\u0430\u0432 \u0443\u043f\u0435\u0440\u0435\u0434 \u0449\u0435 \u0440\u0430\u0437 \u0443\u0441\u0456\u043c \u043d\u0430\u0433\u0430\u0434\u0443\u044e \u043c\u043e\u043b\u043e\u0434\u0448\u0438\u0439 \u0431\u0440\u0430\u0442 \u0432\u0430\u0441\u0438\u043b\u044c \u043e\u0441\u0442\u0430\u043d\u043d\u0456\u0439 \u0456\u0437 \u044f\u0440\u043e\u0441\u043b\u0430\u0432\u0438\u0447\u0456\u0432 \u043f\u0456\u0434\u0441\u0438\u0434\u0456\u0432 \u0441\u0442\u0430\u0440\u0448\u043e\u0433\u043e \u0437\u0440\u043e\u0431\u0438\u043b\u0438 \u0432\u0436\u0435 \u0434\u043e\u043d\u0435\u0441\u0435\u043d\u043d\u044f \u043d\u0430\u0447\u0430\u043b\u044c\u0441\u0442\u0432\u0443 \u0449\u043e\u0431 \u043f\u0440\u043e\u0432\u0435\u0441\u0442\u0438 \u0432 \u043f\u043e\u043b\u043a\u0443 \u0447\u0438\u0441\u0442\u043a\u0443 \u043d\u0435 \u0442\u0430 \u043b\u044e\u0434\u0438\u043d\u0430 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443 \u043c\u0438 \u0431\u0443\u043b\u0438 \u0432\u0438\u0441\u043b\u0430\u043d\u0456 \u044f\u043a \u043a\u0443\u0440\u043a\u0443\u043b\u0456 \u0430 \u043f\u043e\u0442\u0456\u043c \u0443\u0436\u0435 \u0437\u0430 \u0432\u0456\u0440\u0443 \u0437\u0430\u0430\u0440\u0435\u0448\u0442\u043e\u0432\u0430\u043d\u0456 \u043c\u043e\u0432\u0447\u0438 \u0454\u0437\u0438\u0447\u043a\u0443 \u0431\u0443\u0434\u0435\u0448 \u043a\u0430\u0448\u043a\u0443 \u0457\u0441\u0442\u0438 \u043f\u0430\u0440\u0443\u0431\u043e\u043a \u0437\u043d\u043e\u0432\u0443 \u0441\u0438\u0434\u0438\u0442\u044c \u0442\u0430 \u0439 \u043f\u043b\u0430\u0447\u0435 \u043d\u0430\u0432\u0456\u0449\u043e \u0432\u0456\u0434\u043a\u043b\u0430\u0434\u0430\u0442\u0438 \u043d\u0430 \u0437\u0430\u0432\u0442\u0440\u0430 \u0442\u0435 \u0449\u043e \u043c\u043e\u0436\u043d\u0430 \u0437\u0440\u043e\u0431\u0438\u0442\u0438 \u043f\u0456\u0441\u043b\u044f\u0437\u0430\u0432\u0442\u0440\u0430 \u043a\u043e\u043b\u0438 \u0437\u0456\u0439\u0434\u0435\u0442\u044c\u0441\u044f \u0442\u0440\u0438 \u0443\u043a\u0440\u0430\u0457\u043d\u0446\u0456 \u0442\u043e \u0446\u0435 \u0432\u0436\u0435 \u0445\u043e\u0440 \u0432 \u0443\u043a\u0440\u0430\u0457\u043d\u0456 \u0434\u0456\u0454 \u0432\u0438\u0449\u0430 \u0440\u0430\u0434\u0430 \u043f\u0440\u0430\u0432\u043e\u0441\u0443\u0434\u0434\u044f \u044f\u043a\u0430 \u0441\u0432\u043e\u0431\u043e\u0434\u0443 \u043d\u0435 \u0441\u043f\u0438\u043d\u0438\u0442\u0438 \u043f\u0440\u0438 \u0446\u044c\u043e\u043c\u0443 \u0432\u0438\u043f\u0443\u0441\u043a \u0436\u0443\u0440\u043d\u0430\u043b\u0456\u0432 \u0456 \u043f\u0435\u0440\u0456\u043e\u0434\u0438\u0447\u043d\u0438\u0445 \u0432\u0438\u0434\u0430\u043d\u044c \u0443 \u0440\u043e\u043a\u0438 \u043d\u0435\u0437\u0430\u043b\u0435\u0436\u043d\u043e\u0441\u0442\u0456 \u043f\u0435\u0440\u0435\u0436\u0438\u0432 \u0441\u043f\u0440\u0430\u0432\u0436\u043d\u0456\u0439 \u0437\u043b\u0435\u0442 \u0445\u0430\u0439 \u043f\u043e\u043a\u0430\u0440\u0430\u0454 \u043c\u0435\u043d\u0435 \u043c\u043e\u0440\u0430\u043d\u0430 \u0445\u0430\u0439 \u0443\u043f\u0430\u0434\u0435 \u043c\u0435\u043d\u0456 \u043f\u0435\u043a \u043d\u0430 \u0433\u043e\u043b\u043e\u0432\u0443 \u0441\u043a\u043e\u0440\u043e\u043c\u043e\u0432\u043a\u043e\u044e \u0437\u0430\u043f\u0440\u0438\u0441\u044f\u0433\u043d\u0443\u0432\u0441\u044f \u0431\u043e\u0440\u0438\u0441\u043b\u0430\u0432 \u0443\u0441\u0456 \u043e\u0431'\u0454\u0434\u043d\u0430\u043d\u043d\u044f \u0433\u0440\u043e\u043c\u0430\u0434\u044f\u043d \u0440\u0456\u0432\u043d\u0456 \u043f\u0435\u0440\u0435\u0434 \u0437\u0430\u043a\u043e\u043d\u043e\u043c \u043f\u0440\u043e\u0448\u0443 \u0431\u043b\u0438\u0436\u0447\u0435 \u0434\u043e \u043c\u0456\u043a\u0440\u043e\u0444\u043e\u043d\u0443 \u044f \u0441\u043a\u0430\u0437\u0430\u0432 \u0449\u043e \u044f \u0431\u0456\u043b\u044c\u0448\u0435 \u043d\u0435 \u0431\u0443\u0434\u0443 \u0434\u0430\u0432\u0430\u0442\u0438"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

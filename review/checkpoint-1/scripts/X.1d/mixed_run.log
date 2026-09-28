@@ -1,0 +1,7 @@
+=== mixed model=small stream_runs=1 ===
+engine loaded in 1.6s
+--- mixed: 40 clips, 511.0s audio ---
+[small/mixed] batch  WER=0.1096 (edits=111 ref_words=1013) 167.6s
+[small/mixed] stream rep=0 WER=0.1412 (edits=143 ref_words=1013) 1039.5s decodes=587 contradicted=0/289
+  (results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1d/small_mixed_results.json)
+DONE
