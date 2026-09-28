@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-28 20:07 UTC",
+ "generated": "2026-09-28 20:08 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -1217,6 +1217,7 @@ const DATA = {
     "X.3",
     "X.4",
     "X.5",
+    "X.6",
     "X.1b",
     "X.1c",
     "X.1d"
@@ -1224,10 +1225,11 @@ const DATA = {
    "state": "in-progress",
    "waiting_on": [
     "X.3",
-    "X.4"
+    "X.4",
+    "X.6"
    ],
    "depth": 0,
-   "leaves_total": 8,
+   "leaves_total": 9,
    "leaves_done": 6,
    "severity_total": {
     "blocking": 5,
@@ -1440,6 +1442,44 @@ const DATA = {
    "depth": 1,
    "leaves_total": 1,
    "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.6",
+   "title": "DECIDE-08: does the glossary keep English terms in Latin script? (terms set)",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "X.4"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.6-glossary-term-recall.md",
+   "summary": "Data: `eval/results/data/terms.jsonl` (200 uk-pods clips from 187 episodes, each reference holding ≥ 1 Latin-script term inside Ukrainian text; built by X.5). Pre-registered here (2026-09-28, before any run):",
+   "instructions": "Data: `eval/results/data/terms.jsonl` (200 uk-pods clips from 187 episodes, each reference holding\n≥ 1 Latin-script term inside Ukrainian text; built by X.5). Pre-registered here (2026-09-28,\nbefore any run):\n\n- **Metric:** term recall = share of the reference's Latin terms (the `terms` field) that appear in\n  the hypothesis as the same Latin token, case-insensitive, edge punctuation stripped; plus corpus\n  WER (`gmst.metrics.word_errors`) on the same clips.\n- **Path:** batch per clip, language pinned `uk` (`gmst.pipeline.batch.transcribe_by_region` with\n  `Config(language=\"uk\", ...)`), `small` and `large-v2`.\n- **Conditions:** (a) no glossary; (b) static glossary = the 100 most frequent Latin terms (same\n  tokenizer as X.5) in `eval/results/raw/uk-pods_pods_train.json` `text_no_preprocessing`, which\n  does not include the 200 test clips — check and report the overlap of clip ids; (c) autogrow\n  only — `glossary_autogrow = true`, starting empty, one `Glossary` object carried across the 200\n  clips in manifest order (the `Glossary` API in `src/gmst/glossary.py`: decode each clip with its\n  prompt/hotwords, then `observe` the output).\n- **Rule:** recommend enabling a glossary (b or c) only if its term recall is ≥ 10.0 pts above (a)\n  **and** its WER is ≤ (a)'s + 1.0 pt, for both models. Otherwise record that it does not earn its\n  latency and leave it off by default.\n\nAlso report decode time per clip for each condition (the latency cost the user accepted), and 10\nexample terms that (a) got wrong and (b)/(c) got right, and vice versa. Read first: root\n`CLAUDE.md`, `src/gmst/glossary.py`, `tasks/X.5-*.md`, this file. Offline, one large model at a\ntime (`pgrep -af python` first), main tree `.venv`, no clone; write only this node file and\n`scripts/X.6/`.",
+   "findings_text": "_(numbers against the rule)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "X.4"
+   ],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
