@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 06:33 UTC",
+ "generated": "2026-09-28 06:34 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -190,29 +190,29 @@
    "agent": "code-reviewer",
    "model": "sonnet",
    "effort": "medium",
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 1,
+    "serious": 4,
+    "minor": 1
    },
    "file": "tasks/R3-capture-and-failure-modes.md",
    "summary": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoi",
    "instructions": "Walk every row of `PLAN.md` \"Failure modes & degradation\" and confirm the code implements its policy, citing the `file:line` that does. Files: `src/gmst/audio/{device_source,resample,file_source,types}.py`, `src/gmst/cli.py` (exit codes 0/1/2/3), `src/gmst/sink/{base,console,jsonl,srt,sse}.py`, and the shutdown path in `pipeline/stream.py`. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nA row with no implementation, or an implementation that differs from the policy, is a finding. Specific checks: the capture callback does only downmix → persistent `soxr.ResampleStream` → enqueue; drop-oldest and the `[lagging]` flag reach the sink; PortAudio status flags are counted, not swallowed; `DeviceLost` after the drain → exit 3; `sink.close()` runs even when the final decode raises; the SSE per-client queue is bounded at 512 with drop-oldest and a heartbeat; the JSONL/SSE event schema matches the pinned one. You may run `gmst devices` / `gmst listen` briefly on this Linux machine; BlackHole is rule 6.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "- [blocking] `gmst stream`'s SIGINT handling (`cli.py:169-188`) is the *only* signal trap installed.\n  `grep -rn \"SIGTERM\" src/gmst/` returns nothing. PLAN.md's row is titled **\"Ctrl-C / SIGTERM\"**\n  with policy \"stop stream → drain queue → transcribe & flush the uncommitted tail as final → close\n  sink\" (`PLAN.md:164`), and CLAUDE.md repeats \"without it every session loses its last utterance\".\n  `sigterm_probe.py` reproduces `_cmd_stream`'s exact idiom (register a SIGINT handler that runs\n  cleanup; nothing for any other signal) in a child process:\n  ```\n  signal=SIGINT exit_code=0 stdout_after_signal='CLEANUP-RAN\\n'\n  signal=SIGTERM exit_code=-15 stdout_after_signal=''\n  ```\n  SIGTERM kills the process via Python's default disposition — no drain, no flush, no\n  `sink.close()`. Any supervisor that stops the process with SIGTERM first (`systemd stop`,\n  `docker stop`, plain `kill <pid>` with no `-INT`) loses the uncommitted tail — the exact loss the\n  whole flush mechanism exists to prevent, on a signal the row's own title names.\n\n- [serious] The `[lagging]` flag PLAN.md's \"Bounded queues\" row promises (\"on full, drop oldest\n  audio and set a `[lagging]` flag **the sink renders**\", `PLAN.md:150`) never reaches any sink used\n  by `gmst stream`. `DeviceSource.lagging`/`.stats.blocks_dropped` (`device_source.py:150-158,186-187`)\n  is read in exactly one place in the whole codebase: `cli.py:118-119`, inside `_cmd_listen` — a\n  different subcommand from `stream` that has no sink at all, just a level meter. `run_stream`\n  (`pipeline/stream.py`) never reads `source.lagging` or `source.stats`, and `Segment`\n  (`transcribe/types.py:29-37`) has no field for it, so no sink (`console.py`, `jsonl.py`, `srt.py`,\n  `sse.py`) could render it even if asked. `lagging_probe.py`:\n  ```\n  run_stream source mentions 'lagging': False\n  run_stream source mentions '.stats': False\n  source.lagging = True, blocks_dropped = 7\n  ...\n  'lagging' appears in sink output: False\n  ```\n  `tests/fakes.py:70`'s `ListSource.lagging = False` is dead scaffolding — nothing in\n  `test_stream_pipeline.py` ever asserts on it (`grep -n lagging tests/*.py` finds only the fakes.py\n  attribute and `test_device_source.py`'s own unit test of `DeviceSource`, never a stream/CLI test).\n  During a real meeting on this Linux path, a user whose queue is dropping audio gets no signal at\n  all in `stream`'s console/jsonl/srt/sse output.\n\n- [serious] PLAN.md's \"PortAudio `input_overflow` / `underflow`\" row says these are \"counted,\n  logged, never swallowed\" (`PLAN.md:151`). They are counted (`device_source.py:125-128`,\n  `CaptureStats.status_flags` / `.overflows`) but never logged: `grep -n \"log\\|Logger\" src/gmst/audio/device_source.py` matches nothing, and\n  `grep -rn \"logging.getLogger\" src/gmst/pipeline/stream.py` finds only the one call at\n  `stream.py:205`, for the final-flush exception — unrelated. The counters are read in exactly the\n  same one place as `lagging` above: `_cmd_listen` (`cli.py:116-117`), never in `_cmd_stream` or\n  `run_stream`. A real overflow during `gmst stream` is silently invisible to the operator, contrary\n  to \"never swallowed\".\n\n- [serious] PLAN.md's \"BlackHole / loopback not installed\" row: \"`gmst devices` and `gmst stream`\n  print the routing setup doc and exit 2\" (`PLAN.md:156`) is entirely unimplemented. `grep -rn\n  \"BlackHole\\|routing\" src/gmst/` returns nothing — the string \"BlackHole\" only exists in\n  `README.md`. Live check on this machine:\n  ```\n  $ uv run gmst stream -d \"definitely-not-a-real-device-xyz\"\n  cannot open input: no input device matching 'definitely-not-a-real-device-xyz'\n  exit=1\n  ```\n  Every device-open failure in `_cmd_stream`/`_cmd_devices` returns exit **1** with a generic\n  message (`cli.py:101-105,155-159`), matching CLAUDE.md's own exit-code table (\"1: bad input — no\n  such file / device\") and the existing test `test_cli.py::test_stream_bad_device_returns_1` — but\n  contradicting `PLAN.md`'s row, which is a distinct, never-",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 1,
+    "serious": 4,
+    "minor": 1
    }
   },
   {
@@ -224,7 +224,7 @@
    "agent": "code-reviewer",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "in-progress",
    "depends_on": [],
    "finding": null,
    "has_read_section": true,
@@ -238,7 +238,7 @@
    "instructions": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nFor each promised test, name the test that covers it or record that none does. Own the onboarding lead: `tests/fixtures/en.wav` / `uk.wav`. Then check that the tests would actually fail if the code were wrong: for the five riskiest guards (your pick, justified — start with `_align`'s −1 on contradiction, the overlap anchor, `trim_to`/`rebase`, the unconditional `sink.close()`, and the drop-oldest queue), apply a one-line mutation in a **scratch copy** of the tree (never the working tree), run the suite there, and record whether it goes red. Save the mutations and outputs in `scripts/R4/`. Run `uv run pytest -m slow` once (offline) and record the result.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
    "children": [],
-   "state": "ready",
+   "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
@@ -385,7 +385,6 @@
    "state": "waiting",
    "waiting_on": [
     "R2",
-    "R3",
     "R4",
     "R6",
     "R7"
