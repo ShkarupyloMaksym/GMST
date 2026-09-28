@@ -1,0 +1,41 @@
+# Copy to gmst.toml and edit. All keys optional; unset keys use defaults.
+# Env overrides: GMST_ENGINE / GMST_MODEL / GMST_MODEL_REPO / GMST_COMPUTE_DEVICE /
+#                GMST_COMPUTE_TYPE / GMST_LANGUAGE  (GMST_LANGUAGE=auto means "detect")
+# Every value is type- and range-checked at load, not mid-meeting: bad enums, a string where a
+# number is expected, a non-boolean `word_timestamps`, a `language` other than en/uk/auto.
+# `--config <path>` must exist; only this default `gmst.toml` may be absent.
+
+# --- transcription ---
+# engine          = "faster_whisper"  # faster_whisper (portable) | mlx_whisper (Mac GPU) | canary (Phase 4)
+# model_size      = "large-v3"        # PROVISIONAL — `gmst bench` (Phase 1) picks the real default
+# model_repo      = ""                # explicit HF repo / mlx path, e.g. "mlx-community/whisper-large-v3-turbo"
+# compute_device  = "cpu"             # cpu | cuda | auto
+# compute_type    = "int8"            # int8 | int8_float16 | float16 | float32
+# word_timestamps = true              # per-word timing: accurate spans + turn detection
+
+# --- language ---
+# language            = "en"          # "en" | "uk" | "auto"; omit (or "auto") for per-utterance LID
+# lid_threshold       = 0.7           # below this, keep the previous utterance's language
+# lid_tiebreak_margin = 0.15          # uk/ru tie-break window; prefer uk inside it
+
+# --- audio capture ---
+# input_device = "BlackHole"          # sounddevice id (int) or name substring; see `gmst devices`
+# block_ms     = 100
+
+# --- streaming segmentation / reconciliation ---
+# min_silence_ms          = 600
+# min_chunk_seconds       = 1.0
+# max_buffer_seconds      = 15.0      # unconfirmed-buffer cap; forces a cut. The buffer is also
+#                                     # trimmed at every commit, so it normally stays well below
+# max_unconfirmed_seconds = 8.0       # forced commit (in *audio* seconds) when the tail never
+#                                     # agrees; 3 updates without progress also forces one
+# overlap_seconds         = 0.5       # audio kept after a forced cut, to bridge the seam
+# vad_backend             = "silero"  # silero | energy
+# vad_threshold           = 0.5       # silero: speech probability; energy: fraction of full scale
+
+# --- output ---
+# sink             = "console"        # console | jsonl | srt | sse
+# out_path         = "transcript.srt"
+# sse_port         = 8765             # sink = "sse" -> http://127.0.0.1:<port>/ (0 = any free port)
+#                                     # sse + out_path writes the file as well as serving
+# turn_gap_seconds = 1.5             # pause longer than this starts a new turn (0 = off)
