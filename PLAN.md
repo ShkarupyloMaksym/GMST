@@ -273,6 +273,23 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 Env: `GMST_ENGINE`, `GMST_MODEL`, `GMST_MODEL_REPO`, `GMST_COMPUTE_DEVICE`, `GMST_COMPUTE_TYPE`,
 `GMST_LANGUAGE` (`auto` ⇒ `None`).
 
+## Review decisions (checkpoint-1 review, 2026-09-28)
+
+Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind them are in
+`review/checkpoint-1/tasks/T1-triage.md`.
+
+- **DECIDE-01 — re-anchoring after a trim.** The per-commit trim cuts *before* the last committed
+  word (its start minus the back-off), not 0.2 s before its end; and reconciliation anchors by word
+  timestamps as UFAL's `whisper_streaming` does — hypothesis words that end before the last
+  committed word's end are dropped, and an up-to-5-word n-gram overlap with the committed tail is
+  de-duplicated — so a re-heard or revised word is no longer a terminal contradiction for the
+  utterance. Still LocalAgreement-2.
+- **DECIDE-02 — `lid_languages`.** New config field, default `["en", "uk"]`. The detector's
+  distribution is renormalised over it, with `ru` folded into `uk`; this applies to the first
+  utterance too. `language = en|uk` pinning is unchanged.
+- **DECIDE-03 — batch per-segment LID.** Batch VAD-splits the file, detects each region's language
+  (restricted as above) and decodes each region in that language — the same semantics as streaming.
+
 ## Phases
 
 | Phase | Build | Milestone / exit criterion |

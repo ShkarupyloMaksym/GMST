@@ -5,7 +5,7 @@ stage: decision
 kind: task
 agent: human
 model: human
-status: todo
+status: in-progress
 depends-on: T1
 
 # H1 — Your decisions
@@ -46,7 +46,11 @@ The orchestrator lists every `DECIDE-nn` here with the options, the evidence for
 
 ## What was read / measured
 
-_(write as you go: files and line ranges read, commands run, where you stopped)_
+2026-09-28, answered in session:
+- **DECIDE-01 → (b)** trim before the last committed word + timestamp-based anchoring (UFAL style).
+- **DECIDE-02 → `lid_languages`** config field, default `["en", "uk"]`, `ru` folded into `uk`.
+- **DECIDE-03 → (a)** batch VAD-splits and decodes each region in its own (restricted) language.
+- Still open: DECIDE-04 (waits on EVID-02), DECIDE-05, DECIDE-06, DECIDE-07.
 
 ## Findings
 
