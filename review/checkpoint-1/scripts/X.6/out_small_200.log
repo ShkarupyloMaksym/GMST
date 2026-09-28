@@ -1,0 +1,36 @@
+model=small n_clips=200
+load time: 0.75s
+=== condition (a): no glossary ===
+  [25/200] last decode 1.31s
+  [50/200] last decode 1.38s
+  [75/200] last decode 1.55s
+  [100/200] last decode 1.07s
+  [125/200] last decode 1.12s
+  [150/200] last decode 1.54s
+  [175/200] last decode 1.24s
+  [200/200] last decode 1.88s
+  wall 254.3s  term_recall=0.438  wer=0.208  timed_out=0
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_small_200.json
+=== condition (b): static glossary (100 terms) ===
+  [25/200] last decode 1.80s
+  [50/200] last decode 1.42s
+  [75/200] last decode 2.57s
+  [100/200] last decode 1.60s
+  [125/200] last decode 1.66s
+  [150/200] last decode 6.58s
+  [175/200] last decode 9.50s
+  [200/200] last decode 13.17s
+  wall 1090.5s  term_recall=0.414  wer=0.822  timed_out=0
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_small_200.json
+=== condition (c): autogrow only ===
+  [25/200] last decode 1.66s  glossary_size=34
+  [50/200] last decode 2.01s  glossary_size=60
+  [75/200] last decode 13.65s  glossary_size=100
+  [100/200] last decode 17.62s  glossary_size=100
+  [125/200] last decode 1.86s  glossary_size=100
+  [150/200] last decode 2.60s  glossary_size=100
+  [175/200] last decode 19.39s  glossary_size=100
+  [200/200] last decode 1.63s  glossary_size=100
+  wall 1226.6s  term_recall=0.464  wer=0.632  timed_out=0
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_small_200.json
+wrote /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_small_200.json

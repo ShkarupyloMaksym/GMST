@@ -1,0 +1,34 @@
+model=large-v2 n_clips=100
+load time: 3.80s
+=== condition (a): no glossary ===
+  [25/100] last decode 6.46s
+  [50/100] last decode 6.72s
+  [75/100] last decode 7.50s
+  [100/100] last decode 5.44s
+  wall 651.7s  term_recall=0.617  wer=0.110  timed_out=0
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_large-v2_100.json
+=== condition (b): static glossary (100 terms) ===
+  [20/100] id=55840b09-240d-4f00-b973-570ccbbe0f48_0289 TIMED OUT after 54.6s
+  [25/100] last decode 40.78s
+  [29/100] id=0491fda2-9b14-4e19-8c5c-5b28d3a3c55e_0174 TIMED OUT after 58.4s
+  [32/100] id=1e3f419b-8819-47f2-99f6-b649c1183e96_0078 TIMED OUT after 58.5s
+  [40/100] id=43aa1430-0e3a-41d5-8e0a-1441595d1e03_0089 TIMED OUT after 59.3s
+  [50/100] last decode 6.30s
+  [51/100] id=c2930d5c-5bfb-4ba8-a8ae-61d761038f49_0171 TIMED OUT after 49.0s
+  [54/100] id=0d866c18-80bb-49f2-bc6a-40da4c78c400_0083 TIMED OUT after 52.2s
+  [63/100] id=5a376b2f-d7a3-40b2-ad69-159c7a1d1b98_0049 TIMED OUT after 51.8s
+  [75/100] last decode 8.06s
+  [80/100] id=5c050eea-8e56-46b4-9adf-059eb8165483_0096 TIMED OUT after 58.6s
+  [84/100] id=afc7dfa6-4a21-4f5c-b2b0-84f92ec66d4c_0074 TIMED OUT after 46.0s
+  [89/100] id=4a768cc3-6011-4a09-99a4-76070aa8c205_0152 TIMED OUT after 48.4s
+  [100/100] last decode 8.18s
+  wall 1386.7s  term_recall=0.346  wer=0.544  timed_out=10
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_large-v2_100.json
+=== condition (c): autogrow only ===
+  [25/100] last decode 8.21s  glossary_size=33
+  [50/100] last decode 9.29s  glossary_size=56
+  [75/100] last decode 11.83s  glossary_size=68
+  [100/100] last decode 8.42s  glossary_size=75
+  wall 791.8s  term_recall=0.463  wer=0.392  timed_out=0
+  checkpoint written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_large-v2_100.json
+wrote /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.6/results_large-v2_100.json
