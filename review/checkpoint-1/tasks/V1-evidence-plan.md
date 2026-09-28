@@ -34,6 +34,9 @@ Read T1's EVID table, R1's `probe_real_model_contradictions.py`, R2's `lid_probe
 | X.3 | EVID-03 | F.2 (eval fixes) | UK corpus WER + paired-bootstrap 95 % CI of each pairwise difference; EN corpus WER | default = lowest UK WER whose CI vs the runner-up excludes 0, provided its EN WER is within 2.0 pts of the best; if not separable, the cheaper one per X.4 |
 | X.4 | EVID-04 | nothing | median wall time per decode at 2/4/8/15 s + `detect_language` at 3 s, large-v2 and large-v3 CPU int8 | (wall at 4 s + LID) ≤ 1.0 s → 1 update/s is feasible on this CPU; otherwise record the smallest feasible update interval. Either way PLAN.md's latency budget is amended with the measured fixed cost (FIX-13) |
 
+*Amendment 2026-09-28 (user): X.3 runs on 800 uk clips, not the full 3,204 — see X.3's node; the
+turbo-uk vs large-v2 pair is then expected to stay unresolved.*
+
 Common: offline, one `large-*` model at a time machine-wide, results and scripts in
 `scripts/X.n/`, a wall-clock note if anything else was running. Clip lists are fixed by manifest
 order (first N) and written to `scripts/X.n/clips.txt` before the run.
