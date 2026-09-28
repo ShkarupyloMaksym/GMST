@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 22:31 UTC",
+ "generated": "2026-09-28 22:32 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -1127,15 +1127,14 @@
    ],
    "state": "in-progress",
    "waiting_on": [
-    "X.3",
-    "X.6b"
+    "X.3"
    ],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 8,
+   "leaves_done": 9,
    "severity_total": {
     "blocking": 9,
-    "serious": 9,
+    "serious": 11,
     "minor": 1
    }
   },
@@ -1577,30 +1576,30 @@
    "agent": "orchestrator",
    "model": "opus",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "F.18"
    ],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
-    "serious": 0,
+    "serious": 2,
     "minor": 0
    },
    "file": "tasks/X.6b-glossary-post-correction.md",
    "summary": "User, 2026-09-29, after X.6: \"Correct after decoding\" — the glossary no longer goes into Whisper; it corrects Cyrillic transliterations of English terms in the decoded text. Pre-registered here, **before the corrector exists** (F.18), so nothing is tuned on these clips:",
    "instructions": "User, 2026-09-29, after X.6: \"Correct after decoding\" — the glossary no longer goes into Whisper;\nit corrects Cyrillic transliterations of English terms in the decoded text. Pre-registered here,\n**before the corrector exists** (F.18), so nothing is tuned on these clips:\n\n- **Inputs:** X.6's condition (a) hypotheses — `scripts/X.6/results_small_200.json` `a_hyps`\n  (200 clips) and `results_large-v2_100.json` `a_hyps` (100) — no decoding.\n- **Glossaries:** (b') the 100 most frequent Latin terms in `uk-pods_pods_train.json`\n  `text_no_preprocessing` **excluding every clip id in `terms.jsonl`** (X.6's static list leaked\n  179/200); (c') autogrow only — correction plus `observe` over the clips in manifest order,\n  starting empty.\n- **Metric and rule:** X.6's, unchanged — recommend (b') or (c') only if term recall ≥ (a) + 10.0\n  pts and WER ≤ (a) + 1.0 pt, for both models. Also report every replacement the corrector made\n  that is *not* a reference term (false positives), with the text.\n- **Corrector design fixed in F.18 before scoring:** transliterate Cyrillic runs of 1–3 tokens,\n  compare to each term on a crude sound-alike key (SequenceMatcher ≥ 0.75, first letter equal,\n  length within ±35 %, ≥ 4 letters, up to 2 trailing letters tolerated for Ukrainian case\n  endings). No threshold may be changed after the first score. *(Amended before any score, from\n  the unit tests' own examples: a run may not have more words than the term — the ending\n  tolerance was swallowing the next short word, \"деплой на\" → \"deploy\".)*",
-   "findings_text": "_(numbers against the rule)_",
+   "findings_text": "| model | glossary | term recall | WER | Δrecall / ΔWER | false positives | rule |\n|---|---|---|---|---|---|---|\n| small (200) | (a) none | 43.8 % | 20.79 % | | | |\n| small | (b') static, leak-free | 50.3 % | 24.98 % | +6.5 / +4.19 | 188 | fails |\n| small | (c') autogrow | 44.6 % | 24.20 % | +0.9 / +3.41 | 128 | fails |\n| large-v2 (100) | (a) none | 61.7 % | 11.03 % | | | |\n| large-v2 | (b') static, leak-free | 66.0 % | 15.62 % | +4.3 / +4.60 | 89 | fails |\n| large-v2 | (c') autogrow | 64.2 % | 13.54 % | +2.5 / +2.51 | 48 | fails |\n\n- [serious] **Post-decode correction fails the rule too.** Recall rises a little, but short common\n  English words in the list match ordinary Ukrainian words and WER rises 2.5–4.6 pts: \"мені\" →\n  \"Men\", \"тому\" → \"To\", \"цим\" → \"time\", \"приводу\" → \"Prey\", \"ліси\" → \"Lies\", \"Мілані\" → \"Man\".\n- [serious] **Autogrow learns the wrong things**: speakers' English phrases (\"ring hollow for me\",\n  \"one note\") feed it \"me\", \"to\", \"time\", which then overwrite Ukrainian words.\n- Per the pre-registration, no threshold is changed after this score. Not tested (would need a\n  new pre-registered set): a curated list of long, distinctive technical terms only.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
-    "serious": 0,
+    "serious": 2,
     "minor": 0
    }
   },

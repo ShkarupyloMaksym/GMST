@@ -5,7 +5,7 @@ stage: evidence
 kind: task
 agent: orchestrator
 model: opus
-status: todo
+status: done
 depends-on: F.18
 
 # X.6b — DECIDE-08 revised: glossary as post-decode correction, scored on X.6's no-glossary outputs
@@ -34,14 +34,31 @@ it corrects Cyrillic transliterations of English terms in the decoded text. Pre-
 
 ## What was read / measured
 
-_(write as you go)_
+`scripts/X.6b/score_correction.py` (X.6's `term_hit` / `score` copied verbatim; the static list
+rebuilt from 30,629 train clips with every `terms.jsonl` id excluded), run once:
+`scripts/X.6b/score_correction.out`, `scores.json`. No decoding.
 
 ## Findings
 
-_(numbers against the rule)_
+| model | glossary | term recall | WER | Δrecall / ΔWER | false positives | rule |
+|---|---|---|---|---|---|---|
+| small (200) | (a) none | 43.8 % | 20.79 % | | | |
+| small | (b') static, leak-free | 50.3 % | 24.98 % | +6.5 / +4.19 | 188 | fails |
+| small | (c') autogrow | 44.6 % | 24.20 % | +0.9 / +3.41 | 128 | fails |
+| large-v2 (100) | (a) none | 61.7 % | 11.03 % | | | |
+| large-v2 | (b') static, leak-free | 66.0 % | 15.62 % | +4.3 / +4.60 | 89 | fails |
+| large-v2 | (c') autogrow | 64.2 % | 13.54 % | +2.5 / +2.51 | 48 | fails |
+
+- [serious] **Post-decode correction fails the rule too.** Recall rises a little, but short common
+  English words in the list match ordinary Ukrainian words and WER rises 2.5–4.6 pts: "мені" →
+  "Men", "тому" → "To", "цим" → "time", "приводу" → "Prey", "ліси" → "Lies", "Мілані" → "Man".
+- [serious] **Autogrow learns the wrong things**: speakers' English phrases ("ring hollow for me",
+  "one note") feed it "me", "to", "time", which then overwrite Ukrainian words.
+- Per the pre-registration, no threshold is changed after this score. Not tested (would need a
+  new pre-registered set): a curated list of long, distinctive technical terms only.
 
 ## Could not check
 
-_(and why)_
+Whether a *curated* list of distinctive technical terms (not frequency-mined from a film podcast) helps — the podcast's terms are film titles and everyday English, not an IT meeting's vocabulary.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: findings
