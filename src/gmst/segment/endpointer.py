@@ -80,9 +80,11 @@ class Endpointer:
     def trim_to(self, seconds: float) -> float:
         """Drop buffer audio before ``seconds`` (buffer-relative); advances ``t0`` to match.
 
-        Called at a committed word boundary, with ``_TRIM_BACKOFF_S`` of slack so the cut lands
-        just before the word rather than inside it. Returns the seconds actually dropped, which
-        the caller needs to work out which words are still in the buffer (0.0 when nothing went).
+        Called with the *start* of the last committed word; ``_TRIM_BACKOFF_S`` of slack moves the
+        cut earlier still, so that word survives whole and re-anchors the next decode. (Until the
+        2026-09-28 review this was called with the word's *end*, cutting inside it — R1.) Returns
+        the seconds actually dropped, which the caller needs to work out which words are still in
+        the buffer (0.0 when nothing went).
         """
         audio = self.buffer
         n = max(0, min(len(audio), int((seconds - _TRIM_BACKOFF_S) * SAMPLE_RATE)))

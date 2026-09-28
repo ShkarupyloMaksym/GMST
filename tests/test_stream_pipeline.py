@@ -213,25 +213,30 @@ def test_shutdown_flush_commits_unconfirmed_tail():
     assert len(engine.calls) == 3
 
 
-def test_shutdown_flush_keeps_a_contradicting_tail_instead_of_dropping_it():
+def test_shutdown_flush_keeps_a_revised_tail_instead_of_dropping_it():
     # The in-loop decodes commit "the quick brown"; the final tail decode revises "brown" ->
-    # "brownish" so it contradicts the anchor. F03's drop-on-contradiction is right mid-stream
-    # (a later decode recovers) but at end-of-session there is no later decode — absorb() must
-    # keep the tail rather than silently lose the last words of the meeting.
+    # "brownish" and adds "fox jumps" from new audio. At end-of-session there is no later decode,
+    # so the revised word must not re-commit and the new words must not be lost. Word times are
+    # honest: the revised words sit over the committed audio (amplitude 0.3), "fox jumps" over
+    # the audio that arrived after it (0.5).
     def script(audio, i):
-        dur = len(audio) / SAMPLE_RATE
-        toks = ["the", "quick", "brown"] if i < 2 else \
-            ["the", "quick", "brownish", "fox", "jumps"]
-        step = dur / len(toks)
-        words = [Word(t, k * step, (k + 1) * step) for k, t in enumerate(toks)]
-        return [Segment(0.0, dur, " ".join(toks), "en", words=words)]
+        vals = np.asarray(audio)
+        old = int(np.count_nonzero(np.isclose(vals, 0.3))) / SAMPLE_RATE
+        new = len(vals) / SAMPLE_RATE - old
+        head = ["the", "quick", "brown"] if i < 2 else ["the", "quick", "brownish"]
+        words = [Word(t, k * old / 3, (k + 1) * old / 3) for k, t in enumerate(head)]
+        if new > 0:
+            words += [Word("fox", old, old + new / 2), Word("jumps", old + new / 2, old + new)]
+        return [Segment(0.0, old + new, " ".join(w.text for w in words), "en", words=words)]
 
-    src = ListSource([_loud(0.2), _loud(0.2)])
+    new_audio = np.full(int(0.2 * SAMPLE_RATE), 0.5, dtype=np.float32)
+    src = ListSource([_loud(0.2), _loud(0.2), new_audio])
     sink = RecSink()
     run_stream(_cfg(min_chunk_seconds=0.15), src, FakeEngine(script), sink, language="en")
 
     words = sink.final_words()
-    assert "fox" in words and "jumps" in words  # the contradicting tail was not dropped
+    assert "fox" in words and "jumps" in words  # the tail was not dropped
+    assert words.count("brown") == 1 and "brownish" not in words  # nor re-committed
     assert sink.closed
 
 
@@ -386,3 +391,52 @@ def test_a_second_interrupt_abandons_the_final_decode_but_still_closes_the_sink(
 
     assert len(engine.calls) == 4, "a decode was started after the second interrupt"
     assert "w0" in p.read_text(encoding="utf-8")
+
+
+
+def _head_sliver_engine(variant):
+    """R1's probe as a test: a word whose audio is cut short at the head of the buffer (the
+    trim's back-off sliver) is mis-heard as another token or dropped, as a real model does."""
+    chunk = int(0.5 * SAMPLE_RATE)
+
+    def script(audio, _call):
+        vals = np.asarray(audio)
+        if len(vals) == 0:
+            return []
+        edges = np.flatnonzero(np.diff(vals)) + 1
+        starts = np.concatenate(([0], edges))
+        ends = np.concatenate((edges, [len(vals)]))
+        words = []
+        for s, e in zip(starts, ends, strict=True):
+            if vals[s] == 0.0:
+                continue
+            tok = f"w{int(round(float(vals[s]) * 100))}"
+            if s == 0 and (e - s) < chunk - 1:
+                if variant == "dropped":
+                    continue
+                tok = "p" + tok[1:]
+            words.append(Word(tok, s / SAMPLE_RATE, e / SAMPLE_RATE))
+        if not words:
+            return []
+        return [Segment(words[0].start, words[-1].end, " ".join(w.text for w in words), "en",
+                        words=words)]
+
+    return FakeEngine(script)
+
+
+@pytest.mark.parametrize("variant", ["fragment", "dropped"])
+def test_a_misheard_or_dropped_trim_sliver_loses_and_duplicates_nothing(variant):
+    """Shipped defaults (energy VAD only): two 6 s utterances must come out whole, once each,
+    with committed times moving forward."""
+    cfg = Config(vad_backend="energy", vad_threshold=0.05)
+    audio = np.concatenate([_marked(12), _silent(1.5), _marked(12)[::-1].copy(), _silent(1.5)])
+    blocks = [audio[i : i + SAMPLE_RATE // 10] for i in range(0, len(audio), SAMPLE_RATE // 10)]
+    expected = [f"w{int(round((0.1 + 0.05 * i) * 100))}" for i in range(12)]
+    sink = RecSink()
+
+    run_stream(cfg, ListSource(blocks), _head_sliver_engine(variant), sink, language="en")
+
+    finals = [w for w in sink.final_words() if not w.startswith("p")]
+    assert sorted(finals) == sorted(expected * 2), finals
+    spans = [(s.start, s.end) for s in sink.segs if s.is_final]
+    assert all(b[0] >= a[1] - 1e-6 for a, b in zip(spans, spans[1:], strict=False)), spans

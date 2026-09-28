@@ -134,8 +134,9 @@ Decomposition, worst-case per committed word:
 LocalAgreement-2 re-decodes the whole unconfirmed buffer every update, so required throughput is
 `RTF × (buffer_seconds / update_interval)`, **not** RTF. For a 15 s buffer at 1 update/s that is
 15 × RTF, so the real target is **RTF ≤ ~0.15**, not 0.5. `max_buffer_seconds` (default 15) caps
-the buffer; it is trimmed to the last committed **word** boundary on every commit
-(`Endpointer.trim_to`, with a 0.2 s back-off so the cut never lands mid-phoneme). The trim is what
+the buffer; it is trimmed on every commit to just before the last committed **word**
+(`Endpointer.trim_to` gets its start, minus a 0.2 s back-off, so that word survives whole as the
+anchor — DECIDE-01). The trim is what
 keeps `buffer_seconds` near one utterance instead of the 15 s cap — without it every 1 s update
 re-decodes the full cap and the budget above cannot close. Trimming committed audio out of the
 buffer also means the reconciler's anchor has to move with it: `LocalAgreement.rebase` keeps
@@ -157,7 +158,7 @@ Every row has a defined policy; none of this is optional.
 | Model not cached | `load_engine` wraps the load; `ModelUnavailable` carries "run `gmst warmup`" and every CLI handler **exits 2** (an unimplemented backend the same way) |
 | All-silence input | VAD emits nothing; sink shows an idle indicator, no hallucinated text |
 | Never-agreeing tail (stutter/disfluency) | force a commit after `max_unconfirmed_seconds` (default 8) **of audio** or `_MAX_STALLED_PUSHES` = 3 updates without progress — both conditions only while something is actually pending |
-| Model revises text it already committed | `LocalAgreement._align` returns −1 (contradiction) instead of falling back to index 0; `push` commits nothing and flags `contradicted`. **Mid-stream**, `flush` drops the unplaceable tail — duplicating a final utterance is worse than losing one the next decode will recover. **On shutdown** there is no next decode, so `absorb` commits the whole tail anyway (a small seam artifact beats losing the last words of the meeting) |
+| Model revises text it already committed | With word times (the stream always has them) the revised words lie over committed audio and are dropped by time (DECIDE-01). Text-only: `LocalAgreement._align` returns −1 (contradiction) instead of falling back to index 0; `push` commits nothing and flags `contradicted`. **Mid-stream**, `flush` drops the unplaceable tail — duplicating a final utterance is worse than losing one the next decode will recover. **On shutdown** there is no next decode, so `absorb` commits the whole tail anyway (a small seam artifact beats losing the last words of the meeting) |
 | Engine raises mid-meeting | `run_stream`'s shutdown flush is nested so `sink.close()` is unconditional — `SrtSink` only writes its file there, and one engine failure must not cost the whole transcript. The original exception still propagates |
 | SSE viewer stops reading | per-client queue bounded at 512 events, **drop oldest** (`SseSink.dropped` counts); a `retry:` hint and a 15 s heartbeat comment keep proxies from dropping idle connections |
 | Long meeting (2 h+) | memory bound = bounded queues + buffer trim + bounded SSE client queues + the committed word list capped at 4000 + `initial_prompt` capped at 600 characters (~200 Whisper tokens; 200 *words* of Ukrainian is ~400 tokens and would be silently truncated) |
@@ -225,7 +226,8 @@ src/gmst/
 | Longest common prefix | compare **normalized** word tokens (casefold, strip trailing punctuation); emit original text |
 | Tail never agrees | forced commit after `max_unconfirmed_seconds` or N stalled updates |
 | `initial_prompt` growth | cap to the last ~200 tokens of committed text (Whisper's prompt window) |
-| Buffer trim mid-word | trim only at committed word boundaries, with a small sample back-off (`_TRIM_BACKOFF_S` = 0.2 s); `rebase` keeps the words whose audio survived so the sliver is not committed twice |
+| Buffer trim mid-word | trim just before the last committed word (its start minus `_TRIM_BACKOFF_S` = 0.2 s), so it survives whole; `rebase` keeps the words whose audio survived, with their times, so they are not committed twice |
+| Re-heard anchor spelled differently / dropped | align by text, then by time: drop hypothesis words ending within the committed audio (`_TIME_TOLERANCE_S` = 0.02 s), then de-duplicate a ≤ 5-word repeat of the committed tail (DECIDE-01; R1 showed text-only alignment losing ~85 % of a real stream) |
 | Forced cut with `overlap_seconds` retained | the retained audio is decoded again — keep the committed words inside the overlap as the anchor, or those words commit a second time with timestamps that run backwards |
 | partial→final race | single-writer sink — only the reconcile thread writes; the sink is not thread-safe and does not pretend to be |
 

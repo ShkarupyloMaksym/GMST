@@ -7,8 +7,9 @@ Loop per decode (buffer has >= ``min_chunk_seconds`` new audio and contains spee
 3. push the hypothesis' words through LocalAgreement-2 → emit newly-agreed words as **final**,
    the unconfirmed tail as a **partial**; spans use per-word timestamps when the engine provides
    them, else an even split of the segment span
-4. after a commit, ``ep.trim_to`` drops the committed audio (with a small back-off) and
-   ``agree.rebase`` re-anchors on what survived, so the re-decoded buffer stays short
+4. after a commit, ``ep.trim_to`` drops the audio before the last committed word (with a small
+   back-off, so that word survives whole) and ``agree.rebase`` re-anchors on what survived, with
+   word times, so the re-decoded buffer stays short
 5. on an endpoint / forced cut / stalled tail: ``flush()`` the reconciler (commit the rest),
    reset the endpointer, re-detect language next utterance
 
@@ -69,6 +70,10 @@ def _words_of(segs: list[Segment]) -> list[Word]:
         for i, t in enumerate(toks):
             out.append(Word(t, s.start + i * step, s.start + (i + 1) * step))
     return out
+
+
+def _spans(words: list[Word], shift: float = 0.0) -> list[tuple[float, float]]:
+    return [(w.start - shift, w.end - shift) for w in words]
 
 
 def run_stream(
@@ -135,7 +140,7 @@ def run_stream(
                 continue
 
             hyp, call_lang = decode(ep.buffer)
-            newly, _pending = agree.push([w.text for w in hyp])
+            newly, _pending = agree.push([w.text for w in hyp], _spans(hyp))
             o = agree.last_offset
             new_words = hyp[o : o + len(newly)]
             last_pending = hyp[o + len(newly) :]
@@ -166,9 +171,11 @@ def run_stream(
                 if keep_overlap:
                     cut = max(0.0, ep.buffer_seconds - cfg.overlap_seconds)
                     done = o + len(newly) + len(rest)
+                    kept_c = [w for w in hyp[:done] if w.end > cut]
+                    kept_p = [w for w in hyp[done:] if w.end > cut]
                     agree.rebase(
-                        [w.text for w in hyp[:done] if w.end > cut],
-                        [w.text for w in hyp[done:] if w.end > cut],
+                        [w.text for w in kept_c], [w.text for w in kept_p],
+                        _spans(kept_c + kept_p, shift=cut),
                     )
                 else:
                     agree.reset()
@@ -180,13 +187,15 @@ def run_stream(
                     stats.utterances += 1
                 last_commit_seconds = ep.t0_seconds + ep.buffer_seconds
             elif new_words:
-                # committed audio has served its purpose; drop it so the next decode is short
-                cut = ep.trim_to(new_words[-1].end)
+                # committed audio has served its purpose; drop it so the next decode is short.
+                # Cut *before* the last committed word so it survives whole as the anchor.
+                cut = ep.trim_to(new_words[-1].start)
                 if cut > 0:
                     done = o + len(newly)
+                    kept_c = [w for w in hyp[:done] if w.end > cut]
                     agree.rebase(
-                        [w.text for w in hyp[:done] if w.end > cut],
-                        [w.text for w in hyp[done:]],
+                        [w.text for w in kept_c], [w.text for w in hyp[done:]],
+                        _spans(kept_c + hyp[done:], shift=cut),
                     )
                     last_pending = []  # its spans are relative to the pre-trim buffer
     except KeyboardInterrupt:
@@ -200,7 +209,7 @@ def run_stream(
                 hyp, call_lang = decode(tail)
                 # last decode of the session — commit the whole tail, never drop it, skipping
                 # only a prefix that repeats what is already committed.
-                start = agree.absorb([w.text for w in hyp])
+                start = agree.absorb([w.text for w in hyp], _spans(hyp))
                 final_words = hyp[start:]
                 if final_words:
                     stats.committed_words += len(final_words)

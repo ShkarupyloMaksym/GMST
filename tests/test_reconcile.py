@@ -104,3 +104,75 @@ def test_reset_clears_state():
     la.reset()
     assert la.committed == []
     assert la.push(tokenize("new start")) == ([], ["new", "start"])
+
+
+def _spans(n, start=0.0, step=0.3):
+    return [(start + i * step, start + (i + 1) * step) for i in range(n)]
+
+
+def test_a_misheard_anchor_word_does_not_block_the_utterance():
+    """After a trim the last committed word is decoded again; a real model may hear it differently
+    ("idle" -> "title"). With word times the reconciler places it by time, not by text, so the
+    rest of the utterance still commits (R1: text-only alignment lost ~85 % of a real stream)."""
+    la = LocalAgreement()
+    la.push(["a", "b"], _spans(2))
+    assert la.push(["a", "b", "c"], _spans(3))[0] == ["a", "b"]
+    la.rebase(["b"], ["c"], spans=_spans(2))  # the trim kept "b" (committed) and "c" (pending)
+
+    newly, pending = la.push(["bee", "c", "d"], _spans(3))
+    assert not la.contradicted
+    assert newly == ["c"] and pending == ["d"]
+    assert "bee" not in la.committed
+
+
+def test_a_dropped_anchor_word_does_not_block_the_utterance():
+    la = LocalAgreement()
+    la.push(["a", "b"], _spans(2))
+    la.push(["a", "b", "c"], _spans(3))
+    la.rebase(["b"], ["c"], spans=_spans(2))
+
+    newly, _ = la.push(["c", "d"], _spans(2, start=0.3))  # the model skipped the re-heard "b"
+    assert not la.contradicted
+    assert newly == ["c"]
+
+
+def test_a_repeated_committed_ngram_timed_past_the_boundary_is_not_committed_again():
+    """Timestamps drift: the re-heard committed words can be timed after the committed end. A
+    mis-heard head defeats the text prefix match, time drops only that head, and the n-gram
+    de-dup must still recognise "a b" as already committed."""
+    la = LocalAgreement()
+    la.push(["a", "b"], _spans(2))
+    la.push(["a", "b", "c"], _spans(3))
+    la.rebase(["a", "b"], ["c"], spans=_spans(3))  # committed end = 0.6 s
+
+    hyp = ["uh", "a", "b", "c"]
+    newly, _ = la.push(hyp, [(0.0, 0.2), (0.8, 1.0), (1.0, 1.2), (1.2, 1.5)])
+    assert newly == ["c"]
+    assert la.committed == ["a", "b", "c"]
+
+
+def test_absorb_commits_a_contradicting_tail_rather_than_dropping_it():
+    """Shutdown only: no later decode can recover the tail, so a contradiction (text-only
+    alignment) still commits everything — losing the meeting's last words is the worse failure."""
+    la = LocalAgreement()
+    la.push(tokenize("the quick brown"))
+    la.push(tokenize("the quick brown"))
+    start = la.absorb(tokenize("the quick brownish fox"))
+    assert start == 0
+    assert la.committed[-2:] == ["brownish", "fox"]
+
+
+def test_a_new_word_stretched_back_to_the_buffer_head_is_kept():
+    """Seen with faster-whisper after a trim (F.8 trace): the anchor word is not re-emitted and
+    the first *new* word is timed from 0.00 ("for@0.00-0.56" with the committed end at 0.42).
+    Its end is past the committed audio, so it is new speech and must not be dropped."""
+    la = LocalAgreement()
+    la.push(["was", "idle"], _spans(2))
+    la.push(["was", "idle", "for"], _spans(3))
+    la.rebase(["idle"], ["for"], spans=[(0.2, 0.42), (0.42, 0.68)])
+
+    hyp, spans = ["for", "him", "to"], [(0.0, 0.56), (0.56, 0.94), (0.94, 1.1)]
+    newly, _ = la.push(hyp, spans)
+    assert newly == ["for"]
+    newly, _ = la.push(hyp + ["move"], spans + [(1.1, 1.3)])
+    assert newly == ["him", "to"]

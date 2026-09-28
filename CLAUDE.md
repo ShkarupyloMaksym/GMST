@@ -125,8 +125,13 @@ prefix of two consecutive hypotheses, comparing **normalized** word tokens (case
 trailing punctuation) but emitting original text. Plus: forced commit after
 `max_unconfirmed_seconds` **of audio** (or 3 updates without progress) when the tail never agrees;
 `initial_prompt` capped at 600 characters (~200 Whisper tokens — 200 *words* of Ukrainian is ~400);
-buffer trimmed at committed **word** boundaries on every commit (`Endpointer.trim_to`, 0.2 s
-back-off) with `LocalAgreement.rebase` moving the anchor to match. `is_final` is set only here,
+buffer trimmed on every commit to just before the last committed word (`Endpointer.trim_to` is
+passed that word's **start**, minus a 0.2 s back-off, so the word survives whole as the anchor) with
+`LocalAgreement.rebase` moving the anchor — and its word times — to match. Alignment is by text,
+then by **word time** (`push(words, spans)`): hypothesis words ending within the committed audio are
+dropped, then a ≤ 5-word repeat of the committed tail. Until the 2026-09-28 review the trim cut
+inside the last word and alignment was text-only, so one re-heard word ("idle" → "title") blocked
+the rest of the utterance: stream WER 0.878 vs batch 0.015 (R1). `is_final` is set only here,
 never by a backend. The sink is **single-writer** — only the reconcile thread emits — and is not
 thread-safe.
 
@@ -135,9 +140,9 @@ Two invariants the seams have to preserve, both easy to break:
 - **committed spans are strictly monotonic** (`types.py`). Audio retained across a forced cut
   (`overlap_seconds`) or left by the trim back-off gets transcribed *again*, so the committed words
   inside it must stay as the anchor — otherwise they commit twice with times running backwards.
-- **a revised prefix is never re-committed.** When the model changes a word it already emitted as
-  final, `_align` returns −1 (`contradicted`) rather than falling back to index 0; `push` emits
-  nothing. Mid-stream, `flush` drops the unplaceable tail (the next decode recovers it); on
+- **a revised prefix is never re-committed.** With word times, a revised word lies over committed
+  audio and is dropped by time. Without them (text-only callers), `_align` returns −1
+  (`contradicted`) rather than falling back to index 0 and `push` emits nothing. Mid-stream, `flush` drops the unplaceable tail (the next decode recovers it); on
   shutdown, `absorb` commits the whole tail regardless — there is no next decode, and losing the
   last utterance of a meeting is the failure the shutdown flush exists to prevent.
 
