@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 07:00 UTC",
+ "generated": "2026-09-28 07:02 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -65,7 +65,10 @@
     "F.4",
     "F.5",
     "F.6",
-    "F.7"
+    "F.7",
+    "F.8",
+    "F.9",
+    "F.10"
    ],
    "state": "in-progress",
    "waiting_on": [
@@ -75,10 +78,13 @@
     "F.4",
     "F.5",
     "F.6",
-    "F.7"
+    "F.7",
+    "F.8",
+    "F.9",
+    "F.10"
    ],
    "depth": 0,
-   "leaves_total": 7,
+   "leaves_total": 10,
    "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
@@ -326,6 +332,114 @@
    "summary": "- **FIX-24** README Linux: `pactl set-default-source <sink>.monitor` or `PULSE_SOURCE`, and the system PortAudio package. - **FIX-25a** amend PLAN.md's loopback row to exit 1 plus a routing hint (and print that hint). - **FIX-25b** document `eval/` (run commands, extra deps) in CLAUDE.md Commands and PLAN.md layout; mark `backends/canary.py` as not created. - **FIX-26** correct the LID-cost claims",
    "instructions": "- **FIX-24** README Linux: `pactl set-default-source <sink>.monitor` or `PULSE_SOURCE`, and the system PortAudio package.\n- **FIX-25a** amend PLAN.md's loopback row to exit 1 plus a routing hint (and print that hint).\n- **FIX-25b** document `eval/` (run commands, extra deps) in CLAUDE.md Commands and PLAN.md layout; mark `backends/canary.py` as not created.\n- **FIX-26** correct the LID-cost claims (`engine.py:5-6`, PLAN.md:77-79, :98, :128).\n- **FIX-27** after DECIDE-01's fix and EVID-01, replace \"verified end-to-end … clean ordered transcript\" with what EVID-01 measured.\n- DECIDE-07's outcome (CI claim) lands here too.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; one commit per\nFIX id with an explicit pathspec. Items and evidence: T1's triage table.",
    "findings_text": "_(what changed, per FIX id, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.8",
+   "title": "DECIDE-01 fix: trim before the last committed word; timestamp-based anchoring",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.8-reanchor-after-trim.md",
+   "summary": "Implement PLAN.md \"Review decisions\" DECIDE-01. `Endpointer.trim_to` cuts at the last committed word's *start* minus the back-off (fix the docstring). `LocalAgreement` anchors by timestamps: hypothesis words ending at or before the last committed word's end (buffer-relative) are dropped, then an up-to-5-word n-gram overlap with the committed tail is removed; a contradiction is no longer terminal f",
+   "instructions": "Implement PLAN.md \"Review decisions\" DECIDE-01. `Endpointer.trim_to` cuts at the last committed word's *start* minus the back-off (fix the docstring). `LocalAgreement` anchors by timestamps: hypothesis words ending at or before the last committed word's end (buffer-relative) are dropped, then an up-to-5-word n-gram overlap with the committed tail is removed; a contradiction is no longer terminal for the utterance. Regression tests first: extend `_marked` to sub-0.2 s marks (or a fake that drops/mis-hears the sliver, as R1's `probe_trim_fragment.py` does) so the current code goes red; R1's fragment/dropped probes must show `lost 0/24`. Keep both CLAUDE.md seam invariants and their existing tests green. Then X.1 measures it with a real model.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; commit with an\nexplicit pathspec. Items and evidence: T1's triage table; the decision: root PLAN.md \"Review\ndecisions\".",
+   "findings_text": "_(what changed, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.9",
+   "title": "DECIDE-02 fix: `lid_languages`, restricted and renormalised LID",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.9-lid-languages.md",
+   "summary": "Implement PLAN.md \"Review decisions\" DECIDE-02: config field `lid_languages` (default `[\"en\", \"uk\"]`, validated in `_merge`, env `GMST_LID_LANGUAGES` comma-separated, documented in `gmst.example.toml` and PLAN.md's config table). `resolve_language` renormalises `all_probs` over the allowed set with `ru` folded into `uk`, so the first utterance is covered; the sticky threshold applies to the renorm",
+   "instructions": "Implement PLAN.md \"Review decisions\" DECIDE-02: config field `lid_languages` (default `[\"en\", \"uk\"]`, validated in `_merge`, env `GMST_LID_LANGUAGES` comma-separated, documented in `gmst.example.toml` and PLAN.md's config table). `resolve_language` renormalises `all_probs` over the allowed set with `ru` folded into `uk`, so the first utterance is covered; the sticky threshold applies to the renormalised probability. Tests: R2's cases (`bg`, `ja`, `tr`, `ar` top-1 on Ukrainian; first utterance at 0.21) in `test_lid.py`.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; commit with an\nexplicit pathspec. Items and evidence: T1's triage table; the decision: root PLAN.md \"Review\ndecisions\".",
+   "findings_text": "_(what changed, with the commit)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.10",
+   "title": "DECIDE-03 fix: batch decodes each VAD region in its own language",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "todo",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.10-batch-per-region-lid.md",
+   "summary": "Implement PLAN.md \"Review decisions\" DECIDE-03: with `per_segment_lid` on and no pinned language, batch VAD-splits the file (`segment/vad.py`), detects each region's language via `detect_language` (F.9's restriction, sticky across regions) and decodes each region with that `language`; timestamps offset to file time. Same for `mlx_whisper`. `eval/run_eval.py`'s `gmst-batch` then measures GMST, not ",
+   "instructions": "Implement PLAN.md \"Review decisions\" DECIDE-03: with `per_segment_lid` on and no pinned language, batch VAD-splits the file (`segment/vad.py`), detects each region's language via `detect_language` (F.9's restriction, sticky across regions) and decodes each region with that `language`; timestamps offset to file time. Same for `mlx_whisper`. `eval/run_eval.py`'s `gmst-batch` then measures GMST, not raw autodetect. Test: a `FakeEngine` batch run with two regions of different scripted languages decodes each with its own `language`.\n\nProtocol: `verify-then-integrate` skill — re-run the finding's probe first, write the regression\ntest and watch it fail, then fix; `uv run pytest -q` and `uv run ruff check .` green; commit with an\nexplicit pathspec. Items and evidence: T1's triage table; the decision: root PLAN.md \"Review\ndecisions\".",
+   "findings_text": "_(what changed, with the commit)_",
    "children": [],
    "state": "ready",
    "waiting_on": [],
@@ -663,11 +777,11 @@
    "agent": "orchestrator",
    "model": "opus",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -677,13 +791,13 @@
    "file": "tasks/V1-evidence-plan.md",
    "summary": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
    "instructions": "For each `EVID-nn`, pre-register the measurement: data, model, command, the number that decides it and the threshold, **before** running anything. Create one `X.n` child of `X` per measurement with its own node file. The model-selection eval (four candidates, sample size from R5) is expected to be one of them.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "### Pre-registered measurements (2026-09-28)\n\n| Node | EVID | Needs | Deciding number | Rule |\n|---|---|---|---|---|\n| X.1 | EVID-01 | F.8 (DECIDE-01 fix) | corpus WER stream − batch, language pinned; share of contradicted pushes | **holds** if stream ≤ batch + 3.0 pts on en and uk with `small`, and contradicted pushes ≤ 10 %; otherwise DECIDE-01 reopens |\n| X.2 | EVID-02 | nothing | restricted-LID accuracy by prefix length (1/2/3/4 s/full), per language | ≥ 95 % on both at 2 s → DECIDE-04 = detect once at ≥ 2 s of buffer; ≥ 95 % only at full → re-detect on every decode until the endpoint; < 95 % even at full → record, DECIDE-04 needs a design |\n| X.3 | EVID-03 | F.2 (eval fixes) | UK corpus WER + paired-bootstrap 95 % CI of each pairwise difference; EN corpus WER | default = lowest UK WER whose CI vs the runner-up excludes 0, provided its EN WER is within 2.0 pts of the best; if not separable, the cheaper one per X.4 |\n| X.4 | EVID-04 | nothing | median wall time per decode at 2/4/8/15 s + `detect_language` at 3 s, large-v2 and large-v3 CPU int8 | (wall at 4 s + LID) ≤ 1.0 s → 1 update/s is feasible on this CPU; otherwise record the smallest feasible update interval. Either way PLAN.md's latency budget is amended with the measured fixed cost (FIX-13) |\n\nCommon: offline, one `large-*` model at a time machine-wide, results and scripts in\n`scripts/X.n/`, a wall-clock note if anything else was running. Clip lists are fixed by manifest\norder (first N) and written to `scripts/X.n/clips.txt` before the run.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -714,12 +828,164 @@
    "summary": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
    "instructions": "Placeholder group. V1 creates the children; each runs one pre-registered measurement and reports against its pre-committed threshold.",
    "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "children": [
+    "X.1",
+    "X.2",
+    "X.3",
+    "X.4"
+   ],
+   "state": "waiting",
+   "waiting_on": [
+    "X.1",
+    "X.2",
+    "X.3",
+    "X.4"
+   ],
+   "depth": 0,
+   "leaves_total": 4,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1",
+   "title": "EVID-01: stream vs batch WER after the re-anchoring fix",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F.8"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.1-stream-vs-batch-wer.md",
+   "summary": "Extend R1's `scripts/R1/probe_real_model_contradictions.py` into `scripts/X.1/`: for the first 20 clips of `eval/results/data/en` and of `uk` (language pinned) and the first 20 `mixed` inter clips (auto LID), run batch and `run_stream` with shipped defaults, `small` then `large-v2`. Report corpus WER per set and mode, contradicted-push share, and 5 sample stream outputs.",
+   "instructions": "Extend R1's `scripts/R1/probe_real_model_contradictions.py` into `scripts/X.1/`: for the first 20 clips of `eval/results/data/en` and of `uk` (language pinned) and the first 20 `mixed` inter clips (auto LID), run batch and `run_stream` with shipped defaults, `small` then `large-v2`. Report corpus WER per set and mode, contradicted-push share, and 5 sample stream outputs.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.1/`. Write the clip list to `scripts/X.1/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
+   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
    "children": [],
    "state": "waiting",
    "waiting_on": [
-    "V1"
+    "F.8"
    ],
-   "depth": 0,
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.2",
+   "title": "EVID-02: LID accuracy vs prefix length, with and without the en/uk restriction",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.2-lid-vs-prefix.md",
+   "summary": "For all 60 `uk` and 60 `en` clips, call the model's `detect_language` on prefixes of 1, 2, 3, 4 s and the full clip, `small` then `large-v2`. From each raw distribution compute (a) unrestricted top-1 and (b) restricted = argmax over {en, uk + ru}. Report accuracy per language × prefix × model for both, and the first-utterance case (no prior).",
+   "instructions": "For all 60 `uk` and 60 `en` clips, call the model's `detect_language` on prefixes of 1, 2, 3, 4 s and the full clip, `small` then `large-v2`. From each raw distribution compute (a) unrestricted top-1 and (b) restricted = argmax over {en, uk + ru}. Report accuracy per language × prefix × model for both, and the first-utterance case (no prior).\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.2/`. Write the clip list to `scripts/X.2/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
+   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.3",
+   "title": "EVID-03: model selection on the full cleaned CV10 uk set",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F.2"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.3-model-selection.md",
+   "summary": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnig",
+   "instructions": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnight, one model at a time, resumable.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.3/`. Write the clip list to `scripts/X.3/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
+   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "children": [],
+   "state": "waiting",
+   "waiting_on": [
+    "F.2"
+   ],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.4",
+   "title": "EVID-04: per-update decode cost and LID cost, large models on CPU",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.4-per-update-cost.md",
+   "summary": "Extend R5's `scripts/R5/p4_amplification.py` into `scripts/X.4/`: `large-v2` then `large-v3`, CPU int8, buffers 2/4/8/15 s cut from `eval/results/data/en` speech, 10 repetitions each after 2 warm-up calls, median and p90 wall time; `detect_language` on 3 s. Record `nproc`, threads used, and anything else running.",
+   "instructions": "Extend R5's `scripts/R5/p4_amplification.py` into `scripts/X.4/`: `large-v2` then `large-v3`, CPU int8, buffers 2/4/8/15 s cut from `eval/results/data/en` speech, 10 repetitions each after 2 warm-up calls, median and p90 wall time; `detect_language` on 3 s. Record `nproc`, threads used, and anything else running.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.4/`. Write the clip list to `scripts/X.4/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
+   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
    "leaves_total": 1,
    "leaves_done": 0,
    "severity_total": {
