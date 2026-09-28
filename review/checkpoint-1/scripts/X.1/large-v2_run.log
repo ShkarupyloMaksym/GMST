@@ -2,3 +2,10 @@
 engine loaded in 3.7s
 --- en: 20 clips, 162.6s audio ---
 [large-v2/en] batch  WER=0.0168 (edits=7 ref_words=417) 118.8s
+[large-v2/en] stream WER=0.0647 (edits=27 ref_words=417) 1569.1s decodes=179 contradicted=0/179
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1/large-v2_results.json)
+--- uk: 20 clips, 103.0s audio ---
+[large-v2/uk] batch  WER=0.1678 (edits=24 ref_words=143) 100.9s
+[large-v2/uk] stream WER=0.2098 (edits=30 ref_words=143) 574.9s decodes=98 contradicted=0/98
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1/large-v2_results.json)
+DONE

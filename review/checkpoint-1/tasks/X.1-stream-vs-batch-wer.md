@@ -6,7 +6,7 @@ kind: task
 agent: repro-runner
 model: sonnet
 effort: medium
-status: in-progress
+status: done
 depends-on: F.8
 
 # X.1 — EVID-01: stream vs batch WER after the re-anchoring fix
@@ -124,8 +124,67 @@ unplaceable-tail path (`reconcile.py:130-140`) was never exercised in ~570 pushe
 audio; it remains untested against a real model at this sample size (a note for future evidence, not
 a defect).
 
+**`large-v2` run complete** (en, uk only, per the budget fallback; `scripts/X.1/run_wer.py large-v2
+en uk`, `scripts/X.1/large-v2_run.log`, `scripts/X.1/large-v2_results.json`). Total wall time
+2364s (~39.4 min), under the ~60 min budget; no other Python process running throughout (checked
+via `pgrep -af python` / `ps` before and during).
+
+| set | mode | WER | edits/ref | elapsed | decodes | contradicted/pushes |
+|---|---|---|---|---|---|---|
+| en | batch | 1.68% | 7/417 | 118.8s | — | — |
+| en | stream | 6.47% | 27/417 | 1569.1s | 179 | 0/179 |
+| uk | batch | 16.78% | 24/143 | 100.9s | — | — |
+| uk | stream | 20.98% | 30/143 | 574.9s | 98 | 0/98 |
+
+- en: stream − batch = 6.47 − 1.68 = **4.80 pts** > 3.0 pt threshold.
+- uk: stream − batch = 20.98 − 16.78 = **4.20 pts** > 3.0 pt threshold.
+- contradicted-push share: 0/179 (en), 0/98 (uk) = **0%**, same as `small`.
+
+**[serious] `large-v2` also fails the pre-registered margin, and by a slightly wider margin than
+`small`** (en 4.80 pts vs 4.32 pts; uk 4.20 pts vs 3.50 pts), even though large-v2's batch WER is
+much better than small's on both sets (en 1.68% vs 2.64%; uk 16.78% vs 23.78%). The pre-registered
+rule decides on `small`, and it already fails there; large-v2 confirms this is not a small-model
+accuracy artifact — a stronger model narrows both batch and stream WER but does not close, and if
+anything slightly widens, the stream/batch gap. The amplification looks structural to the streaming
+path (shorter re-decoded buffers, no full-clip context, boundary effects at commits/trims) rather
+than something a bigger model fixes. Sample (en, `large-v2_results.json`): ref `...IT WAS IDLE FOR
+HIM...` → stream out `...It was idle for him...` (correct here) but batch is uniformly closer to ref
+than stream across both sets, consistent with the WER numbers.
+
+**Coordinator note (F.11, DECIDE-04) received mid-run:** `src/gmst/pipeline/stream.py` changed —
+with `language=None` the stream now re-detects LID on every decode until the buffer holds 3s and
+holds commits until then; pinned-language runs are unaffected. This node's en/uk runs pass an
+explicit `language` (pinned) throughout, so **F.11 does not affect any en/uk number in this node**
+(small or large-v2). The only auto-LID (`language=None`) run in this node is the `small`/mixed-inter
+stream row above: it was started and completed (`small_run.log`, finished before the coordinator's
+F.11 message) using the **pre-F.11 detect-once behaviour** — labelled "before F.11" per the
+coordinator's instruction. No large-v2/mixed run was made (skipped for budget, see below), so there
+is no "after F.11" mixed number in this node to compare against.
+
+**Net against the pre-registered rule (V1, EVID-01):** the deciding condition is `small`, en and uk.
+Both fail the +3.0 pt margin (en +4.32 pts, uk +3.50 pts) while contradicted-push share is 0% on
+every set/model measured. Per the rule's own text ("otherwise DECIDE-01 reopens"): **DECIDE-01
+reopens.** F.8's fix closed the contradiction/duplication failure mode it targeted (0/570 pushes
+contradicted across both models and all three sets — a real, measured improvement over the
+pre-fix state R1/F.8 quote, e.g. R1's 0.878 stream WER on the un-fixed code), but streaming still
+costs real accuracy over batch on the same audio, on both a small and a large model, and this
+node's job is only to report that against the pre-registered number — not to propose the redesign.
+CLAUDE.md / PLAN.md's "verified end-to-end" language (F.8 flagged this as FIX-27, "waits for X.1")
+should not be read as "streaming matches batch accuracy" — measured here, it does not, and
+strengthening the model (`small` → `large-v2`) did not close the gap either.
+
 ## Could not check
 
-_(and why)_
+- **large-v2 on the mixed-inter set**: skipped per this node's pre-authorized budget fallback — the
+  `small` run's stream cost alone (en+uk = 543.4s ≈ 9 min out of ~20.6 min total for 3 sets) implied
+  a full 3-set large-v2 run would likely exceed the ~60 min budget once large-v2's per-decode cost
+  (see en: batch 118.8s vs small's 21.8s, ~5.5x) is applied to mixed's larger audio (298.8s, the
+  biggest of the three sets). Only en and uk ran on large-v2 (2364s total, confirming the estimate
+  was reasonable: en+uk alone already took ~39 min). mixed-inter therefore has small-model numbers
+  only (see above; auto-LID, pre-F.11 detect-once).
+- Per-clip attribution inside the stream WER is not available: the stream ref/hyp comparison is one
+  corpus-level edit distance over the whole 20-clip concatenation (see "What was read/measured"),
+  so a WER-per-clip breakdown within a set was not computed, only the pooled number the rule asks
+  for.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: findings
