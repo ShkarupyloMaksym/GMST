@@ -10,7 +10,7 @@ machine, streams it through an ASR engine, emits a live transcript.
 
 **Supported platform: macOS (Apple Silicon)** — the only config where both the latency and the
 Ukrainian-accuracy stories close. Linux/Windows are expected to run via the `faster_whisper`
-backend (CI + portable fallback) but are not validated.
+backend (portable fallback) but are not validated. There is no CI (DECIDE-07).
 
 Build order is **batch first, then streaming** — see `PLAN.md` for the full phase plan, model
 survey, latency budget, failure-mode table, and config reference. Current state: **Phases 1–3 done,
@@ -82,7 +82,7 @@ def detect_language(self, audio) -> tuple[str, float]: ...
 
 Backends under `transcribe/backends/`:
 
-- `faster_whisper` — **portable default** (Linux/Windows/CI). CPU `int8` only on Apple Silicon
+- `faster_whisper` — **portable default** (Linux/Windows). CPU `int8` only on Apple Silicon
   (CTranslate2 has no Metal/MPS backend), CUDA where available. Per-segment LID runs GMST's own
   detector pass on a **window around the segment** (widened to ≥ 0.5 s, never the whole file) and
   routes it through `resolve_language`. faster-whisper's in-pass `multilingual=True` is asked for
@@ -188,8 +188,10 @@ therefore reports the *measured* seconds per update (a `TYPICAL_BUFFER_S` = 4 s 
 ### Failure modes
 
 `PLAN.md` has the full table — every row has a defined policy, none optional. Load-bearing ones:
-bounded `audio_queue` (drop-oldest + `[lagging]` flag when the engine falls behind); PortAudio
-status flags surfaced not swallowed; device disconnect → `DeviceLost` after the drain → exit 3;
+bounded `audio_queue` (drop-oldest + a `lagging` status event, `slow` after 10 s, when the engine
+falls behind); PortAudio overflows surfaced as `overflow` events; `idle` after 10 s of silence —
+all logged to stderr and sent to sinks with `status()` (JSONL/SSE status objects, console line;
+DECIDE-05); device disconnect → `DeviceLost` after the drain → exit 3;
 missing/unloadable model → `ModelUnavailable` carrying "run `gmst warmup`" → exit 2; a stalled SSE
 viewer → bounded per-client queue, drop-oldest; **Ctrl-C → drain → transcribe & flush the
 uncommitted tail as final → close sink** (without it every session loses its last utterance) — and
@@ -219,7 +221,8 @@ is git-ignored.
 
 `tests/fakes.py::FakeEngine` implements the `Engine` protocol with scripted hypotheses, so the
 whole stream pipeline is testable with no model and no audio device. Model-downloading tests are
-`@pytest.mark.slow` and deselected by default. CI runs the `faster_whisper` path only.
+`@pytest.mark.slow` and deselected by default. There is no CI; run the suite locally (MLX tests
+skip off Apple Silicon).
 
 A fixed script is not enough for the seams. Anything about the overlap, the buffer trim, or
 timestamp monotonicity needs an engine that reacts to the audio it is *actually* handed —

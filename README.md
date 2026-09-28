@@ -11,7 +11,7 @@ See [PLAN.md](PLAN.md) for the pipeline design, phases, latency budget, and fail
 
 - **Supported:** macOS (Apple Silicon) — the only config where both latency and Ukrainian accuracy
   close.
-- **Expected to run, not validated:** Linux / Windows via the `faster_whisper` backend (CI +
+- **Expected to run, not validated:** Linux / Windows via the `faster_whisper` backend (the
   portable fallback).
 
 ## Setup

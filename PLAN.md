@@ -113,7 +113,7 @@ class Engine(Protocol):
 
 | Backend | Use | Notes |
 |---|---|---|
-| `faster_whisper` | portable default (Linux/Windows/CI), CPU `int8` or CUDA | LID = one separate `detect_language` encoder pass per utterance / region; `vad_filter` available but pipeline-owned (see VAD) |
+| `faster_whisper` | portable default (Linux/Windows), CPU `int8` or CUDA | LID = one separate `detect_language` encoder pass per utterance / region; `vad_filter` available but pipeline-owned (see VAD) |
 | `mlx_whisper` | Mac fast path | Apple GPU; `path_or_hf_repo` e.g. `mlx-community/whisper-large-v3-turbo`; no `vad_filter` param; last release 2025-08-29 and pulls `torch` — pin it, fall back to `whisper.cpp` + Core ML if it goes stale |
 | `canary` (NeMo) | optional, Phase 4 | Linux/GPU only; needs external LID; batch/40 s-chunk |
 
@@ -163,14 +163,14 @@ Every row has a defined policy; none of this is optional.
 | Condition | Policy |
 |---|---|
 | Bounded queues | `audio_queue` sized in blocks (`max_buffer_seconds / (block_ms/1000)`); on full, **drop oldest audio** and set a `[lagging]` flag the sink renders |
-| PortAudio `input_overflow` / `underflow` | every status flag is counted (`CaptureStats.status_flags`, `overflows`), logged, never swallowed. The counters are read-modify-written from the PortAudio thread: they are diagnostics, so a lost count is accepted rather than paying for a lock in a realtime callback |
+| PortAudio `input_overflow` / `underflow` | every status flag is counted (`CaptureStats.status_flags`, `overflows`); `gmst stream` reports new overflows as an `overflow` status event + log warning (≤ 1 per 5 s; until F.13 only `gmst listen` showed them — R3). The counters are read-modify-written from the PortAudio thread: they are diagnostics, so a lost count is accepted rather than paying for a lock in a realtime callback |
 | Resampling in the capture callback | the callback downmixes and feeds one persistent `soxr.ResampleStream` (filter state carries across blocks — a one-shot `soxr.resample` per 100 ms block restarts the polyphase filter, ~−57 dB), then enqueues. Measured at ~0.1 % of the callback budget; everything else stays off this thread |
-| Engine falls behind real time | drop-oldest (above) keeps latency bounded; if sustained > 10 s, log a warning suggesting a smaller model |
+| Engine falls behind real time | drop-oldest (above) keeps latency bounded; a `lagging` status event (≤ 1 per 5 s of audio) and, if dropping lasts > 10 s, one `slow` event suggesting a smaller model — both also logged. Until F.13 (2026-09-28) neither reached `gmst stream` (R3) |
 | Input device disconnects mid-call | `finished_callback` → `DeviceSource.blocks()` drains what was captured, then raises `DeviceLost`; the shutdown flush still runs, `gmst stream` logs and **exits 3** (auto-reconnect is a later feature) |
 | Device refuses 16 kHz | open at the device's native rate, resample in `resample.py` (never rely on PortAudio silent conversion) |
 | BlackHole / loopback not installed | ~~`gmst devices` and `gmst stream` print the routing setup doc and exit 2~~ *(amended 2026-09-28, review R3/FIX-25a: never built, and a missing loopback cannot be told from any other missing device.)* A device that does not open exits **1** (bad input, as CLAUDE.md, README and `test_stream_bad_device_returns_1` say) with a one-line pointer to README "Audio routing" |
 | Model not cached | `load_engine` wraps the load; `ModelUnavailable` carries "run `gmst warmup`" and every CLI handler **exits 2** (an unimplemented backend the same way) |
-| All-silence input | VAD emits nothing; sink shows an idle indicator, no hallucinated text |
+| All-silence input | VAD emits nothing, so no hallucinated text; after 10 s of no speech one `idle` status event ("still listening") — DECIDE-05, implemented 2026-09-28 (F.13) |
 | Never-agreeing tail (stutter/disfluency) | force a commit after `max_unconfirmed_seconds` (default 8) **of audio** or `_MAX_STALLED_PUSHES` = 3 updates without progress — both conditions only while something is actually pending |
 | Model revises text it already committed | With word times (the stream always has them) the revised words lie over committed audio and are dropped by time (DECIDE-01). Text-only: `LocalAgreement._align` returns −1 (contradiction) instead of falling back to index 0; `push` commits nothing and flags `contradicted`. **Mid-stream**, `flush` drops the unplaceable tail — duplicating a final utterance is worse than losing one the next decode will recover. **On shutdown** there is no next decode, so `absorb` commits the whole tail anyway (a small seam artifact beats losing the last words of the meeting) |
 | Engine raises mid-meeting | `run_stream`'s shutdown flush is nested so `sink.close()` is unconditional — `SrtSink` only writes its file there, and one engine failure must not cost the whole transcript. The original exception still propagates |
@@ -259,6 +259,11 @@ One object per line (JSONL) or per `data:` event (SSE): `{"t0": float, "t1": flo
 …]` when the engine produced per-word timings. Partials carry `"final": false`; a later line/event
 for an overlapping span supersedes them.
 
+Runtime status objects share the stream (DECIDE-05, 2026-09-28) and are told apart by their
+`"status"` key: `{"status": "lagging" | "overflow" | "slow" | "idle", "t": float, "message": str}`
+plus `"dropped"` / `"overflows"` counts where relevant. `t` is audio seconds on the sample clock.
+A consumer that only wants transcript lines skips objects with a `status` key.
+
 ## Config (`src/gmst/config.py`)
 
 Loaded in `main()` and passed to every subcommand. Precedence: defaults < `gmst.toml` (flat table)
@@ -325,6 +330,10 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   committed as English.
 - **DECIDE-06 — evaluation audio.** No private recording for now; find public Ukrainian speech with
   English terms / uk–en code-switching whose transcripts keep the terms in Latin script (X.5).
+- **DECIDE-05 — runtime status.** `lagging`, `overflow`, `slow` (> 10 s of dropping: try a smaller
+  model) and `idle` (10 s without speech) go to stderr as log warnings, to the console as a status
+  line, and into the JSONL/SSE stream as `{"status": ...}` objects (schema addition approved).
+- **DECIDE-07 — CI.** There is none and no remote; the claims are struck.
 - **DECIDE-08 — auto-growing glossary.** A config-enabled term list passed to Whisper (prompt and
   faster-whisper `hotwords`) on every decode, growing with English terms seen in the session; off
   for speed. Targets term fidelity inside Ukrainian decoding, which per-utterance LID cannot fix.
@@ -350,8 +359,9 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   through `main()`.
 - Fixtures: two ~5 s clips (`tests/fixtures/en.wav`, `uk.wav`) committed for LID tests.
 - Tests that download a model are marked `@pytest.mark.slow` and **deselected by default**
-  (`addopts = "-m 'not slow'"`). CI runs the `faster_whisper` path only; MLX cannot run on a Linux
-  runner.
+  (`addopts = "-m 'not slow'"`). ~~CI runs the `faster_whisper` path only; MLX cannot run on a
+  Linux runner.~~ *(Struck 2026-09-28, DECIDE-07: there is no CI and no remote — R6. Run the suite
+  locally; MLX tests skip off Apple Silicon.)*
 
 ## Audio routing (user setup, not automatable)
 
@@ -365,4 +375,4 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
 
 **Supported**: macOS (Apple Silicon) — the only config where both the latency and Ukrainian-accuracy
 stories close. **Expected to run, not validated**: Linux / Windows via the `faster_whisper` backend
-(used for CI and the portable fallback).
+(the portable fallback; there is no CI — DECIDE-07).

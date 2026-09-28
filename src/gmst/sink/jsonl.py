@@ -3,6 +3,10 @@
     {"t0": float, "t1": float, "text": str, "lang": str, "final": bool, "turn": int,
      "lid_prob": float[, "words": [[str, float, float], …]]}
 
+Runtime status lines (DECIDE-05, 2026-09-28) share the stream and are told apart by their key:
+
+    {"status": "lagging" | "overflow" | "slow" | "idle", "t": float, "message": str, ...}
+
 ``turn`` and ``words`` were added in Phase 4; ``words`` is present only when the engine produced
 per-word timings. Non-final lines are written too (``"final": false``); a later line for an
 overlapping span supersedes them.
@@ -35,6 +39,10 @@ class JsonlSink:
         if seg.words:
             obj["words"] = [[w.text, round(w.start, 3), round(w.end, 3)] for w in seg.words]
         self._fh.write(json.dumps(obj, ensure_ascii=False) + "\n")
+        self._fh.flush()
+
+    def status(self, event: dict) -> None:
+        self._fh.write(json.dumps(event, ensure_ascii=False) + "\n")
         self._fh.flush()
 
     def close(self) -> None:

@@ -4,7 +4,8 @@
 - ``GET /`` → a tiny viewer page (EventSource) for eyeballing a live meeting.
 
 Event JSON matches the JSONL schema plus ``turn`` and (when present) ``words``:
-``{"t0","t1","text","lang","final","turn","lid_prob"[, "words": [[w,t0,t1], …]]}``
+``{"t0","t1","text","lang","final","turn","lid_prob"[, "words": [[w,t0,t1], …]]}`` — and runtime
+status events ``{"status", "t", "message", ...}`` (DECIDE-05), which the viewer shows in a bar.
 
 ``emit`` is called from the single reconcile thread; HTTP handlers run in their own threads and
 each hold a **bounded** ``queue.Queue`` fed by ``emit`` under a lock. A viewer that stops reading
@@ -26,9 +27,11 @@ _CLIENT_QUEUE_MAX = 512  # ~1 min of dense partials before a stalled viewer star
 
 _INDEX_HTML = b"""<!doctype html><meta charset=utf-8><title>GMST live</title>
 <style>body{font:16px/1.6 system-ui,sans-serif;margin:2rem;max-width:46rem}
-.p{color:#999}.m{color:#0a7;font-variant-numeric:tabular-nums}</style><body><div id=o></div><script>
-const o=document.getElementById('o');let p=null;
+.p{color:#999}.m{color:#0a7;font-variant-numeric:tabular-nums}#st{color:#b60;min-height:1.6em}
+</style><body><div id=st></div><div id=o></div><script>
+const o=document.getElementById('o'),st=document.getElementById('st');let p=null;
 const es=new EventSource('/events');es.onmessage=e=>{const s=JSON.parse(e.data);
+if(s.status){st.textContent='['+s.status+'] '+s.message;return}
 if(!s.final){if(!p){p=document.createElement('div');p.className='p';o.append(p)}p.textContent=s.text;return}
 if(p){p.remove();p=null}const d=document.createElement('div');
 const m=document.createElement('span');m.className='m';
@@ -113,7 +116,13 @@ class SseSink:
             return len(self._clients)
 
     def emit(self, seg: Segment) -> None:
-        line = ("data: " + json.dumps(payload(seg), ensure_ascii=False) + "\n\n").encode("utf-8")
+        self._broadcast(payload(seg))
+
+    def status(self, event: dict) -> None:
+        self._broadcast(event)
+
+    def _broadcast(self, obj: dict) -> None:
+        line = ("data: " + json.dumps(obj, ensure_ascii=False) + "\n\n").encode("utf-8")
         with self._lock:
             clients = list(self._clients)
         for q in clients:

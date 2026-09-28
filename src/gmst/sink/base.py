@@ -6,6 +6,10 @@ Sinks are not thread-safe and do not pretend to be.
 ``emit`` may be called with non-final segments (streaming partials); a later ``emit`` for an
 overlapping span supersedes an earlier non-final one. In batch every segment is final.
 
+A sink may also implement ``status(event: dict)`` for runtime status (DECIDE-05): ``lagging``,
+``overflow``, ``slow``, ``idle`` — ``{"status": str, "t": float, "message": str, ...}``. It is
+optional: the stream calls it only when present (``SrtSink`` has none; status is not subtitle).
+
 ``sse`` is the one kind that is not a file: asked for it *and* an output path, ``make_sink``
 returns both behind a ``TeeSink`` rather than dropping the file the user asked for.
 """
@@ -35,6 +39,12 @@ class TeeSink:
     def emit(self, seg: Segment) -> None:
         for s in self._sinks:
             s.emit(seg)
+
+    def status(self, event: dict) -> None:
+        for s in self._sinks:
+            fn = getattr(s, "status", None)
+            if fn is not None:
+                fn(event)
 
     def close(self) -> None:
         for s in self._sinks:

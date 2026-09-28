@@ -82,6 +82,68 @@ def _words_of(segs: list[Segment]) -> list[Word]:
     return out
 
 
+_LAG_REPORT_EVERY_S = 5.0  # at most one "lagging" / "overflow" event per this much audio
+_SLOW_AFTER_S = 10.0  # PLAN.md: dropping sustained this long -> suggest a smaller model
+_IDLE_AFTER_S = 10.0  # no speech this long -> one "idle" event per silent stretch
+
+
+class _StatusMonitor:
+    """Runtime status for the user (PLAN.md "Review decisions", DECIDE-05; R3): dropped audio,
+    PortAudio overflows, a sustained lag, and long silence. Each becomes a ``logging`` warning
+    (stderr) and a ``{"status", "t", "message", ...}`` event for a sink that has ``status()``.
+    Rate-limited, and timed on the audio clock like everything else here."""
+
+    def __init__(self, source, sink) -> None:
+        self._stats = getattr(source, "stats", None)
+        self._send = getattr(sink, "status", None)
+        self._log = logging.getLogger("gmst.stream")
+        self._dropped = self._overflows = 0
+        self._last_lag_event = self._last_ovf_event = -1e9
+        self._lag_since: float | None = None
+        self._last_drop = -1e9
+        self._slow_sent = False
+        self._last_speech = 0.0
+        self._idle_sent = False
+
+    def _event(self, kind: str, t: float, message: str, **detail) -> None:
+        self._log.warning("%s at %.1f s: %s", kind, t, message)
+        if self._send is not None:
+            self._send({"status": kind, "t": round(t, 3), "message": message, **detail})
+
+    def tick(self, now: float) -> None:
+        if self._stats is None:
+            return
+        dropped = int(getattr(self._stats, "blocks_dropped", 0))
+        if dropped > self._dropped:
+            if self._lag_since is None or now - self._last_drop > _SLOW_AFTER_S:
+                self._lag_since, self._slow_sent = now, False  # a new lagging episode
+            self._last_drop = now
+            if now - self._last_lag_event >= _LAG_REPORT_EVERY_S:
+                self._event("lagging", now, f"{dropped} audio blocks dropped so far — the engine "
+                            "is behind real time", dropped=dropped)
+                self._last_lag_event = now
+            if not self._slow_sent and now - self._lag_since >= _SLOW_AFTER_S:
+                self._event("slow", now, f"audio dropped for {now - self._lag_since:.0f} s — try "
+                            "a smaller model (model_size) or a pinned --language", dropped=dropped)
+                self._slow_sent = True
+            self._dropped = dropped
+        overflows = int(getattr(self._stats, "overflows", 0))
+        if overflows > self._overflows:
+            if now - self._last_ovf_event >= _LAG_REPORT_EVERY_S:
+                self._event("overflow", now, f"{overflows} PortAudio input overflows",
+                            overflows=overflows)
+                self._last_ovf_event = now
+            self._overflows = overflows
+
+    def speech(self, now: float, heard: bool) -> None:
+        if heard:
+            self._last_speech, self._idle_sent = now, False
+        elif not self._idle_sent and now - self._last_speech >= _IDLE_AFTER_S:
+            self._event("idle", now, f"no speech for {now - self._last_speech:.0f} s — "
+                        "still listening")
+            self._idle_sent = True
+
+
 def _spans(words: list[Word], shift: float = 0.0) -> list[tuple[float, float]]:
     return [(w.start - shift, w.end - shift) for w in words]
 
@@ -99,6 +161,7 @@ def run_stream(
     agree = LocalAgreement()
     turns = TurnTracker(cfg.turn_gap_seconds)
     glossary = make_glossary(cfg)
+    monitor = _StatusMonitor(source, sink)
     stats = StreamStats()
 
     committed: list[str] = []
@@ -150,11 +213,13 @@ def run_stream(
     try:
         for block in source.blocks():
             ep.add(block)
+            monitor.tick(ep.t0_seconds + ep.buffer_seconds)
             if not ep.ready_to_decode():
                 continue
             ep.mark_decoded()
 
             a = ep.assess()
+            monitor.speech(ep.t0_seconds + ep.buffer_seconds, bool(a.regions))
             if not a.regions:
                 if a.forced:  # silence-only buffer that grew too big — drop it
                     ep.reset(keep_overlap=False)

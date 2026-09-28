@@ -49,6 +49,17 @@ class ConsoleSink:
             self._partial_len = len(line)
         self._fh.flush()
 
+    def status(self, event: dict) -> None:
+        """Runtime status on its own line — on a terminal only: in a transcript file it would be
+        noise, and stderr already carries it as a log warning."""
+        if not self._tty:
+            return
+        if self._partial_len:
+            self._fh.write("\r" + " " * self._partial_len + "\r")
+            self._partial_len = 0
+        self._fh.write(f"[{event['status']}] {event.get('message', '')}\n")
+        self._fh.flush()
+
     def close(self) -> None:
         if self._tty and self._partial_len:
             self._fh.write("\n")

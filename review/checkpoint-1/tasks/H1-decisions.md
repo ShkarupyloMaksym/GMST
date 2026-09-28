@@ -5,7 +5,7 @@ stage: decision
 kind: task
 agent: human
 model: human
-status: in-progress
+status: done
 depends-on: T1
 
 # H1 — Your decisions
@@ -71,16 +71,20 @@ the synthetic sets — DECIDE-06 (a recorded, hand-transcribed real meeting) bec
 - **DECIDE-06 → search the web for datasets** ("I can't give you real audio for now"): public
   Ukrainian speech with English terms / uk–en code-switching, with transcripts that keep the terms
   in Latin script. Node X.5.
+- **DECIDE-05 → "Also in JSONL/SSE":** stderr log warnings, a console status line, and a
+  `{"status": ...}` object in the JSONL/SSE stream (a schema addition, approved). F.13.
+- **DECIDE-07 → strike the claim:** no CI; the CI sentences are struck in CLAUDE.md / PLAN.md /
+  README (F.13's commit).
 - **DECIDE-08 (new) → an auto-growing glossary**, enabled in config and removable for speed ("yes,
   it'd add latency, but if we would want speed — it can be removed"): a configured term list fed to
   Whisper as prompt / `hotwords`, which grows with English terms seen in the session.
 
 ## Findings
 
-_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_
+All eight DECIDE items answered on 2026-09-28 (see above and root PLAN.md "Review decisions").
 
 ## Could not check
 
-_(and why)_
+Nothing.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded

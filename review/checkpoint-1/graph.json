@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 11:30 UTC",
+ "generated": "2026-09-28 11:36 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -70,17 +70,17 @@
     "F.9",
     "F.10",
     "F.11",
-    "F.12"
+    "F.12",
+    "F.13"
    ],
    "state": "in-progress",
    "waiting_on": [
-    "H1",
     "F.4",
     "F.7"
    ],
    "depth": 0,
-   "leaves_total": 12,
-   "leaves_done": 10,
+   "leaves_total": 13,
+   "leaves_done": 11,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -520,6 +520,42 @@
    }
   },
   {
+   "id": "F.13",
+   "title": "DECIDE-05 fix: runtime status to stderr, console and JSONL/SSE; DECIDE-07 CI claim struck",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "T1"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.13-runtime-status.md",
+   "summary": "Implement DECIDE-05 (R3's four serious rows + the idle minor) and DECIDE-07 (R6's CI claim).",
+   "instructions": "Implement DECIDE-05 (R3's four serious rows + the idle minor) and DECIDE-07 (R6's CI claim).",
+   "findings_text": "- `stream.py` `_StatusMonitor`: reads `source.stats.blocks_dropped` / `.overflows` every block\n  and VAD speech every decode, on the audio clock; events `{\"status\", \"t\", \"message\", ...}` via\n  `logging.getLogger(\"gmst.stream\").warning` and the sink's optional `status()`.\n- Sinks: `JsonlSink.status` writes the object; `SseSink.status` broadcasts it and the viewer shows\n  it in a status bar instead of as a partial; `ConsoleSink.status` prints a line on a TTY only;\n  `TeeSink.status` fans out; `SrtSink` has none.\n- Docs: PLAN.md failure rows (queues, overflow, falls behind, all-silence), the pinned JSONL/SSE\n  schema (status objects), \"Review decisions\"; CLAUDE.md \"Failure modes\".\n- DECIDE-07: CI sentences struck/removed in CLAUDE.md, PLAN.md, README.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -528,11 +564,11 @@
    "agent": "human",
    "model": "human",
    "effort": null,
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [
     "T1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -542,13 +578,13 @@
    "file": "tasks/H1-decisions.md",
    "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
    "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "All eight DECIDE items answered on 2026-09-28 (see above and root PLAN.md \"Review decisions\").",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -941,7 +977,7 @@
    "file": "tasks/X.1-stream-vs-batch-wer.md",
    "summary": "Extend R1's `scripts/R1/probe_real_model_contradictions.py` into `scripts/X.1/`: for the first 20 clips of `eval/results/data/en` and of `uk` (language pinned) and the first 20 `mixed` inter clips (auto LID), run batch and `run_stream` with shipped defaults, `small` then `large-v2`. Report corpus WER per set and mode, contradicted-push share, and 5 sample stream outputs.",
    "instructions": "Extend R1's `scripts/R1/probe_real_model_contradictions.py` into `scripts/X.1/`: for the first 20 clips of `eval/results/data/en` and of `uk` (language pinned) and the first 20 `mixed` inter clips (auto LID), run batch and `run_stream` with shipped defaults, `small` then `large-v2`. Report corpus WER per set and mode, contradicted-push share, and 5 sample stream outputs.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.1/`. Write the clip list to `scripts/X.1/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.",
-   "findings_text": "**`small` run complete** (`scripts/X.1/run_wer.py small en uk mixed`, `scripts/X.1/small_run.log`,\n`scripts/X.1/small_results.json`; shipped-default engine `faster_whisper`, `per_segment_lid=True`,\n`compute_device=cpu`, `compute_type=int8`; no other Python process running before/during, offline).\nCorpus WER (`gmst.metrics.word_errors`, pooled edits/ref_words, not per-clip mean):\n\n| set | mode | WER | edits/ref | elapsed | decodes | contradicted/pushes |\n|---|---|---|---|---|---|---|\n| en | batch | 2.64% | 11/417 | 21.8s | — | — |\n| en | stream | 6.95% | 29/417 | 406.9s | 179 | 0/179 |\n| uk | batch | 23.78% | 34/143 | 19.9s | — | — |\n| uk | stream | 27.27% | 39/143 | 136.5s | 98 | 0/98 |\n| mixed-inter | batch | 11.02% | 65/590 | 79.0s | — | — |\n| mixed-inter | stream | 33.39% | 197/590 | 567.8s | 293 | 0/293 |\n\nPre-registered rule (V1, EVID-01): **holds** if stream ≤ batch + 3.0 pts on en and uk with `small`,\nand contradicted-push share ≤ 10%.\n\n- en: stream − batch = 6.95 − 2.64 = **4.32 pts** > 3.0 pt threshold.\n- uk: stream − batch = 27.27 − 23.78 = **3.50 pts** > 3.0 pt threshold.\n- contradicted-push share: 0/179 (en), 0/98 (uk), 0/293 (mixed) = **0%** on all three sets, well\n  under the 10% cap — F.8's timestamp-anchoring fix does what it was built for: not one push in\n  570 total hit the terminal contradiction path.\n\n**[serious] `fails` — the rule's WER margin is not met on either en or uk with `small`, despite zero\ncontradictions.** The stream vs batch gap is real amplification, not the contradiction bug F.8 was\nbuilt to close. Sample evidence (`small_results.json`, `sample_segments`, `ref_preview`/`out_preview`):\n  - en: ref `...AND I DECLARE IT'S TOO BAD THAT...` → stream out `...And I declare it's too bad it is.\n    An...` — casing/punctuation aside, extra/garbled words appear at utterance joins, unlike the\n    F.8 tiny/81s-EN probe (0.091 stream vs 0.061 batch, +3.0 pts, under this same 3.0-pt bar) — a\n    larger/more diverse en set with `small` crosses the line F.8's smaller probe did not.\n  - uk: ref `...карі сірі блакитні...` → stream out `...карі, серій, блоквідні.` (batch, by contrast,\n    got closer per the lower batch WER) — recognition noise compounded by streaming's shorter,\n    re-decoded buffers rather than one full-clip context.\n  - mixed-inter (not part of the pre-registered rule, but instructed to report): batch 11.02% →\n    stream 33.39%, a **22.37-pt** gap, by far the largest of the three. Sample: ref `...ADVICE IT WAS\n    REPUGNANT TO HIS LIBERAL NATURE це буде...` → stream out `...careful advice. was repugnant to his\n    liberal nature. It will be absolutely normal...` — \"IT\" is dropped at the exact point the\n    language should switch en→uk (the utterance-final \"IT\" is swallowed, then the uk clause is\n    itself transcribed into English \"It will be...\" before flipping to Ukrainian). This is\n    consistent with a documented, not re-argued, limitation (CLAUDE.md \"Language mixture\": sentence-\n    level LID, sticky, sub-utterance switches un-caught) but the size of the effect — 3x the WER of\n    batch on the same clips — is new evidence of how costly that limitation is for streaming\n    specifically, since batch's per-VAD-region LID (`transcribe_by_region`) does not pay the same\n    penalty (batch mixed WER 11.02% is close to en/uk-pinned batch quality, not degraded).\n\n**[minor]** All three sets show 0 `flushes_dropping` / `flush_dropped_words` — the flush-drops-an-\nunplaceable-tail path (`reconcile.py:130-140`) was never exercised in ~570 pushes across ~565s of\naudio; it remains untested against a real model at this sample size (a note for future evidence, not\na defect).",
+   "findings_text": "**`small` run complete** (`scripts/X.1/run_wer.py small en uk mixed`, `scripts/X.1/small_run.log`,\n`scripts/X.1/small_results.json`; shipped-default engine `faster_whisper`, `per_segment_lid=True`,\n`compute_device=cpu`, `compute_type=int8`; no other Python process running before/during, offline).\nCorpus WER (`gmst.metrics.word_errors`, pooled edits/ref_words, not per-clip mean):\n\n| set | mode | WER | edits/ref | elapsed | decodes | contradicted/pushes |\n|---|---|---|---|---|---|---|\n| en | batch | 2.64% | 11/417 | 21.8s | — | — |\n| en | stream | 6.95% | 29/417 | 406.9s | 179 | 0/179 |\n| uk | batch | 23.78% | 34/143 | 19.9s | — | — |\n| uk | stream | 27.27% | 39/143 | 136.5s | 98 | 0/98 |\n| mixed-inter | batch | 11.02% | 65/590 | 79.0s | — | — |\n| mixed-inter | stream | 33.39% | 197/590 | 567.8s | 293 | 0/293 |\n\nPre-registered rule (V1, EVID-01): **holds** if stream ≤ batch + 3.0 pts on en and uk with `small`,\nand contradicted-push share ≤ 10%.\n\n- en: stream − batch = 6.95 − 2.64 = **4.32 pts** > 3.0 pt threshold.\n- uk: stream − batch = 27.27 − 23.78 = **3.50 pts** > 3.0 pt threshold.\n- contradicted-push share: 0/179 (en), 0/98 (uk), 0/293 (mixed) = **0%** on all three sets, well\n  under the 10% cap — F.8's timestamp-anchoring fix does what it was built for: not one push in\n  570 total hit the terminal contradiction path.\n\n**[serious] `fails` — the rule's WER margin is not met on either en or uk with `small`, despite zero\ncontradictions.** The stream vs batch gap is real amplification, not the contradiction bug F.8 was\nbuilt to close. Sample evidence (`small_results.json`, `sample_segments`, `ref_preview`/`out_preview`):\n  - en: ref `...AND I DECLARE IT'S TOO BAD THAT...` → stream out `...And I declare it's too bad it is.\n    An...` — casing/punctuation aside, extra/garbled words appear at utterance joins, unlike the\n    F.8 tiny/81s-EN probe (0.091 stream vs 0.061 batch, +3.0 pts, under this same 3.0-pt bar) — a\n    larger/more diverse en set with `small` crosses the line F.8's smaller probe did not.\n  - uk: ref `...карі сірі блакитні...` → stream out `...карі, серій, блоквідні.` (batch, by contrast,\n    got closer per the lower batch WER) — recognition noise compounded by streaming's shorter,\n    re-decoded buffers rather than one full-clip context.\n  - mixed-inter (not part of the pre-registered rule, but instructed to report): batch 11.02% →\n    stream 33.39%, a **22.37-pt** gap, by far the largest of the three. Sample: ref `...ADVICE IT WAS\n    REPUGNANT TO HIS LIBERAL NATURE це буде...` → stream out `...careful advice. was repugnant to his\n    liberal nature. It will be absolutely normal...` — \"IT\" is dropped at the exact point the\n    language should switch en→uk (the utterance-final \"IT\" is swallowed, then the uk clause is\n    itself transcribed into English \"It will be...\" before flipping to Ukrainian). This is\n    consistent with a documented, not re-argued, limitation (CLAUDE.md \"Language mixture\": sentence-\n    level LID, sticky, sub-utterance switches un-caught) but the size of the effect — 3x the WER of\n    batch on the same clips — is new evidence of how costly that limitation is for streaming\n    specifically, since batch's per-VAD-region LID (`transcribe_by_region`) does not pay the same\n    penalty (batch mixed WER 11.02% is close to en/uk-pinned batch quality, not degraded).\n\n**[minor]** All three sets show 0 `flushes_dropping` / `flush_dropped_words` — the flush-drops-an-\nunplaceable-tail path (`reconcile.py:130-140`) was never exercised in ~570 pushes across ~565s of\naudio; it remains untested against a real model at this sample size (a note for future evidence, not\na defect).\n\n**Coordinator note (F.11, DECIDE-04) received mid-run:** `src/gmst/pipeline/stream.py` changed —\nwith `language=None` the stream now re-detects LID on every decode until the buffer holds 3s and\nholds commits until then; pinned-language runs are unaffected. This node's en/uk runs pass an\nexplicit `language` (pinned) throughout, so **F.",
    "children": [],
    "state": "in-progress",
    "waiting_on": [],
