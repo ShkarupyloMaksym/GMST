@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 06:34 UTC",
+ "generated": "2026-09-28 06:45 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -156,29 +156,29 @@
    "agent": "code-reviewer",
    "model": "opus",
    "effort": "high",
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 3,
+    "serious": 3,
+    "minor": 2
    },
    "file": "tasks/R2-language-id-and-backends.md",
    "summary": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
    "instructions": "Review `src/gmst/transcribe/lid.py`, `engine.py`, `types.py`, and every backend under `transcribe/backends/` (`faster_whisper.py`, `mlx_whisper.py`, the `load_engine` factory) against `CLAUDE.md` \"Language mixture\" and `PLAN.md` \"Language ID\" / \"ASR engine\". Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nOwn the onboarding lead in `review/checkpoint-1/PLAN.md`: does `resolve_language` ever restrict the detector to the meeting's languages, and what does GMST do when the top label is `bg`, `ja`, `be`, `pl`…? Confirm with a probe on the local clips (`eval/results/data/uk/`, offline, `tiny` and `small` only — rule 4), saved in `scripts/R2/`. Also check: the sticky threshold and uk/ru tie-break compose as the module docstring says; the ≥ 0.5 s LID window around a segment; `multilingual=True` is only requested when `per_segment_lid` is off; `vad_filter=False` on every streaming call; `no_speech_threshold` and temperature fallback left on; `ModelUnavailable` carries \"run `gmst warmup`\". For `mlx_whisper.py`, read for bugs visible without running it (the `ModelHolder.get_model` reuse and the release in `gmst bench` are open Mac items — record, don't run).",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "- [blocking] **F1 — `resolve_language` never restricts to the meeting's languages, so the stream decodes Ukrainian as `tr`, `ar`, `ru`, `bg`, `ja`… and emits text in that script.** Lead confirmed. `src/gmst/transcribe/lid.py:24-45` passes through any label the detector returns. The only rewrite is uk↔ru within `tiebreak_margin`. `stream.py:158-161` hands that label to `engine.transcribe(language=call_lang)`. `config.py:91` restricts `language` to `{en, uk}` for *pinning* only. Evidence from `lid_probe.py`, part A (full clip, `prev_lang=None`): tiny `resolved prev=None: {'ru': 27, 'uk': 21, 'pl': 4, 'bg': 2, 'ja': 2, 'cs': 2, 'ur': 1, 'hr': 1} -> not en/uk: 39/60`; small `-> not en/uk: 21/60`. Even with `prev_lang='uk'`, `ru` survives: tiny `{'uk': 47, 'ru': 13}`, small `{'uk': 48, 'ru': 12}` (e.g. `uk-3541 top3=[('ru', 0.972), ('uk', 0.012) ...]`, where the gap is far outside the 0.15 margin). Part C, the real `run_stream` path: tiny `languages handed to transcribe(): {'tr': 1, 'ru': 10, 'en': 1}; not en/uk: 11/12`, emitting `[tr] 'yorkot,navçidele,dobroho,tah'` and `[ru] 'университет,музыи и'`. small `[ar] 1.35-2.15 'يوركو'`, `[ar] 5.00-7.00 'موزيجي بيبليوتي'`.\n- [blocking] **F2 — The sticky threshold does not protect the first utterance, and it then preserves a wrong first label.** `lid.py:39,43` only stays sticky `if ... prev_lang is not None`. `run_stream` starts with `prev_lang = language` = `None` (`stream.py:131`), so the meeting's first detection is accepted at any confidence and becomes the anchor that later low-confidence detections defer to. `lid_probe_small.out`: `LID on 2.00s prev=None raw=ar@0.21 ... -> used ar`, then `LID on 3.00s prev=ar raw=ru@0.423 ... -> used ar`. `lid_probe_tiny.out`: `prev=None raw=tr@0.435 -> used tr`, then a single `ru@0.708` (just over 0.7) locks `ru` for 9 of the next 10 utterances (`prev=ru raw=en@0.339 -> used ru`, `raw=es@0.317 -> used ru`, `raw=pl@0.306 -> used ru` …). The docstring's rationale (\"switching an English meeting to `uk` on 0.11 confidence would then stick\", `lid.py:12-14`) applies just as much to the first utterance, but no prior exists for it.\n- [blocking] **F3 — In batch, \"per-segment LID\" only relabels. The text is faster-whisper's own first-window autodetect decode, with no tie-break, no sticky rule and no window. The labels can also contradict the script of the text.** `faster_whisper.py:54-57` calls `self._model.transcribe(language=None, multilingual=False)` when `per_segment_lid` is on. faster-whisper then detects once and decodes every segment in that language. `_detect_slice` (`:69`) only writes `Segment.language` afterwards. `mlx_whisper.py:53-66` has the same structure. `lid_probe_tiny.out` part B: `text identical to raw autodetect decode: 60/60; clips where GMST label != language the text was decoded in: 5/60`, e.g. `uk-259: decoded-as=cs gmst-labels=['ro'] text=' Štáraz o sím na hadejo.'` and `uk-2150: decoded-as=ru gmst-labels=['es'] text=' Уситок и вон есть.'`. Eval cross-check (gmst-batch vs fw-tiny-auto text): `uk-3726 True bg`, `uk-3519 True ja`, `uk-2023 True ru`, 11/12 identical. This is why `scores.json` gives gmst-batch UK WER = raw autodetect (68.21) and not the pinned 41.54. `eval/run_eval.py:6` describes `gmst-batch` as \"per-utterance LID + tiebreak\", so the eval that is meant to choose the model and default measures raw autodetect under GMST's name. That is a wrong-decision risk (rule 2).\n- [serious] **F4 — The stream fixes an utterance's language from its first 1–4 s of buffer, not from the endpointed segment, and short prefixes of Ukrainian read as English.** `stream.py:157-158` detects once, when `utt_lang is None`, on the buffer at the utterance's first decode (`min_chunk_seconds=1.0`, `endpointer.py:65-66`). It keeps that answer until the endpoint. PLAN.md:40-41 says \"detect language on each endpointed segment\". Part C shows LID ran on 1.0–4.0 s buffers. Part A on the first 1.0 s of each uk clip: tiny `raw top-1: {'en': 38, 'ru': 13, 'nn'",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 3,
+    "serious": 3,
+    "minor": 2
    }
   },
   {
@@ -224,29 +224,29 @@
    "agent": "code-reviewer",
    "model": "sonnet",
    "effort": "medium",
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 1,
+    "serious": 2,
+    "minor": 1
    },
    "file": "tasks/R4-test-suite-adequacy.md",
    "summary": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.",
    "instructions": "Audit `tests/` (136 fast tests + 4 slow) against what `PLAN.md` \"Testing\" and \"`reconcile.py` edge cases (each has a test)\" promise. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nFor each promised test, name the test that covers it or record that none does. Own the onboarding lead: `tests/fixtures/en.wav` / `uk.wav`. Then check that the tests would actually fail if the code were wrong: for the five riskiest guards (your pick, justified — start with `_align`'s −1 on contradiction, the overlap anchor, `trim_to`/`rebase`, the unconditional `sink.close()`, and the drop-oldest queue), apply a one-line mutation in a **scratch copy** of the tree (never the working tree), run the suite there, and record whether it goes red. Save the mutations and outputs in `scripts/R4/`. Run `uv run pytest -m slow` once (offline) and record the result.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "- **[blocking]** `tests/test_device_source.py::test_bounded_queue_drops_oldest` cannot tell\n  drop-oldest from drop-newest, so a reversal of the documented failure-mode policy\n  (`CLAUDE.md`: \"bounded `audio_queue` (drop-oldest + `[lagging]` flag when the engine falls\n  behind)\") would ship silently. `src/gmst/audio/device_source.py:150-158` is the only place that\n  policy is implemented. Mutation 5\n  (`review/checkpoint-1/scripts/R4/mutation5_drop_oldest_queue.diff`) replaces the evict-head-then-\n  enqueue with \"count the drop, discard the incoming block\" (i.e. drop-**newest**) — a one-line\n  change that keeps the *stalest* audio in the queue forever once it fills, the opposite of what a\n  live-captioning session needs. Result: `9 passed` in `tests/test_device_source.py`\n  (`scripts/R4/mutation5_output.txt`) — the test suite does not notice. Root cause: the test feeds\n  five identical `np.zeros(...)` blocks, so `blocks_in`, `blocks_dropped`, `q.qsize()` and `lagging`\n  are the same regardless of which end of the queue is evicted. `scripts/R4/queue_content_probe.py`,\n  run against the *real*, unmutated code, confirms the surviving queue entries are content-dependent:\n  feeding marks `0.0, 0.1, 0.2, 0.3, 0.4` through the maxsize-3 queue leaves the three most recent\n  marks (`0.13, 0.2, 0.26` after resampling) — proof the current code is in fact correct, and equally\n  proof that the existing test is not exercising the property it is named for. A one-line assertion\n  on block *content* (not just counts) after overflow would have caught this.\n\n- **[serious]** `PLAN.md:295` and `tests/fixtures/README.md` promise `tests/fixtures/en.wav` and\n  `uk.wav`, committed, for LID tests (\"Keep them short and commit them... commit\"). Verified:\n  `ls tests/fixtures/` → only `README.md`; no `.wav` file exists anywhere in `tests/fixtures/`.\n  No test in the suite reads `tests/fixtures/en.wav` or `uk.wav` (`grep -r fixtures/en.wav\\|uk.wav\n  tests/` — no hits); `tests/test_lid.py` tests `resolve_language` purely on synthetic\n  `(lang, prob, candidates)` tuples, and `tests/test_backend_lid_windows.py` stubs the model with\n  `_RecordingModel` rather than loading real audio. The onboarding lead this node was asked to own\n  is confirmed exactly as suspected: the promised end-to-end \"does the model actually call `uk` on\n  clear Ukrainian speech / `en` on clear English speech\" check does not exist anywhere in the suite —\n  every LID test operates on numbers the test author chose, not on real EN/UK audio.\n\n- **[serious]** `src/gmst/segment/endpointer.py:80-92` (`trim_to`) and its only tests\n  (`tests/test_endpointer.py::test_trim_to_advances_t0_and_shrinks_buffer`,\n  `test_trim_to_is_a_no_op_inside_the_back_off`) verify only the raw seconds/samples arithmetic of\n  the `_TRIM_BACKOFF_S` = 0.2 s back-off against an arbitrary `ScriptedVad` boundary — they never tie\n  the cut point to a real committed word's audio span. This is exactly why the suite stayed green\n  through R1's reported defect (`trim_to` cuts 0.2 s before the **end** of the last committed word,\n  landing *inside* that word rather than before it): no unit test asserts the back-off lands outside\n  the word's own audio. Separately, the seam-level probes that could in principle catch the\n  consequence (`test_stream_pipeline.py::test_committed_audio_is_trimmed_so_the_decoded_buffer_stays_bounded`,\n  `test_forced_cut_never_re_commits_the_overlap_or_moves_time_backwards`) are built on `_marked()`\n  audio whose amplitude only changes at 0.5 s chunk boundaries (`chunk_seconds=0.5` default) — coarser\n  than the 0.2 s back-off — so `_marked_engine` reads back the *same* word mark whether the cut lands\n  at the true word boundary or 0.2 s inside it, and the bug produces no observable duplicate or\n  mismatch in these tests. Demonstrated directly: mutation 3\n  (`scripts/R4/mutation3_trim_rebase.diff`, widening the trim-path anchor beyond what actually\n  survived the cut — a related but distinct \"anchor too ",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "blocking": 1,
+    "serious": 2,
+    "minor": 1
    }
   },
   {
@@ -292,29 +292,29 @@
    "agent": "doc-consistency-auditor",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "serious": 3,
+    "minor": 4
    },
    "file": "tasks/R6-docs-vs-code.md",
    "summary": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.",
    "instructions": "Read `CLAUDE.md`, `PLAN.md`, `README.md` and `gmst.example.toml` as a new session would, and check every factual claim they make about the code: module layout, config fields and defaults (the table in `PLAN.md` \"Config\" vs `src/gmst/config.py`), env vars, exit codes, phase status, CLI flags (`uv run gmst <cmd> --help`), the test count, and the Commands section. Read first: root `CLAUDE.md`, `PLAN.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), this file. Set `status: in-progress` before starting.\n\nEvery disagreement is a finding with both locators. Own the onboarding leads on `eval/` being undocumented and the ruff E501. Also list anything a new user would need to run it on Linux (the PulseAudio/PipeWire monitor source) that the README does not say.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "- [serious] `PLAN.md` and `CLAUDE.md` both assert CI behavior (\"CI runs the `faster_whisper` path\n  only\") but no CI configuration exists anywhere in the repository — `PLAN.md:297` (\"CI runs the\n  `faster_whisper` path only; MLX cannot run on a Linux runner\"), `CLAUDE.md` Commands section\n  (\"CI runs the `faster_whisper` path only\"). Evidence: `.github/` does not exist (`ls -la .github`\n  → \"No such file or directory\"); no `.yml`/`.yaml` workflow file anywhere in the tree outside\n  `.venv`. A reader of either doc would reasonably conclude a pipeline exists and is green on every\n  push; there is nothing to be green — the claim describes an intent, not an observable fact.\n\n- [serious] `gmst.example.toml:39` documents `sse_port = 0  # ... (0 = any free port)`, but setting\n  `sse_port = 0` in `gmst.toml` is rejected at config load, contradicting the doc — only the CLI\n  flag `--sse-port 0` (which bypasses `Config._merge`/`_coerce` via a direct `replace`, `cli.py:166`)\n  gets the \"any free port\" behavior the comment describes. Evidence\n  (`review/checkpoint-1/scripts/R6/sse_port_zero.py`, run via `uv run python`):\n  `_merge(Config(), {\"sse_port\": 0})` → `FAIL: ValueError sse_port: 0 is out of range (in [1,\n  65535])`, because `config.py:85` sets `\"sse_port\": (int, 1, 65535)` — minimum 1, not 0. A user who\n  follows the example file's own comment and puts `sse_port = 0` in `gmst.toml` gets a load-time\n  crash instead of \"any free port\"; the CLAUDE.md/PLAN.md config-validation claim (\"a bad enum...\n  all fail at load, not mid-meeting\") is otherwise true, but here the *documented* value is itself\n  invalid.\n\n- [serious] README's Linux row of the audio-routing table (\"the PulseAudio/PipeWire sink `.monitor`\n  source\", Gotchas: \"—\") implies a Linux user can point `input_device`/`--device` at that source by\n  name the same way the macOS row points at \"BlackHole\", but `gmst devices` does not surface\n  per-sink monitor names on a PipeWire/PulseAudio-ALSA machine — it only lists the generic ALSA\n  entries `pulse`, `pipewire`, `default`, etc., which route to whichever source is the **system\n  default**, not a name a `--device` substring match can pick out. Evidence — actual\n  `uv run gmst devices` output on this machine:\n  ```\n   idx  ch     rate  host / name\n  ------------------------------------------------------------\n     0   2    44100  ALSA / HDA Intel PCH: ALC257 Analog (hw:0,0)\n     9  128    48000  ALSA / sysdefault\n    18  128    44100  ALSA / pipewire\n    19   32    44100  ALSA / pulse\n    24* 128    44100  ALSA / default\n  ```\n  There is no entry named after any monitor source. Making the Meet-output monitor the thing `gmst`\n  actually captures on Linux requires OS-level default-source routing (e.g. `pactl set-default-source\n  <sink>.monitor`, or `pactl load-module module-loopback`, or `PULSE_SOURCE=<name>` in the\n  environment) — none of which the README or `PLAN.md`'s routing table mentions. `input_device`'s\n  doc (\"sounddevice id, or name substring\", `config.py:36`) is accurate for macOS/BlackHole (a\n  uniquely named device) but not operable for the Linux path as documented.\n\n- [minor] README's Setup section (`uv sync` / `uv run gmst devices` / `uv run gmst warmup`) does not\n  mention that `sounddevice` on Linux needs the **system** PortAudio library already installed —\n  unlike the macOS/Windows PyPI wheels, the Linux wheel does not bundle `libportaudio`. Evidence: no\n  `libportaudio*` file anywhere under `.venv/` (`find .venv -iname \"*portaudio*\"` → empty), while\n  `ldconfig -p | grep -i portaudio` resolves it to `/usr/lib/libportaudio.so.2`, a system package on\n  this machine (pre-installed, not part of the repo/venv). `cli.py:34-39` does handle the missing\n  case cleanly (`except OSError: print(\"cannot load PortAudio: ...\")`, exit 1), so it is not silent\n  — but nothing in README/CLAUDE.md tells a fresh Linux user to `apt install libportaudio2` /\n  `pacman -S portaudio` / equivalent before `uv sync` will give a working `so",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
-    "serious": 0,
-    "minor": 0
+    "serious": 3,
+    "minor": 4
    }
   },
   {
@@ -384,9 +384,6 @@
    "children": [],
    "state": "waiting",
    "waiting_on": [
-    "R2",
-    "R4",
-    "R6",
     "R7"
    ],
    "depth": 0,
