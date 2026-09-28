@@ -5,7 +5,7 @@ stage: fix
 kind: task
 agent: orchestrator
 model: sonnet
-status: todo
+status: done
 depends-on: T1
 
 # F.7 — Documents: Linux routing, eval, LID cost, stale claims
@@ -25,14 +25,20 @@ FIX id with an explicit pathspec. Items and evidence: T1's triage table.
 
 ## What was read / measured
 
-_(write as you go: files and line ranges read, commands run, where you stopped)_
+FIX-24, -25a, -25b, -26 landed in `8ea0f79` (after a classifier outage); DECIDE-07's CI claim in
+`fed803c` (F.13). FIX-27 waited for X.1d, done here.
 
 ## Findings
 
-_(what changed, per FIX id, with the commit)_
+- **FIX-24** README: system PortAudio; the Meet monitor on Linux via `PULSE_SOURCE` / pavucontrol.
+- **FIX-25a** PLAN loopback row amended (exit 1 + routing pointer, printed by `stream`).
+- **FIX-25b** `eval/` in PLAN's layout and CLAUDE.md's commands; `canary.py` marked not created.
+- **FIX-26** LID is a separate encoder pass on both backends (PLAN, `engine.py`, latency table).
+- **FIX-27** the "verified end-to-end … clean ordered transcript" claims in CLAUDE.md and PLAN.md
+  struck and replaced with X.1d's measured numbers.
 
 ## Could not check
 
-_(and why)_
+The Linux monitor-routing steps are documented as not yet validated end-to-end.
 
-FINDING: _(clean | findings | recorded | blocked)_
+FINDING: recorded

@@ -14,9 +14,12 @@ backend (portable fallback) but are not validated. There is no CI (DECIDE-07).
 
 Build order is **batch first, then streaming** — see `PLAN.md` for the full phase plan, model
 survey, latency budget, failure-mode table, and config reference. Current state: **Phases 1–3 done,
-Phase 4 partial.** Every subcommand works. `stream` runs device → endpointer → per-utterance sticky
-LID → engine → LocalAgreement-2 → sink, SIGINT-driven drain-and-flush shutdown, verified end-to-end
-with real Silero VAD + `tiny` Whisper. Phase 4 shipped: word-level timestamps (`Segment.words`),
+Phase 4 partial.** Every subcommand works. `stream` runs device → endpointer → per-utterance
+restricted LID → engine → LocalAgreement-2 (provisional) → per-utterance final decode (two-pass,
+DECIDE-09) → sink, with SIGINT/SIGTERM drain-and-flush shutdown. ~~Verified end-to-end with real
+Silero VAD + `tiny` Whisper~~ — that check fed noise and lost ~85 % of real speech (review R1).
+Measured instead (review X.1d, 2026-09-28, `small`, fresh unseen clips, final text vs batch):
+English 3.51 % vs 3.22 %, Ukrainian 31.94 % vs 33.33 %; `large-v2` +0.9 / +3.5 pts. Phase 4 shipped: word-level timestamps (`Segment.words`),
 turn segmentation on pauses (`segment/turns.py`, `Segment.turn`), and an SSE sink (`sink/sse.py`,
 `--sink sse`). Not done: AlignAtt/`Lightning-SimulWhisper` and the `canary` backend (Mac/GPU only),
 LLM cleanup pass (deferred). `mlx_whisper` backend is written but untested (needs a Mac); `gmst
