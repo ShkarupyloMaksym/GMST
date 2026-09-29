@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-29 05:22 UTC",
+ "generated": "2026-09-29 05:23 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -1332,12 +1332,15 @@ const DATA = {
     "X.1b",
     "X.1c",
     "X.1d",
+    "X.1e",
     "X.6b"
    ],
    "state": "in-progress",
-   "waiting_on": [],
+   "waiting_on": [
+    "X.1e"
+   ],
    "depth": 0,
-   "leaves_total": 10,
+   "leaves_total": 11,
    "leaves_done": 10,
    "severity_total": {
     "blocking": 11,
@@ -1771,6 +1774,42 @@ const DATA = {
    "severity_total": {
     "blocking": 0,
     "serious": 1,
+    "minor": 0
+   }
+  },
+  {
+   "id": "X.1e",
+   "title": "EVID-01 for the new default model (large-v3-turbo), two-pass, fresh rows",
+   "parent": "X",
+   "stage": "evidence",
+   "kind": "task",
+   "agent": "repro-runner",
+   "model": "sonnet",
+   "effort": "medium",
+   "status": "todo",
+   "depends_on": [
+    "F.19"
+   ],
+   "finding": null,
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/X.1e-two-pass-turbo.md",
+   "summary": "DECIDE-10 made `large-v3-turbo` the default; X.1d verified two-pass streaming with `small` and `large-v2` only. Pre-registered here (2026-09-29, before running): EVID-01's threshold applied to the default model — stream (final segments only) ≤ batch + 3.0 pts on en and uk — on rows 40–59 of `en.jsonl` / `uk.jsonl` (X.1d's deciding rows), `large-v3-turbo`, each stream run twice. Also report any rep",
+   "instructions": "DECIDE-10 made `large-v3-turbo` the default; X.1d verified two-pass streaming with `small` and\n`large-v2` only. Pre-registered here (2026-09-29, before running): EVID-01's threshold applied to\nthe default model — stream (final segments only) ≤ batch + 3.0 pts on en and uk — on rows 40–59\nof `en.jsonl` / `uk.jsonl` (X.1d's deciding rows), `large-v3-turbo`, each stream run twice. Also\nreport any repeated 6-gram not present in the reference and any \"www\" / \"End 1\"-style boilerplate.\nCopy `scripts/X.1d/run_wer.py` to `scripts/X.1e/` (output paths only). Read first: root\n`CLAUDE.md`, `tasks/X.1d-*.md`, this file. Offline (turbo is cached), one large model at a time\n(`pgrep -af python` first), main tree `.venv`, no clone; write only this node file and\n`scripts/X.1e/`.",
+   "findings_text": "_(numbers against the rule)_",
+   "children": [],
+   "state": "ready",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 0,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
     "minor": 0
    }
   },
