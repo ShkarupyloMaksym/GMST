@@ -375,6 +375,32 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   in Latin inside Ukrainian text. Targets term fidelity inside Ukrainian decoding, which
   per-utterance LID cannot fix. X.6b measures it.
 
+## Open after the checkpoint-1 review (2026-09-29)
+
+Summary of the review: `review/checkpoint-1/changes.md`.
+
+**Needs the Mac (rule 6 of the review):**
+- **MAC-01** `ModelHolder.get_model(repo, mx.float16)` in `mlx-whisper==0.4.3`: name, signature,
+  and that `transcribe` shares the cached model; `gmst bench` actually frees unified memory.
+- **MAC-02** `mlx_whisper.py` `_detect_full`: float32 mel into a float16 model — promoted or error;
+  `log_mel_spectrogram` layout, `mel[None]`, `probs[0]`.
+- **MAC-03** MLX latency: LID per utterance (PLAN's ~150 ms), live update, two-pass final text;
+  end-to-end ≲ 3 s. The CPU numbers (X.4) say this is where the target lives or dies.
+- **MAC-04** BlackHole routing and the 10-min zero-overflow soak.
+- **MAC-05** an mlx conversion of `Yehor/whisper-large-v3-turbo-quantized-uk` for `MLX_CANDIDATES`.
+- **MAC-06** two-pass stream vs batch WER with `mlx_whisper` (X.1e's protocol).
+
+**Deferred:**
+- A per-decode timeout / token cap: the only hangs seen (X.6) came from glossary prompts, now
+  removed, but nothing bounds a runaway decode.
+- Two-pass runs LID twice per utterance (live, then on the whole utterance): reusing the live
+  language saves ~3.5 s per utterance on CPU at X.2's 3 s accuracy (≥ 95 %) instead of ≥ 98 %.
+- `Yehor/whisper-large-v3-turbo-quantized-uk` (leaderboard 12.75 % uk) is a `compressed-tensors`
+  checkpoint; measuring it needs `torch` + a conversion path (X.3).
+- The glossary on real IT-meeting audio (DECIDE-06: none available); `large-v2` two-pass uk was
+  +3.48 pts over batch (X.1d) — not the default model.
+- `bench` UPDATE_INTERVAL_S is a constant, not a config field (X.4).
+
 ## Phases
 
 | Phase | Build | Milestone / exit criterion |

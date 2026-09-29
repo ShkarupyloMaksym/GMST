@@ -134,7 +134,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,3.2vw,34px)
 
 <script>
 const DATA = {
- "generated": "2026-09-29 05:23 UTC",
+ "generated": "2026-09-29 06:07 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -177,12 +177,12 @@ const DATA = {
    "agent": "orchestrator",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "T1",
     "H1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -215,7 +215,7 @@ const DATA = {
     "F.19",
     "F.20"
    ],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 0,
    "leaves_total": 20,
@@ -1307,11 +1307,11 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": null,
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "V1"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -1335,13 +1335,11 @@ const DATA = {
     "X.1e",
     "X.6b"
    ],
-   "state": "in-progress",
-   "waiting_on": [
-    "X.1e"
-   ],
+   "state": "done",
+   "waiting_on": [],
    "depth": 0,
    "leaves_total": 11,
-   "leaves_done": 10,
+   "leaves_done": 11,
    "severity_total": {
     "blocking": 11,
     "serious": 11,
@@ -1786,11 +1784,11 @@ const DATA = {
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "F.19"
    ],
-   "finding": null,
+   "finding": "clean",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -1800,13 +1798,13 @@ const DATA = {
    "file": "tasks/X.1e-two-pass-turbo.md",
    "summary": "DECIDE-10 made `large-v3-turbo` the default; X.1d verified two-pass streaming with `small` and `large-v2` only. Pre-registered here (2026-09-29, before running): EVID-01's threshold applied to the default model — stream (final segments only) ≤ batch + 3.0 pts on en and uk — on rows 40–59 of `en.jsonl` / `uk.jsonl` (X.1d's deciding rows), `large-v3-turbo`, each stream run twice. Also report any rep",
    "instructions": "DECIDE-10 made `large-v3-turbo` the default; X.1d verified two-pass streaming with `small` and\n`large-v2` only. Pre-registered here (2026-09-29, before running): EVID-01's threshold applied to\nthe default model — stream (final segments only) ≤ batch + 3.0 pts on en and uk — on rows 40–59\nof `en.jsonl` / `uk.jsonl` (X.1d's deciding rows), `large-v3-turbo`, each stream run twice. Also\nreport any repeated 6-gram not present in the reference and any \"www\" / \"End 1\"-style boilerplate.\nCopy `scripts/X.1d/run_wer.py` to `scripts/X.1e/` (output paths only). Read first: root\n`CLAUDE.md`, `tasks/X.1d-*.md`, this file. Offline (turbo is cached), one large model at a time\n(`pgrep -af python` first), main tree `.venv`, no clone; write only this node file and\n`scripts/X.1e/`.",
-   "findings_text": "_(numbers against the rule)_",
+   "findings_text": "Pre-registered rule (this file, 2026-09-29): EVID-01's threshold (stream, finals only, two-pass, ≤\nbatch + 3.0 pts on en and uk) applied to the default model `large-v3-turbo`, on X.1d's deciding\nrows 40-59 of `en.jsonl`/`uk.jsonl`, each stream run twice.\n\n**`large-v3-turbo`, rows 40-59 (`scripts/X.1e/large-v3-turbo_c_results.json`):**\n\n| set | mode | WER | edits/ref | gap vs batch |\n|---|---|---|---|---|\n| en | batch | 3.22% | 11/342 | — |\n| en | stream rep0 | 2.34% | 8/342 | **−0.88 pts (passes, stream beats batch)** |\n| en | stream rep1 | 2.34% | 8/342 | same, identical to rep0 |\n| uk | batch | 6.25% | 9/144 | — |\n| uk | stream rep0 | 6.25% | 9/144 | **0.00 pts (passes, exact tie)** |\n| uk | stream rep1 | 6.25% | 9/144 | same, identical to rep0 |\n\nContradicted-push share: en 0/130, uk 0/80 (0%) both reps — well under the 10% bar. Both reps\nbyte-identical per set. No repeated 6-gram and no \"www\"/\"End 1\"/\".FEMA\"/\".gov\"/boilerplate\nsubstring in any of the 4 stream `full_out` strings.\n\n**Verdict: EVID-01 holds cleanly for the new default model, `large-v3-turbo`, on rows 40-59 —\nthe best of the four (`small`, `large-v2`, `large-v3-turbo`, and the earlier `large-v2` reported\nrun) two-pass results seen across X.1d/X.1e: both languages pass with margin, uk exactly ties\nbatch rather than merely staying under the +3.0-pt bar, and en's stream even beats batch. This is\nalso the only model of the three tested (`small`, `large-v2`, `large-v3-turbo`) with zero gap on\nuk** — `large-v2` reported +3.48 pts over the bar on this exact row range (X.1d), `small` passed\nat −1.39 pts. Both `uk` batch WER (6.25%, 9/144) and `en` batch WER (3.22%, 11/342) on this specific\n20-clip subset are markedly lower than X.3's cited corpus-level figures for `large-v3-turbo` (uk\n12.36%, en 2.79%, per `config.py:24`'s DECIDE-10 comment) — expected, since rows 40-59 is a\n20-clip subset of a much larger eval set, not a discrepancy, but it means this node's numbers\nshould not be read as reproducing X.3's aggregate WER.\n\n- No blocking or serious findings: the pre-registered rule holds on both languages, on the\n  deciding held-out rows, with both stream reps deterministic and no hallucination/duplication\n  signature.",
    "children": [],
-   "state": "ready",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -1858,11 +1856,11 @@ const DATA = {
    "agent": "orchestrator",
    "model": "opus",
    "effort": "medium",
-   "status": "todo",
+   "status": "done",
    "depends_on": [
     "F"
    ],
-   "finding": null,
+   "finding": "recorded",
    "has_read_section": true,
    "severity": {
     "blocking": 0,
@@ -1872,15 +1870,13 @@ const DATA = {
    "file": "tasks/Z1-close-out.md",
    "summary": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
    "instructions": "Confirm every FIX is done or explicitly deferred, every MAC item is listed in `PLAN.md`, `CLAUDE.md` / `PLAN.md` reflect what changed, the suite and ruff are green. Write `changes.md` (what the review changed) and tag `checkpoint-2` on `main` after the user merges.",
-   "findings_text": "_(one bullet per finding: `- [blocking|serious|minor] <claim> — <file:line or command>`, then the evidence)_",
+   "findings_text": "- `review/checkpoint-1/changes.md` written.\n- **Not done here, by rule:** merging to `main` and tagging `checkpoint-2` — the user merges\n  `review-checkpoint-1`, then `git tag checkpoint-2` on `main` (the user pushes).",
    "children": [],
-   "state": "waiting",
-   "waiting_on": [
-    "F"
-   ],
+   "state": "done",
+   "waiting_on": [],
    "depth": 0,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
