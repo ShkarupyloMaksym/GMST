@@ -9,40 +9,30 @@ from gmst.transcribe.types import Segment
 from tests.fakes import FakeEngine, ListSource
 
 
-def test_autogrow_learns_latin_terms_from_ukrainian_text_only():
-    g = Glossary(autogrow=True)
-    g.observe("ми зробили deploy на Kubernetes, і все ок", lang="uk")
-    g.observe("the pull request is merged", lang="en")  # English speech: not a term source
-    assert g.terms == ["deploy", "Kubernetes"]
-
-
-def test_terms_are_deduplicated_case_insensitively_and_capped():
-    g = Glossary(["Deploy"], autogrow=True, max_terms=3)
-    g.observe("deploy CI CD API", lang="uk")
-    assert [t.lower() for t in g.terms] == ["ci", "cd", "api"]  # most recent kept under the cap
-
-
-def test_disabled_autogrow_never_grows():
-    g = Glossary(["Jira"])
-    g.observe("ми відкрили тікет у Jira і GitHub", lang="uk")
-    assert g.terms == ["Jira"]
-
-
-def test_glossary_persists_to_its_path(tmp_path):
-    p = tmp_path / "terms.txt"
-    g = Glossary(["Jira"], autogrow=True, path=p)
-    g.observe("зробимо rebase", lang="uk")
-    g.save()
-    assert Glossary(path=p).terms == ["Jira", "rebase"]
-
-
-def test_config_validates_the_glossary(tmp_path):
+def test_config_accepts_curated_terms_and_rejects_short_or_common_ones(tmp_path):
+    """X.6b: short, common English words in the glossary matched ordinary Ukrainian words
+    ("мені" -> "Men", "тому" -> "To", "цим" -> "time") and raised WER 2.5-4.6 pts. Curated-only
+    (DECIDE-08, 2026-09-29): >= 5 letters and not a common English word, checked at load."""
     import pytest
 
-    bad = tmp_path / "g.toml"
-    bad.write_text("glossary = [\"ok\", 3]\n")
-    with pytest.raises(ValueError, match="glossary: "):
-        Config.load(bad)
+    ok = tmp_path / "ok.toml"
+    ok.write_text('glossary = ["Kubernetes", "deploy", "pull request"]\n')
+    assert Config.load(ok).glossary == ("Kubernetes", "deploy", "pull request")
+    for bad in ('["me"]', '["time"]', '["people"]', '["Kubernetes", "to"]'):
+        f = tmp_path / "bad.toml"
+        f.write_text(f"glossary = {bad}\n")
+        with pytest.raises(ValueError, match="glossary: "):
+            Config.load(f)
+
+
+def test_autogrow_is_gone(tmp_path):
+    """X.6b: autogrow learned "me", "to", "time" from speakers' English phrases."""
+    import pytest
+
+    f = tmp_path / "g.toml"
+    f.write_text("glossary_autogrow = true\n")
+    with pytest.raises(ValueError, match="glossary_autogrow"):
+        Config.load(f)
 
 
 def test_the_glossary_never_reaches_the_decoder():
@@ -72,7 +62,7 @@ def test_correction_tolerates_ukrainian_case_endings():
 
 def test_correction_leaves_ordinary_ukrainian_words_alone():
     g = Glossary(["deploy", "request", "Kubernetes"])
-    text = "депутат замовив реквієм у кухні"
+    text = "депутат замовив реквієм у кухні, мені тому цим"
     assert g.correct(text) == text
 
 

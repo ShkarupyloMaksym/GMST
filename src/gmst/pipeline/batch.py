@@ -69,7 +69,7 @@ def transcribe_by_region(audio: AudioArray, cfg: Config, engine: Engine) -> list
 
     def decode(clip, lang):
         segs = engine.transcribe(clip, language=lang)
-        if not glossary and not glossary.autogrow:
+        if not glossary:
             return segs
         out = []
         for s in segs:  # the glossary corrects the text; it never reaches Whisper (X.6, F.18)
@@ -78,17 +78,13 @@ def transcribe_by_region(audio: AudioArray, cfg: Config, engine: Engine) -> list
                 text = " ".join(w.text for w in words)
             else:
                 words, text = s.words, glossary.correct(s.text)
-            glossary.observe(text, lang=lang)
             out.append(Segment(s.start, s.end, text, s.language, s.is_final, s.lid_prob,
                                s.turn, words))
         return out
 
-    try:
-        if cfg.language is not None:
-            return decode(audio, cfg.language)
-        return _by_region(audio, cfg, engine, decode)
-    finally:
-        glossary.save()
+    if cfg.language is not None:
+        return decode(audio, cfg.language)
+    return _by_region(audio, cfg, engine, decode)
 
 
 def _by_region(audio: AudioArray, cfg: Config, engine: Engine, decode) -> list[Segment]:

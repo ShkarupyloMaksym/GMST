@@ -34,11 +34,8 @@ class Config:
     lid_languages: tuple[str, ...] = ("en", "uk")  # LID picks only among these; ru counts as uk
     lid_settle_seconds: float = 3.0    # stream: re-detect until the utterance has this much audio
 
-    # --- term glossary (DECIDE-08): English terms inside Ukrainian speech ---
-    glossary: tuple[str, ...] = ()     # terms fed to every decode (prompt head + hotwords)
-    glossary_autogrow: bool = False    # learn Latin-script terms committed inside Ukrainian text
-    glossary_path: Path | None = None  # where the grown list persists (one term per line)
-    glossary_max_terms: int = 100
+    # --- term glossary (DECIDE-08, experimental): English terms inside Ukrainian speech ---
+    glossary: tuple[str, ...] = ()     # curated terms the decoded text is corrected to
 
     # --- audio capture (stream / listen) ---
     input_device: int | str | None = None   # sounddevice id, or name substring
@@ -93,10 +90,9 @@ _NUMERIC: dict[str, tuple[type, float, float | None]] = {
     "overlap_seconds": (float, 0.0, None),
     "sse_port": (int, 0, 65535),  # 0 = any free port (gmst.example.toml)
     "turn_gap_seconds": (float, 0.0, None),
-    "glossary_max_terms": (int, 1, None),
 }
 
-_BOOLS = frozenset({"word_timestamps", "glossary_autogrow"})
+_BOOLS = frozenset({"word_timestamps"})
 _STRINGS = frozenset({"model_size", "model_repo"})
 _LANGUAGES = frozenset({"en", "uk"})  # `stream --language` already restricts to these
 _LANG_CODE_LEN = (2, 3)  # Whisper language codes: "en", "uk", "haw", "yue"
@@ -154,6 +150,13 @@ def _coerce(key: str, value: object) -> object:
             isinstance(v, str) and v.strip() for v in value
         ):
             raise ValueError('glossary: expected a list of terms such as ["deploy", "Kubernetes"]')
+        from gmst.glossary import unsafe_term
+
+        bad = [f"{v!r} ({why})" for v in value if (why := unsafe_term(v))]
+        if bad:
+            raise ValueError("glossary: " + ", ".join(bad) + " — a glossary term must have >= 5 "
+                             "letters and not be a common English word, or it overwrites "
+                             "ordinary Ukrainian words (review X.6b)")
         return tuple(v.strip() for v in value)
     if key == "lid_languages":
         if isinstance(value, str):  # GMST_LID_LANGUAGES="en,uk"
@@ -179,7 +182,7 @@ def _merge(base: Config, data: dict[str, object]) -> Config:
         raise ValueError(f"unknown config keys: {', '.join(sorted(unknown))}")
     updates: dict[str, object] = {}
     for key, value in data.items():
-        if key in ("out_path", "glossary_path") and value is not None:
+        if key == "out_path" and value is not None:
             value = Path(str(value))
         else:
             if key == "language" and value == "auto":

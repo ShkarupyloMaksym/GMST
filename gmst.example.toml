@@ -24,9 +24,9 @@
 
 # --- term glossary: English terms inside Ukrainian speech (DECIDE-08) ---
 # glossary            = ["deploy", "pull request", "Kubernetes"]  # "деплой" -> "deploy" after decoding
-# glossary_autogrow   = false         # learn Latin-script terms committed inside Ukrainian text
-# glossary_path       = "glossary.txt" # grown list persists here (one term per line)
-# glossary_max_terms  = 100           # most recent kept; empty glossary = off
+#                                     # EXPERIMENTAL: curated terms only, each >= 5 letters and
+#                                     # not a common English word (checked at load) — short or
+#                                     # common terms overwrite Ukrainian words (review X.6b)
 
 # --- audio capture ---
 # input_device = "BlackHole"          # sounddevice id (int) or name substring; see `gmst devices`

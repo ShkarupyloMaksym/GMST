@@ -224,7 +224,6 @@ def run_stream(
                     continue
                 text = " ".join(w.text for w in words)
                 t0, t1 = words[0].start, words[-1].end
-                glossary.observe(text, lang=lang)
                 stats.committed_words += len(words)
                 sink.emit(Segment(t0, t1, text, lang, is_final=True,
                                   turn=turns.update(t0, t1), words=words))
@@ -386,10 +385,6 @@ def run_stream(
             logging.getLogger(__name__).exception("final flush failed; closing sink anyway")
             salvage()
         finally:
-            try:
-                glossary.save()
-            except OSError:  # a read-only glossary_path must not cost the transcript
-                logging.getLogger(__name__).exception("could not save the glossary")
             sink.close()
 
     return stats

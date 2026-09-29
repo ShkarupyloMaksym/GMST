@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-29 05:21 UTC",
+ "generated": "2026-09-29 05:22 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -77,13 +77,14 @@
     "F.16",
     "F.17",
     "F.18",
-    "F.19"
+    "F.19",
+    "F.20"
    ],
    "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
-   "leaves_total": 19,
-   "leaves_done": 19,
+   "leaves_total": 20,
+   "leaves_done": 20,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -762,6 +763,42 @@
    "summary": "Set the default per the user's DECIDE-10 and replace every \"provisional large-v3\" statement.",
    "instructions": "Set the default per the user's DECIDE-10 and replace every \"provisional large-v3\" statement.",
    "findings_text": "- Default `model_size = \"large-v3-turbo\"`; the leaderboard ranking no longer cited as guidance.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
+   "id": "F.20",
+   "title": "Glossary curated-only and experimental; autogrow removed (DECIDE-08, second revision)",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "opus",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.6b"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.20-curated-glossary.md",
+   "summary": "User, 2026-09-29, after X.6b: \"Curated-only, experimental\".",
+   "instructions": "User, 2026-09-29, after X.6b: \"Curated-only, experimental\".",
+   "findings_text": "- `glossary.py`: `unsafe_term` (< 5 letters, or in `_COMMON`, a fixed list of frequent English\n  words of 5+ letters); `Glossary(terms)` only — `observe`, `save`, `autogrow`, `path`,\n  `max_terms` removed. `config.py`: `glossary_autogrow` / `glossary_path` / `glossary_max_terms`\n  removed; `glossary` validated with `unsafe_term`.\n- `stream.py` / `batch.py`: no observe/save.\n- Docs: CLAUDE.md, PLAN.md config table, `gmst.example.toml`.",
    "children": [],
    "state": "done",
    "waiting_on": [],

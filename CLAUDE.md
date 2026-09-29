@@ -138,14 +138,14 @@ word-level EN↔UK within a sentence is not solved.
   (X.2: restricted LID ≥ 95 % at 3 s, 88–90 % on Ukrainian at 2 s). A short utterance commits at
   its endpoint with its last detection. Word-level EN terms *inside* Ukrainian are DECIDE-08's
   glossary, not LID.
-- **Term glossary (DECIDE-08, `gmst/glossary.py`) — a post-decode corrector, never a decoder
-  input.** `Glossary.correct_words` replaces runs of 1–3 Cyrillic words that sound like a term
-  ("деплой", "пул реквест") with the term, keeping word timings; applied to final text (stream)
-  and batch output. `glossary_autogrow` learns Latin-script tokens written inside `uk` text
-  (never from `en` utterances), capped, persisted to `glossary_path`. Until F.18 it was fed to
-  Whisper as prompt head + faster-whisper `hotwords` (which share one context block, so the terms
-  went in twice): review X.6 measured WER +28 to +61 pts, loops and >45 s decodes. **Do not put
-  the glossary back into the decoder's context.**
+- **Term glossary (DECIDE-08, `gmst/glossary.py`) — experimental, off by default.** A curated
+  list; `Glossary.correct_words` replaces runs of 1–3 Cyrillic words that sound like a term
+  ("деплой", "пул реквест") with the term, keeping word timings, on stream finals and batch output.
+  Terms must have ≥ 5 letters and not be common English words (`unsafe_term`, enforced at config
+  load). Measured on a film-podcast set (the IT-meeting case is unmeasured): fed to Whisper as
+  prompt + `hotwords` it made WER +28 to +61 pts (X.6) — **never put it into the decoder's
+  context**; as a frequency-mined or auto-grown corrector it raised WER 2.5–4.6 pts because short
+  common words ("me", "to", "time") matched Ukrainian ones (X.6b), so autogrow was removed.
 - `gmst stream --language en|uk` bypasses LID for known-monolingual meetings.
 - Never rely on global `language=None` autodetect — it biases to English.
 
