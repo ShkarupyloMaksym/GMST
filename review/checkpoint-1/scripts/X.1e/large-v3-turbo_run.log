@@ -1,0 +1,13 @@
+=== enuk model=large-v3-turbo stream_runs=2 offset_tags=[(40, 'c')] ===
+engine loaded in 2.2s
+--- tag=c offset=40 en: 20 clips, 135.5s audio ---
+[large-v3-turbo/c/en] batch  WER=0.0322 (edits=11 ref_words=342) 77.2s
+[large-v3-turbo/c/en] stream rep=0 WER=0.0234 (edits=8 ref_words=342) 663.3s decodes=172 contradicted=0/130
+[large-v3-turbo/c/en] stream rep=1 WER=0.0234 (edits=8 ref_words=342) 652.7s decodes=172 contradicted=0/130
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1e/large-v3-turbo_c_results.json)
+--- tag=c offset=40 uk: 20 clips, 107.7s audio ---
+[large-v3-turbo/c/uk] batch  WER=0.0625 (edits=9 ref_words=144) 76.7s
+[large-v3-turbo/c/uk] stream rep=0 WER=0.0625 (edits=9 ref_words=144) 460.7s decodes=120 contradicted=0/80
+[large-v3-turbo/c/uk] stream rep=1 WER=0.0625 (edits=9 ref_words=144) 468.5s decodes=120 contradicted=0/80
+  (partial results written to /home/maxymus/code_for_soul/GMST/review/checkpoint-1/scripts/X.1e/large-v3-turbo_c_results.json)
+DONE

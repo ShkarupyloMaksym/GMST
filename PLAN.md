@@ -359,7 +359,8 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   pinned): v2 13.10 / 3.12 %, v3 10.97 / 5.19 %, turbo 12.36 / 2.79 % and ~30 % faster. EVID-03's
   rule could not decide (v3 best on uk but 2.4 pts over the best en, past its 2.0-pt gate; its
   cost fallback assumed two candidates); the user chose turbo. turbo-uk unmeasurable (needs
-  `torch`). Two-pass streaming is not yet re-verified with turbo.
+  `torch`). Two-pass streaming with turbo (X.1e, fresh rows 40–59): en 2.34 % stream vs 3.22 %
+  batch, uk 6.25 % vs 6.25 %, identical across two runs — holds.
 - **DECIDE-09 — two-pass streaming (2026-09-28).** Four rounds of fixes to committing words from
   partial audio each exposed a new failure on fresh clips (dropped words, non-deterministic
   Ukrainian, replayed utterances, hallucinated boilerplate — X.1 … X.1c). The live

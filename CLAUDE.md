@@ -114,7 +114,8 @@ worst on English; turbo is best on English, ~30 % faster, and the Mac's MLX fast
 leaderboard GMST used to cite (v2 13.72 % < v3 20.53 % on uk) does **not** reproduce in this
 harness. `Yehor/whisper-large-v3-turbo-quantized-uk` (the leaderboard's 12.75 %) could not be
 measured: a `compressed-tensors` checkpoint, not CTranslate2, and conversion needs `torch`.
-Two-pass streaming was verified with `small` and `large-v2` (X.1d), not yet with turbo.
+Two-pass streaming with turbo on fresh unseen clips (X.1e): final text en 2.34 % vs batch 3.22 %,
+uk 6.25 % vs 6.25 %, identical across two runs.
 
 ### Language mixture
 
