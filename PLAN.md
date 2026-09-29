@@ -300,7 +300,7 @@ field — enums, numbers with ranges, booleans, strings, `language` (`en`/`uk`/`
 | Field | Default | Notes |
 |---|---|---|
 | `engine` | `faster_whisper` | enum: `faster_whisper` \| `mlx_whisper` \| `canary` |
-| `model_size` | `large-v3` | **provisional** — Phase 1 sets the real default |
+| `model_size` | `large-v3-turbo` | DECIDE-10 (review X.3, 2026-09-29): uk 12.36 % / en 2.79 % corpus WER, ~30 % faster than v2/v3; `large-v3` is best on uk (10.97 %) but worst on en (5.19 %) |
 | `model_repo` | `None` | explicit HF repo / mlx path; overrides `model_size` when set |
 | `compute_device` | `cpu` | renamed from `device` (collided with the audio `--device`); `cpu` \| `cuda` \| `auto` |
 | `compute_type` | `int8` | enum |
@@ -358,6 +358,11 @@ Recorded from `review/checkpoint-1/tasks/H1-decisions.md`; the findings behind t
   model) and `idle` (10 s without speech) go to stderr as log warnings, to the console as a status
   line, and into the JSONL/SSE stream as `{"status": ...}` objects (schema addition approved).
 - **DECIDE-07 — CI.** There is none and no remote; the claims are struck.
+- **DECIDE-10 — default model `large-v3-turbo` (2026-09-29).** X.3 (800 uk / 500 en, language
+  pinned): v2 13.10 / 3.12 %, v3 10.97 / 5.19 %, turbo 12.36 / 2.79 % and ~30 % faster. EVID-03's
+  rule could not decide (v3 best on uk but 2.4 pts over the best en, past its 2.0-pt gate; its
+  cost fallback assumed two candidates); the user chose turbo. turbo-uk unmeasurable (needs
+  `torch`). Two-pass streaming is not yet re-verified with turbo.
 - **DECIDE-09 — two-pass streaming (2026-09-28).** Four rounds of fixes to committing words from
   partial audio each exposed a new failure on fresh clips (dropped words, non-deterministic
   Ukrainian, replayed utterances, hallucinated boilerplate — X.1 … X.1c). The live

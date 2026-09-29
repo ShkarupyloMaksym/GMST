@@ -7,7 +7,7 @@ def test_defaults_when_no_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)  # no gmst.toml at the default path
     cfg = Config.load()
     assert cfg.engine == "faster_whisper"
-    assert cfg.model_size == "large-v3"  # provisional; Phase 1 sets the real default
+    assert cfg.model_size == "large-v3-turbo"  # DECIDE-10, review X.3
     assert cfg.model_repo is None
     assert cfg.compute_device == "cpu"
     assert cfg.language is None

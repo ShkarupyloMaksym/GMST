@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28 22:32 UTC",
+ "generated": "2026-09-29 05:21 UTC",
  "basis": "checkpoint-1 (8beade7)",
  "branch": "review-checkpoint-1",
  "stages": [
@@ -76,13 +76,14 @@
     "F.15",
     "F.16",
     "F.17",
-    "F.18"
+    "F.18",
+    "F.19"
    ],
    "state": "in-progress",
    "waiting_on": [],
    "depth": 0,
-   "leaves_total": 18,
-   "leaves_done": 18,
+   "leaves_total": 19,
+   "leaves_done": 19,
    "severity_total": {
     "blocking": 0,
     "serious": 0,
@@ -738,6 +739,42 @@
    }
   },
   {
+   "id": "F.19",
+   "title": "Default model large-v3-turbo (DECIDE-10)",
+   "parent": "F",
+   "stage": "fix",
+   "kind": "task",
+   "agent": "orchestrator",
+   "model": "sonnet",
+   "effort": null,
+   "status": "done",
+   "depends_on": [
+    "X.3"
+   ],
+   "finding": "recorded",
+   "has_read_section": true,
+   "severity": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   },
+   "file": "tasks/F.19-default-model.md",
+   "summary": "Set the default per the user's DECIDE-10 and replace every \"provisional large-v3\" statement.",
+   "instructions": "Set the default per the user's DECIDE-10 and replace every \"provisional large-v3\" statement.",
+   "findings_text": "- Default `model_size = \"large-v3-turbo\"`; the leaderboard ranking no longer cited as guidance.",
+   "children": [],
+   "state": "done",
+   "waiting_on": [],
+   "depth": 1,
+   "leaves_total": 1,
+   "leaves_done": 1,
+   "severity_total": {
+    "blocking": 0,
+    "serious": 0,
+    "minor": 0
+   }
+  },
+  {
    "id": "H1",
    "title": "Your decisions",
    "parent": null,
@@ -759,7 +796,7 @@
    },
    "file": "tasks/H1-decisions.md",
    "summary": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.",
-   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.\n\n\n2026-09-29 — **DECIDE-08 revised** after X.6 (the glossary fed to Whisper made WER +28 to +61 pts\nworse): **\"Correct after decoding\"** — the glossary corrects the decoded text and is never fed to\nWhisper (F.18; measured by X.6b).\n- **DECIDE-09 → two-pass streaming** (2026-09-28, after X.1c): live text provisional, each\n  utterance decoded whole as final (F.17; X.1d holds).",
+   "instructions": "The orchestrator lists every `DECIDE-nn` here with the options, the evidence for each, and a recommendation. You choose; the orchestrator records the choice in `PLAN.md` with a dated note.\n\n### Open decisions (from T1, 2026-09-28)\n\n- **DECIDE-01 — how the stream re-anchors after a trim.** (a) Trim at the *start* of the last\n  committed word minus the back-off, keeping the whole word as the anchor; exact-prefix `_align`\n  unchanged. Cheap, but any re-hearing of that word still contradicts terminally. (b) **Recommended:**\n  (a) plus timestamp-based anchoring, as UFAL's `whisper_streaming` does — drop hypothesis words\n  ending before the last committed word's end (buffer-relative) and de-duplicate an up-to-5-word\n  n-gram overlap, so a contradiction is no longer terminal. Stays LocalAgreement-2 (rule 5); changes\n  `_align`'s contract, so its tests change with it. (c) Keep exact alignment, but after N contradicted\n  pushes reset the anchor and commit from timestamps.\n- **DECIDE-02 — restrict LID.** **Recommended:** a new config field `lid_languages` (default\n  `[\"en\", \"uk\"]`); renormalise the detector's distribution over it, with `ru` folded into `uk` (the\n  tie-break becomes a special case), so the first utterance is also safe. Alternative: hard-code\n  en/uk. Either way `language = en|uk` pinning is unchanged.\n- **DECIDE-03 — what batch \"per-segment LID\" means.** (a) **Recommended:** VAD-split the file\n  (reuse `segment/vad.py`), detect each region with DECIDE-02's restriction, and decode each region in\n  its own language — same semantics as the stream. (b) One restricted detection per file, decoded\n  in that language (simpler; no code-switching in batch).\n- **DECIDE-04 — stream LID timing.** Waits on EVID-02. Options: re-detect on every decode until\n  confident; re-decode the utterance if the endpointed segment's language differs; or detect only\n  once ≥ N s of buffer exists.\n- **DECIDE-05 — where runtime status goes.** **Recommended:** now, `logging` warnings on stderr for\n  overflow/lagging/sustained lag, and a console-sink status line (`[lagging]`, idle); later, an\n  optional JSONL/SSE `{\"status\": ...}` event (a schema addition, so it needs your yes).\n- **DECIDE-06 — real code-switched eval audio.** **Recommended:** record and hand-transcribe 5–10 min\n  of a real mixed meeting (PLAN Phase 1 already asks for it); drop `real_cs` from `build_sets.py`.\n- **DECIDE-07 — CI.** Add `.github/workflows/ci.yml` (uv sync, ruff, pytest; useful once you add a\n  GitHub remote), or strike the claim from CLAUDE.md/PLAN.md. **Recommended:** add it.\n\n\n2026-09-29 — **DECIDE-08 revised** after X.6 (the glossary fed to Whisper made WER +28 to +61 pts\nworse): **\"Correct after decoding\"** — the glossary corrects the decoded text and is never fed to\nWhisper (F.18; measured by X.6b).\n- **DECIDE-09 → two-pass streaming** (2026-09-28, after X.1c): live text provisional, each\n  utterance decoded whole as final (F.17; X.1d holds).\n\n2026-09-29 — **DECIDE-10 → `large-v3-turbo`** as the default model, after X.3 (the rule could not\ndecide). **DECIDE-08 revised again** after X.6b (post-decode correction also failed): curated-only,\nexperimental — terms of ≥ 5 letters that are not common English words, autogrow removed, off by\ndefault (F.20).",
    "findings_text": "All eight DECIDE items answered on 2026-09-28 (see above and root PLAN.md \"Review decisions\").",
    "children": [],
    "state": "done",
@@ -1126,14 +1163,12 @@
     "X.6b"
    ],
    "state": "in-progress",
-   "waiting_on": [
-    "X.3"
-   ],
+   "waiting_on": [],
    "depth": 0,
    "leaves_total": 10,
-   "leaves_done": 9,
+   "leaves_done": 10,
    "severity_total": {
-    "blocking": 9,
+    "blocking": 11,
     "serious": 11,
     "minor": 1
    }
@@ -1254,29 +1289,29 @@
    "agent": "repro-runner",
    "model": "sonnet",
    "effort": "medium",
-   "status": "in-progress",
+   "status": "done",
    "depends_on": [
     "F.2"
    ],
-   "finding": null,
+   "finding": "findings",
    "has_read_section": true,
    "severity": {
-    "blocking": 0,
+    "blocking": 2,
     "serious": 0,
     "minor": 0
    },
    "file": "tasks/X.3-model-selection.md",
    "summary": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnig",
    "instructions": "After F.2's harness fixes: build the full cleaned-CV10 `uk` set (3204) and a 500-clip LibriSpeech test-clean `en` set, language pinned, `gmst-batch` path. Candidates `large-v2`, `large-v3`; ask the user before downloading `large-v3-turbo` / `Yehor/whisper-large-v3-turbo-quantized-uk`. Report corpus WER with bootstrap CIs and pairwise paired-bootstrap CIs. Expect hours per model on CPU: run overnight, one model at a time, resumable.\n\nRead first: root `CLAUDE.md`, `review/checkpoint-1/PLAN.md` (rules 1–8), `tasks/V1-evidence-plan.md` (the pre-registered rule for this node — do not change it), this file. Offline (`HF_HUB_OFFLINE=1`), one `large-*` model at a time machine-wide (check `pgrep -af python`), scripts and outputs in `scripts/X.3/`. Write the clip list to `scripts/X.3/clips.txt` before running. Report the numbers against the rule; a `fails` is a result, not something to tune away.\n\n**Amended 2026-09-28 (user, before any X.3 run):** scope is **800** cleaned-CV10 `uk` clips (first\n800 in a fixed seed-0 shuffle, written to `scripts/X.3/clips.txt` first) and the same 500 `en`\nclips, candidates `large-v2`, `large-v3`, `large-v3-turbo`, `Yehor/whisper-large-v3-turbo-quantized-uk`\n— downloads approved for the two turbo models (faster-whisper maps `large-v3-turbo` to\n`mobiuslabsgmbh/faster-whisper-large-v3-turbo`, already partly cached; check whether the turbo-uk\nrepo is CTranslate2-loadable, and convert with `ct2-transformers-converter` into\n`eval/results/models/` if it is not). Per R5 this resolves large-v2 vs large-v3 (~73 paired clips)\nand large-v3 vs turbo (~761) but **not** turbo-uk vs large-v2 (~2,893): report that pair's CI\nas-is, with no ranking claimed unless it excludes 0. The pre-registered rule is otherwise\nunchanged. Runs after X.1 and X.4 (one large model at a time); overnight.",
-   "findings_text": "_(the measured numbers against the pre-registered rule, then `- [holds|fails] ...`)_",
+   "findings_text": "- [blocking] `Yehor/whisper-large-v3-turbo-quantized-uk` cannot be loaded via the mandated\n  `faster_whisper` path in this repo's environment: `ct2-transformers-converter` needs `torch`\n  (not a GMST dependency; `ModuleNotFoundError: No module named 'torch'` confirmed directly) and\n  fails with an unrelated `NameError: name 'torch' is not defined` at\n  `.venv/lib/python3.12/site-packages/ctranslate2/converters/transformers.py:107` rather than a\n  clear \"install torch\" message; separately the checkpoint's `compressed-tensors` 4-bit\n  quantization has no converter support path (only `quant_method == \"awq\"` is special-cased) and\n  needs the `compressed_tensors` package to even dequantize on load in `transformers`\n  (also absent). Installing either package is outside this node's network authorization (scoped to\n  downloading the two turbo repos, not installing into the shared `.venv` other concurrent agents\n  use). **Consequence for EVID-03's rule:** the pre-registered rule needs a UK WER number for every\n  candidate; turbo-uk — the leaderboard's best UK performer per `CLAUDE.md` (12.75 %) and the\n  reason the amendment approved downloading it — cannot produce one at all via this path, not just\n  an under-powered pairing as the amendment anticipated for turbo-uk vs large-v2. Full transcript:\n  `scripts/X.3/turbo_uk_conversion.md`.\n- Corpus WER, forced language, n=800 uk / 500 en (full table and all pairwise CIs above): large-v2\n  **13.10 % uk / 3.12 % en**; large-v3 **10.97 % uk / 5.19 % en**; large-v3-turbo **12.36 % uk /\n  2.79 % en**. large-v2 vs large-v3 both contradict `CLAUDE.md`'s cited leaderboard ranking\n  (leaderboard: large-v2 13.72 % < large-v3 20.53 % on uk, i.e. v2 beats v3) — in this harness\n  (forced-language raw faster-whisper, cleaned-CV10 uk800, LibriSpeech en500) **large-v3 beats\n  large-v2 on uk by a statistically significant margin** (paired diff +2.13 pts, CI95 [1.24, 3.04]).\n  `CLAUDE.md`'s \"Model default is provisional\" section should not be read as settled evidence of\n  v2 > v3 on uk for this task; it cites a different harness/leaderboard, and this node's own\n  numbers disagree with it on which of the two is better.\n- [blocking] **Applying the pre-registered EVID-03 rule literally to all three measured candidates\n  disqualifies the significantly-best-on-uk model and then has no tie-breaker for what's left.**\n  Lowest UK WER = large-v3 (10.97 %), CI vs the actual runner-up (large-v3-turbo, 12.36 %) excludes\n  0 ([-2.36, -0.46]) — condition 1 (\"lowest UK WER whose CI vs the runner-up excludes 0\") holds.\n  But large-v3's EN WER (5.19 %) is **2.40 pts** above the best EN WER across all three\n  (large-v3-turbo, 2.79 %) — **0.40 pts past the rule's 2.0-pt gate**, and that gap is itself\n  statistically real (CI [0.58, 4.71] excludes 0) — so large-v3 **fails condition 2**. The rule's\n  fallback, \"the cheaper one per X.4,\" **cannot be executed as written**: X.4\n  (`tasks/X.4-per-update-cost.md`) only benchmarked large-v2 and large-v3, never large-v3-turbo, so\n  there is no X.4 cost figure for the one candidate this eval's own `rtf` shows is clearly the\n  cheapest (0.781/0.687 vs ~1.0-1.08 for the other two; 4748 s vs 6742-7180 s wall time for the\n  full run). Among the two candidates the rule *can* compare on cost (large-v2, large-v3 — X.4 says\n  large-v2 is cheaper), large-v2 and large-v3-turbo are not significantly different on uk (diff\n  +0.73 pts, CI [-0.28, 1.78] includes 0) while large-v3-turbo is significantly better on en (diff\n  +0.33 pts, CI [0.06, 0.63] excludes 0, small) and faster in this harness — picking large-v3-turbo\n  over large-v2 is defensible but is this node's judgment filling a gap in the rule, not the rule's\n  own mechanical output. **This is a property of the pre-registered rule (V1, EVID-03) exposed only\n  once a third real candidate's numbers exist** — a 2-candidate rule with a hard, CI-blind 2.0-pt\n  EN gate and a cost fallback that assumed only 2 candidates would ever need it. Flagged ",
    "children": [],
-   "state": "in-progress",
+   "state": "done",
    "waiting_on": [],
    "depth": 1,
    "leaves_total": 1,
-   "leaves_done": 0,
+   "leaves_done": 1,
    "severity_total": {
-    "blocking": 0,
+    "blocking": 2,
     "serious": 0,
     "minor": 0
    }

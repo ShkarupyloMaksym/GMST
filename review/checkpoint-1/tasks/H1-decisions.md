@@ -50,6 +50,11 @@ Whisper (F.18; measured by X.6b).
 - **DECIDE-09 → two-pass streaming** (2026-09-28, after X.1c): live text provisional, each
   utterance decoded whole as final (F.17; X.1d holds).
 
+2026-09-29 — **DECIDE-10 → `large-v3-turbo`** as the default model, after X.3 (the rule could not
+decide). **DECIDE-08 revised again** after X.6b (post-decode correction also failed): curated-only,
+experimental — terms of ≥ 5 letters that are not common English words, autogrow removed, off by
+default (F.20).
+
 ## What was read / measured
 
 2026-09-28, answered in session:

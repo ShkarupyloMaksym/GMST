@@ -7,7 +7,7 @@
 
 # --- transcription ---
 # engine          = "faster_whisper"  # faster_whisper (portable) | mlx_whisper (Mac GPU) | canary (Phase 4)
-# model_size      = "large-v3"        # PROVISIONAL — `gmst bench` (Phase 1) picks the real default
+# model_size      = "large-v3-turbo"  # default (review X.3); "large-v3" is best on Ukrainian
 # model_repo      = ""                # explicit HF repo / mlx path, e.g. "mlx-community/whisper-large-v3-turbo"
 # compute_device  = "cpu"             # cpu | cuda | auto
 # compute_type    = "int8"            # int8 | int8_float16 | float16 | float32

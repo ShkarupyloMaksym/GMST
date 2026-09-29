@@ -98,14 +98,23 @@ Backends under `transcribe/backends/`:
 - `canary` (NeMo) — optional, Phase 4. Linux/GPU only. **Has no built-in language-ID** (`transcribe()`
   takes an explicit `source_lang`), so it does not remove the LID step; batch/40 s-chunk oriented.
 
-### Model default is provisional
+### Default model: `large-v3-turbo` (DECIDE-10, 2026-09-29)
 
-`config.py` ships `model_size="large-v3"` but this is **not** validated — the Ukrainian leaderboard
-GMST cites (`egorsmkv/speech-recognition-uk`, CV10 `uk`) puts `large-v2` at 13.72 % WER, `large-v3`
-at 20.53 %, `large-v3-turbo` at 22.83 %, and `Yehor/whisper-large-v3-turbo-quantized-uk` at
-12.75 %. Phase 1's `gmst bench` measures UK WER + EN WER + streaming throughput over
-`{large-v2, large-v3, large-v3-turbo, the quantized fine-tune}` on the target Mac and sets the real
-default. Do not treat `large-v3` as decided.
+Chosen from review X.3 — corpus WER with the language pinned, 800 cleaned-CV10 `uk` + 500
+LibriSpeech `en` clips, faster-whisper CPU int8:
+
+| model | uk | en | RTF |
+|---|---|---|---|
+| `large-v2` | 13.10 % | 3.12 % | ~1.0 |
+| `large-v3` | **10.97 %** | 5.19 % | ~1.08 |
+| `large-v3-turbo` | 12.36 % | **2.79 %** | **0.69–0.78** |
+
+`large-v3` is significantly best on Ukrainian (CI of the difference excludes 0) but significantly
+worst on English; turbo is best on English, ~30 % faster, and the Mac's MLX fast path. The
+leaderboard GMST used to cite (v2 13.72 % < v3 20.53 % on uk) does **not** reproduce in this
+harness. `Yehor/whisper-large-v3-turbo-quantized-uk` (the leaderboard's 12.75 %) could not be
+measured: a `compressed-tensors` checkpoint, not CTranslate2, and conversion needs `torch`.
+Two-pass streaming was verified with `small` and `large-v2` (X.1d), not yet with turbo.
 
 ### Language mixture
 

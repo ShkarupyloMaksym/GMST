@@ -57,11 +57,13 @@ the sink is still closed with what was committed.
 ## Status
 
 Phases 1–3 done; Phase 4 partial (word-level timestamps, turn segmentation on pauses, SSE sink).
-The 2026-09-28 review (`review/checkpoint-1/`) found and fixed a streaming bug that lost most of
-each utterance after its first commit, and restricted language detection to the meeting's
-languages (`lid_languages`, default `en`, `uk`); batch now decodes each speech region in its own
-language. `model_size` defaults to `large-v3` but this is **provisional** — the Ukrainian/English
-WER comparison runs in `eval/run_eval.py` (see CLAUDE.md), and `gmst bench <clip>` measures
-throughput and the per-update streaming cost on the target machine. `mlx_whisper` backend is
-written but untested (needs Apple hardware); AlignAtt / Canary backends and an LLM cleanup pass
-are not implemented.
+The 2026-09-28/29 review (`review/checkpoint-1/`) fixed a streaming bug that lost most of each
+utterance, made streaming two-pass (live text is provisional; each utterance is re-decoded whole
+as the final text — on unseen clips the final text matches batch accuracy), restricted language
+detection to the meeting's languages (`lid_languages`, default `en`, `uk`), and made batch decode
+each speech region in its own language. `model_size` defaults to `large-v3-turbo` (measured:
+Ukrainian 12.4 % / English 2.8 % WER; `large-v3` is better on Ukrainian, 11.0 %, worse on English,
+5.2 %). On a CPU the large models are far too slow for live use (a live update takes ~8 s; the final
+text lags an utterance by ~8–10 s) — the ≲ 3 s target relies on the Mac (MLX, still to be measured)
+or a smaller model. `mlx_whisper` backend is written but untested (needs Apple hardware); AlignAtt /
+Canary backends and an LLM cleanup pass are not implemented.

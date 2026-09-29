@@ -21,7 +21,7 @@ DEFAULT_CONFIG_PATH = Path("gmst.toml")
 class Config:
     # --- transcription ---
     engine: str = "faster_whisper"     # faster_whisper | mlx_whisper | canary
-    model_size: str = "large-v3"       # PROVISIONAL — Phase 1 `gmst bench` sets the real default
+    model_size: str = "large-v3-turbo"  # DECIDE-10 (review X.3): uk 12.36 %, en 2.79 %, fastest
     model_repo: str | None = None      # explicit HF repo / mlx path; overrides model_size when set
     compute_device: str = "cpu"        # cpu | cuda | auto  (distinct from the audio --device)
     compute_type: str = "int8"         # int8 | int8_float16 | float16 | float32
