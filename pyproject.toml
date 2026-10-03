@@ -3,6 +3,8 @@ name = "gmst"
 version = "0.0.1"
 description = "Real-time speech-to-text for Google Meet via faster-whisper"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11,<3.15"
 dependencies = [
     "faster-whisper>=1.1",
